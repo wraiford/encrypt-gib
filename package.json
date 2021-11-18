@@ -1,0 +1,49 @@
+{
+  "name": "encrypt-gib",
+  "version": "0.0.0",
+  "description": "Weak (?) hash-based encryption (not signatures). I ain't got no job...Donate - run npm fund! Maybe then I can donate to my dependencies.",
+  "repository": {
+    "url": "https://gitlab.com/ibgib/encrypt-gib",
+    "type": "git"
+  },
+  "funding": {
+    "type": "individual",
+    "url": "https://paypal.me/ibGib"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -b tsconfig.browser.json --force",
+    "build:test": "tsc -b tsconfig.test.json",
+    "build:node": "tsc -b tsconfig.node.json --force",
+    "clean": "rm -rf ./dist",
+    "clean:test": "rm -rf ./dist/test",
+    "pack:browser": "npm version patch && npm run build && npm pack",
+    "pack:node": "npm version patch && npm run build:node && npm pack",
+    "prebuild": "./set_target.sh browser && npm run clean",
+    "prebuild:test": "./set_target.sh node && npm run clean",
+    "prebuild:node": "./set_target.sh node && npm run clean",
+    "pretest": "npm run build:test",
+    "test": "./node_modules/mocha/bin/mocha \"dist/**/*.spec.js\" --opts ./mocha.opts",
+    "predebug": "npm run build:test",
+    "debug": "./node_modules/mocha/bin/mocha debug \"dist/**/*.spec.js\" --opts ./mocha.opts --no-timeouts"
+  },
+  "keywords": [
+    "ibgib",
+    "typescript",
+    "dlt",
+    "blockchain",
+    "encryption",
+    "hashing",
+    "weak"
+  ],
+  "author": "William Raiford",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chai": "^4.2.7",
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^16.11.6",
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0",
+    "typescript": "^4.4.4"
+  }
+}

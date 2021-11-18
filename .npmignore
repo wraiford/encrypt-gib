@@ -1,0 +1,4 @@
+./dist/test/
+ts-gib*.tgz
+
+# going to include src for the time being with the package.

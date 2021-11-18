@@ -1,0 +1,26 @@
+{
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "search.exclude": {
+        "**/*.BAK": true,
+        "**/dist": true
+    },
+    "files.watcherExclude": {
+        "**/*.BAK": true
+    },
+    "workbench.editor": {
+
+    },
+    "debug.node.autoAttach": "on",
+    "files.trimTrailingWhitespace": true,
+    "workbench.colorTheme": "Default Dark+",
+    "workbench.colorCustomizations": {
+        "editor.background": "#850e75",
+        "sideBar.background": "#850e75",
+        "sideBar.border": "#360707",
+    },
+    "editor.tokenColorCustomizations": {
+        "[Kimbie Dark]": {
+            "variables": "#000000"
+        }
+    }
+}

@@ -1,0 +1,16 @@
+# logs
+npm-debug.log*
+
+# npm
+node_modules
+*.tgz
+
+# compiled targets
+dist/*
+
+# backups
+*.BAK
+
+# tsconfig
+*.tsbuildinfo
+
