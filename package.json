@@ -1,6 +1,6 @@
 {
   "name": "encrypt-gib",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Weak (?) hash-based encryption (not signatures). I ain't got no job...Donate - run npm fund! Maybe then I can donate to my dependencies.",
   "repository": {
     "url": "https://gitlab.com/ibgib/encrypt-gib",
