@@ -14,8 +14,8 @@
     "files.trimTrailingWhitespace": true,
     "workbench.colorTheme": "Default Dark+",
     "workbench.colorCustomizations": {
-        "editor.background": "#850e75",
-        "sideBar.background": "#850e75",
+        "editor.background": "#6d0a60",
+        "sideBar.background": "#6d0a60",
         "sideBar.border": "#360707",
     },
     "editor.tokenColorCustomizations": {
