@@ -49,12 +49,15 @@ There are basically four steps in encryption:
 
 So for example, say we have a `secret` of `'my password'` and data of `'42 foo'`.
 
-First we encode that `'42 foo'` into hex, say `'42abc'` (I'm just including 42 for learning purposes, the actual hash of course has no correlation). Once encoded, we can represent each
-character as an index to some alphabet. (If that alphabet is "random"ly distributed of hex
-characters, like in one single hash or multiple concatenated hashes, then the index into that
-distribution also appears "as random".) So we need to build that random alphabet.
+First we encode that `'42 foo'` into hex, say `'42ab'` (only hex characters here, 0-9, a-f.
+I'm including '42' for learning purposes, the actual hash of course has no correlation).
+Once encoded, we can represent each character as an index to some alphabet.
+(If that alphabet is "randomly" distributed of hex characters, like in one single hash
+or multiple concatenated hashes, then the index into that
+distribution also appears "as random".) So we need to build that random, one-time alphabet.
 
 Each iteration of each character has a starting point of `prevHash`. This is generated via
+
 ```typescript
 let prevHash = await doInitialRecursions({
     secret,                        // 'my p4ssw0rd'
@@ -63,7 +66,9 @@ let prevHash = await doInitialRecursions({
     saltStrategy: saltStrategy!,   // 'initialPrepend' means salt only on initialRecursions
     hashAlgorithm: hashAlgorithm!, // 'SHA-256'
 });
+// say, '8e3c167b67934bd3ac2c2ca20337c95b7d53cd62dc004e6f8468f694ced297b7'
 ```
+
 ```typescript
 // error handling removed
 async function doInitialRecursions({
@@ -81,7 +86,9 @@ async function doInitialRecursions({
     return hash;
 }
 ```
+
 which relies on `getPreHash`:
+
 ```typescript
 function getPreHash({
     secret,
@@ -124,7 +131,7 @@ for (let i = 0; i < hexEncodedData.length; i++) { // iterate through characters
     let hash: string;
     while (!alphabet.includes(hexCharFromData)) {
         for (let j = 0; j < recursionsPerHash; j++) {
-            const preHash = getPreHash({prevHash, salt, saltStrategy});
+            const preHash = getPreHash({prevHash, salt, saltStrategy}); // uses prevHash here
             hash = await h.hash({s: preHash, algorithm: hashAlgorithm});
             prevHash = hash;
         }
@@ -141,11 +148,12 @@ const encryptedData = encryptedDataIndexes.join(encryptedDataDelimiter);
 return encryptedData;
 ```
 
-Now say our `hexCharFromData` has a value of `'a'`. There is a possibility that
-the first hash alphabet iteration comprises non-`'a'` hex characters only. This is why
+Now our first `hexCharFromData` has a value of `'4'`. There is a possibility that
+the first hash alphabet iteration comprises non-`'4'` hex characters only. This is why
 we have the `while (!alphabet.includes(hexCharFromData))`. Strictly speaking, it's conceivable
-that we will never generate a hash with that character. But from my testing, the most this
-happens is at 192 characters (3 alphabet-extending hashes) [^2] and [^3].
+that we will never generate a hash with that character (and thus we won't be able to index
+the `hexCharFromData`). But from my testing, the largest alphabet has been 192 characters
+(3 alphabet-extending hashes) [^2] and [^3].
 
 So once we have the `alphabet`, we get the index of `hexCharFromData` into that alphabet
 and push that `charIndex` to our encrypted results.
@@ -159,6 +167,41 @@ string value by joining the array by our given `encryptedDataDelimiter` (`','` a
 
 For our simplified example, we'll say this is `'5,25,123,50'`, but in testing
 this encryption blows up the size of the data by at least a factor of 5x.
+Let's look at each index and what it means.
+
+Remember that our encoded hex is `'42ab'`.
+
+The first is `5`, which means that the alphabet only required one hash iteration
+(but that iteration will have hashed `recursionsPerHash` times, in this case twice).
+So this value of `5` means that in the hash alphabet, the index of `5` must have been
+the first index of `'4'`. So we'll say the first `alphabet` was:
+
+```
+519304f9ad8644869e14935607013348865a0ed45a5b46a8b44f78f2256d3f71
+     ^
+```
+Notice there are `'4'`'s after that position, but that is the first occurrence.
+
+The same goes for the next encrypted index value of `25` and `'2'` from our hex:
+```
+80a53b7e431e43078fddb90ff286939a24a0617d581546c292924dda2574090c
+                         ^
+```
+
+Now the third index of `123` is different. That it is bigger than our hash length
+(64) means that the hash alphabet had to be extended, because it did not have
+an `'a'` in the first hash:
+```
+061899d1b28c46d288b569cc1e3d715cdecf0c1431fb4fb9b61672db5451e76784d9e5d4e36b4495bb76e64bcc2e74330d9c16efec504fcfbc3271cee12a45d2
+                                                                                                                           ^
+```
+
+And our last hex char `'b'` was found again in the first hash alphabet at index `50`:
+
+```
+d2ee40490a0c4f47994e3539c8d5109f5ad5549a22134e5399b1d2126bf0562d
+                                                  ^
+```
 
 #### `decrypt`
 
@@ -167,11 +210,13 @@ So now, we have our encrypted data of `'5,25,123,50'`. How do we get our data ba
 Basically, the key is reproducing the exact same alphabet hashes. We'll convert the
 encrypted data back to the hex, and then we'll decode from hex to our original data.
 
-So in `decrypt` function, we must pass in the same parameters `initialRecursions`, `salt`, etc.:
+So in `decrypt` function, we must pass in the same private `secret` and
+public parameters `initialRecursions`, `salt`, etc.:
 
 ```typescript
 let hexEncodedData: string = await decryptToHex({
     encryptedData,
+    // the following must all be the same as the encrypt call
     initialRecursions,
     recursionsPerHash,
     salt,
@@ -180,6 +225,7 @@ let hexEncodedData: string = await decryptToHex({
     hashAlgorithm,
     encryptedDataDelimiter,
 });
+// '42ab' in our example
 ```
 
 which has inside, the same call to `doInitialRecursions`:
@@ -194,12 +240,13 @@ let prevHash = await doInitialRecursions({
 });
 ```
 
-Once we have our `prevHash`, we iterate again - only this time, not through the source
+Once we have our `prevHash` starting point, we iterate again - only this time, not through the source
 hex characters, but through our encrypted indices (with the delimiters removed):
 
 ```typescript
 let encryptedDataIndexes: number[] =
     encryptedData.split(encryptedDataDelimiter).map((nString: string) => parseInt(nString));
+    // [5,25,123,50] in our example
 let decryptedDataArray: string[] = [];
 for (let i = 0; i < encryptedDataIndexes.length; i++) {
     // this is the index of the character of data that we want to get out of the alphabet map
@@ -233,7 +280,7 @@ Now we decode our hex back into the original string:
 const decryptedData: string = await h.decodeHexStringToString(hexEncodedData);
 ```
 
-And that's it, we have our `decryptedData`.
+And that's it, we have our `decryptedData`!
 
 ### node vs. browser targets
 
