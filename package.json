@@ -3,7 +3,7 @@
   "version": "0.0.3",
   "description": "Weak (?) hash-based encryption (not signatures). I ain't got no job...Donate - run npm fund! Maybe then I can donate to my dependencies.",
   "repository": {
-    "url": "https://gitlab.com/ibgib/encrypt-gib",
+    "url": "https://github.com/wraiford/encrypt-gib/",
     "type": "git"
   },
   "funding": {
