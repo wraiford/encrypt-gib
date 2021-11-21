@@ -105,7 +105,10 @@ async function encryptImpl({
     if (!secret) { const e = `${lcv} secret required`; console.error(e); errors.push(e); }
     if (!encryptedDataDelimiter) { const e = `${lcv} encryptedDataDelimiter required`; console.error(e); errors.push(e); }
 
-    if (hashAlgorithm !== 'SHA-256') { const e = `${lcv} only SHA-256 implemented`; console.error(e); errors.push(e); }
+    // if (hashAlgorithm !== 'SHA-256') { const e = `${lcv} only SHA-256 implemented`; console.error(e); errors.push(e); }
+    if (!Object.values(HashAlgorithm).includes(hashAlgorithm)) {
+        const e = `${lcv} only ${Object.values(HashAlgorithm)} hash algorithms implemented`; console.error(e); errors.push(e);
+    }
 
     if (saltStrategy && !SALT_STRATEGIES.includes(saltStrategy!)) {
         const e = `${lcv} unknown saltStrategy: ${saltStrategy}`; console.error(e); errors.push(e);
@@ -377,7 +380,10 @@ async function decryptImpl({
     if (!secret) { const e = `${lcv} secret required`; console.error(e); errors.push(e); }
     if (!encryptedDataDelimiter) { const e = `${lcv} encryptedDataDelimiter required`; console.error(e); errors.push(e); }
 
-    if (hashAlgorithm !== 'SHA-256') { const e = `${lcv} only SHA-256 implemented`; console.error(e); errors.push(e); }
+    // if (hashAlgorithm !== 'SHA-256') { const e = `${lcv} only SHA-256 implemented`; console.error(e); errors.push(e); }
+    if (!Object.values(HashAlgorithm).includes(hashAlgorithm)) {
+        const e = `${lcv} only ${Object.values(HashAlgorithm)} hash algorithms implemented`; console.error(e); errors.push(e);
+    }
 
     if (saltStrategy && !SALT_STRATEGIES.includes(saltStrategy!)) {
         const e = `${lcv} unknown saltStrategy: ${saltStrategy}`; console.error(e); errors.push(e);

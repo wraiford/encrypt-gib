@@ -1,7 +1,7 @@
 {
   "name": "encrypt-gib",
   "version": "0.0.5",
-  "description": "Weak (?) hash-based encryption (not signatures). I ain't got no job...Donate - run npm fund! Maybe then I can donate to my dependencies.",
+  "description": "Weak (?) hash-based encryption (not signatures). I don't recommend using this for anything sensitive. Donate - run npm fund! Maybe then I can donate to my dependencies.",
   "repository": {
     "url": "https://github.com/wraiford/encrypt-gib/",
     "type": "git"

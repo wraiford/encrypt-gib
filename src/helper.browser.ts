@@ -1,3 +1,4 @@
+import { HashAlgorithm } from './types';
 declare var crypto: any;
 
 export function clone(obj: any) {
@@ -18,21 +19,25 @@ export function getTimestamp() {
  * @param s string to hash
  * @param algorithm to use, currently only 'SHA-256'
  */
-export async function hash({
+ export async function hash({
     s,
     algorithm = 'SHA-256',
 }: {
     s: string,
-    algorithm?: 'SHA-256'
+    algorithm?: HashAlgorithm,
 }): Promise<string> {
     if (!s) { return ''; }
-    if (algorithm !== 'SHA-256') { console.error(`Only SHA-256 implemented`); return ''; }
+    const validAlgorithms = Object.values(HashAlgorithm);
+    if (!validAlgorithms.includes(algorithm)) {
+        console.error(`Only ${validAlgorithms} implemented`); return '';
+    }
     try {
         if (crypto) {
             if (crypto.subtle) {
                 // browser I think
                 const msgUint8 = new TextEncoder().encode(s);
-                const buffer = await crypto.subtle.digest('SHA-256', msgUint8);
+                // const buffer = await crypto.subtle.digest('SHA-256', msgUint8);
+                const buffer = await crypto.subtle.digest(algorithm, msgUint8);
                 const asArray = Array.from(new Uint8Array(buffer));
                 return asArray.map(b => b.toString(16).padStart(2, '0')).join('');
             } else {

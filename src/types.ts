@@ -36,7 +36,11 @@ export const SaltStrategy: { [key: string]: SaltStrategy } = {
 
 export const SALT_STRATEGIES: SaltStrategy[] = Object.values(SaltStrategy);
 
-export type HashAlgorithm = 'SHA-256';
+export type HashAlgorithm = 'SHA-256' | 'SHA-512';
+export const HashAlgorithm: { [key: string]: HashAlgorithm } = {
+    'sha_256': 'SHA-256' as HashAlgorithm,
+    'sha_512': 'SHA-512' as HashAlgorithm,
+}
 
 /**
  * Shared interface among both args and results.

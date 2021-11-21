@@ -42,13 +42,13 @@ const TEST_DATAS: string[] = [
 /**
  * This initial recursion only happens once per encryption/decryption.
  */
-const TEST_INITIAL_RECURSIONS = [0,1,10000];
+const TEST_INITIAL_RECURSIONS = [0,1,20000];
 /**
  * any higher and it goes pretty slow for testing purposes on my machine
  *
  * REMEMBER: This happens **per hex character encrypted/decrypted**.
  */
-const TEST_RECURSIONS_PER_HASH = [1,10];
+const TEST_RECURSIONS_PER_HASH = [1,15];
 const TEST_SALTS = [
     ...CHARS_WE_CHAR_ABOUT.slice(0,2),
     CHARS_WE_CHAR_ABOUT_SINGLE_STRING,
@@ -98,7 +98,8 @@ describe(`encrypting & decrypting`, () => {
         for (const secret of TEST_SECRETS) {
         for (const confirm of TEST_CONFIRM_VALUES) {
 
-            const hashAlgorithm: HashAlgorithm = 'SHA-256'; // only one hash algorithm for now
+            // const hashAlgorithm: HashAlgorithm = 'SHA-256'; // only one hash algorithm for now
+            const hashAlgorithm: HashAlgorithm = 'SHA-512'; // only one hash algorithm for now
 
             it(`enc<->dec,${dataToEncrypt.slice(0, 7)}...(${dataToEncrypt.length}),${secret.slice(0, 7)}...(${secret.length}),${initialRecursions},${recursionsPerHash},${salt.slice(0,7)}(${salt.length}),${saltStrategy},"${encryptedDataDelimiter}",${confirm}`, async () => {
 
