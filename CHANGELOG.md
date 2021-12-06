@@ -1,3 +1,6 @@
+# 0.1.0
+  * changed `initialRecursions` to use 20000 default iterations.
+
 # 0.0.6/7/8
   * Added SHA-512 hashing.
     * Set default hashing to use this in `constants.ts`.

@@ -84,7 +84,10 @@ async function encryptImpl({
 
     // #region set args defaults
 
-    initialRecursions = initialRecursions || c.DEFAULT_INITIAL_RECURSIONS;
+    if (!initialRecursions) {
+        console.warn(`${lc} initial recursions required. defaulting to ${c.DEFAULT_INITIAL_RECURSIONS}`);
+        initialRecursions = c.DEFAULT_INITIAL_RECURSIONS;
+    }
     recursionsPerHash = recursionsPerHash || c.DEFAULT_RECURSIONS_PER_HASH;
     saltStrategy = saltStrategy || c.DEFAULT_SALT_STRATEGY;
     hashAlgorithm = hashAlgorithm || c.DEFAULT_HASH_ALGORITHM;

@@ -41,6 +41,10 @@ const TEST_DATAS: string[] = [
 
 /**
  * This initial recursion only happens once per encryption/decryption.
+ *
+ * ## notes
+ *
+ * 0 initialRecursions will default to the DEFAULT_INITIAL_RECURSIONS value in constants. This is expected behavior.
  */
 const TEST_INITIAL_RECURSIONS = [0,1,20000];
 /**

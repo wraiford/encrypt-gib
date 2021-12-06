@@ -22,7 +22,13 @@ The basic idea is relatively simple[^1]: Leverage the randomness of hex characte
 distribution in hashes by creating just-in-time (JIT) "one-time alphabets"
 via recursive hashing, and publicly record the indices into those alphabets.
 
-This list of indices can then be decrypted into the original by rebuilding the
+Note that these alphabets are very similar to the keystreams of other stream ciphers,
+with the recursive hashing used as the round function. But since the combining function
+is not an XOR, and indeed the stream is not at the bit level but the hex level, the term
+"alphabet" seems to be more appropriate. The output cipher text is then the accumulation
+of these **indices**.
+
+This list of indices ciphertext can then be decrypted into the original by rebuilding the
 same alphabets based on the same private secret and other (public!) encryption parameters.
 
 ## core implementation
@@ -35,7 +41,7 @@ It exports two public functions: `encrypt` and `decrypt`.
 There are basically four steps in encryption:
 
 1) Encode our data to hex.
-2) Perform `initialRecursions` using `secret` and other algorithm parameters, which gives us our initial hash.
+2) Perform `initialRecursions` using `secret` and other algorithm parameters, which gives us our initial hash. (very similar to key stretching)
 3) Iterate through the hex data character by character, creating a one-time alphabet for each individual character based on the previous hash (initially created by our secret in step 2)
 4) Build up the encrypted data by recording the index for each hex character into that alphabet.
 
