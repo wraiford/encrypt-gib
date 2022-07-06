@@ -12,15 +12,24 @@
     },
     "debug.node.autoAttach": "on",
     "files.trimTrailingWhitespace": true,
-    "workbench.colorTheme": "Default Dark+",
+    "peacock.color": "#8f0c93",
     "workbench.colorCustomizations": {
-        "editor.background": "#6d0a60",
-        "sideBar.background": "#6d0a60",
-        "sideBar.border": "#360707",
-    },
-    "editor.tokenColorCustomizations": {
-        "[Kimbie Dark]": {
-            "variables": "#000000"
-        }
+        "activityBar.activeBackground": "#bd10c2",
+        "activityBar.activeBorder": "#b1ac0f",
+        "activityBar.background": "#bd10c2",
+        "activityBar.foreground": "#e7e7e7",
+        "activityBar.inactiveForeground": "#e7e7e799",
+        "activityBarBadge.background": "#b1ac0f",
+        "activityBarBadge.foreground": "#15202b",
+        "sash.hoverBorder": "#bd10c2",
+        "statusBar.background": "#8f0c93",
+        "statusBar.foreground": "#e7e7e7",
+        "statusBarItem.hoverBackground": "#bd10c2",
+        "statusBarItem.remoteBackground": "#8f0c93",
+        "statusBarItem.remoteForeground": "#e7e7e7",
+        "titleBar.activeBackground": "#8f0c93",
+        "titleBar.activeForeground": "#e7e7e7",
+        "titleBar.inactiveBackground": "#8f0c9399",
+        "titleBar.inactiveForeground": "#e7e7e799"
     }
 }
