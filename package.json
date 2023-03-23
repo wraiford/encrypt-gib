@@ -1,7 +1,7 @@
 {
-  "name": "encrypt-gib",
-  "version": "0.1.2",
-  "description": "Weak (?) hash-based encryption (not signatures). I don't recommend using this for anything sensitive. Donate - run npm fund! Maybe then I can donate to my dependencies.",
+  "name": "@ibgib/encrypt-gib",
+  "version": "0.1.3",
+  "description": "Experimental (weak?) encryption based on cryptographic hashing as the only primitive.",
   "repository": {
     "url": "https://github.com/wraiford/encrypt-gib/",
     "type": "git"
