@@ -420,26 +420,7 @@ Here is where you can fiddle with testing of different parameters of the
 `encrypt` and `decrypt` functions. But remember it's easy to set too many tests
 for your computer to run depending on the parameters and data you choose!
 
-### `set_target.sh` - node vs. browser targets
-
-I've found difficulty implementing "isomorphic" JS packages that contain crypto functions.
-So I've hacked together `set_target.sh` that generates code files from any source files that are...
-
-1) Listed in the files array in `set_target.sh`, and
-2) have the filename end in `*.node.ts` or `*.browser.ts`
-
-For example, the `helper.ts` is actually auto-generated from the corresponding `helper.node.ts` or `helper.browser.ts`
-depending on the build target.
-
-**NOTE: Don't edit the `helper.ts` file directly! You'll lose your changes and I know this is annoying. So is programming isomorphic javascript and I apologize for not doing it better.**
-
-The complexity is mitigated by using `npm run` scripts. See `package.json` or run `npm run` for build options.
-
-My solution feels less than ideal, but it's the best I can do right now.
-
-### `helper.ts` (auto-generated!)
-
-This is auto-generated from `helper.node.ts` and `helper.browser.ts`, depending on the build target.
+### `helper.ts`
 
 It contains helper/util functions like `getUUID` and `hash`, as well as the functions
 related to converting to/from hex.
