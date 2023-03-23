@@ -1,5 +1,6 @@
-import { HashAlgorithm } from './types';
-var crypto = require('crypto');
+import { HashAlgorithm } from './types.mjs';
+let crypto: any = globalThis.crypto;
+let { subtle } = crypto;
 
 export function clone(obj: any) {
     return JSON.parse(JSON.stringify(obj));
@@ -8,6 +9,7 @@ export function clone(obj: any) {
 export function getTimestamp() {
     return (new Date()).toUTCString();
 }
+
 
 /**
  * Simple hash function.
@@ -19,7 +21,7 @@ export function getTimestamp() {
  * @param s string to hash
  * @param algorithm to use, currently only 'SHA-256'
  */
- export async function hash({
+export async function hash({
     s,
     algorithm = 'SHA-256',
 }: {
@@ -33,32 +35,66 @@ export function getTimestamp() {
         console.error(`Only ${validAlgorithms} implemented`); return '';
     }
     try {
-        if (crypto) {
-            if (crypto.subtle) {
-                // browser I think
-                const msgUint8 = new TextEncoder().encode(s);
-                // const buffer = await crypto.subtle.digest('SHA-256', msgUint8);
-                const buffer = await crypto.subtle.digest(algorithm, msgUint8);
-                const asArray = Array.from(new Uint8Array(buffer));
-                return asArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            } else if (crypto.createHash) {
-                // node
-                // let hash = crypto.createHash('sha256');
-                let hash = crypto.createHash(algorithm.replace('-', '').toLowerCase());
-                hash.update(s);
-                return hash.digest('hex');
-            } else {
-                throw new Error('Cannot create hash, as unknown crypto library version.');
-            }
-        }
-        else {
-            throw new Error('Cannot create hash, crypto falsy.');
-        }
+        const msgUint8 = new TextEncoder().encode(s);
+        const buffer = await subtle.digest(algorithm, msgUint8);
+        const asArray = Array.from(new Uint8Array(buffer));
+        return asArray.map(b => b.toString(16).padStart(2, '0')).join('');
     } catch (e) {
-        console.error(e.message);
+        console.error(extractErrorMsg(e.message));
         return '';
     }
 }
+
+// /**
+//  * Simple hash function.
+//  *
+//  * NOTE:
+//  *   This is not used for ibGib.gib values (ATOW)
+//  *   but rather as a helper function for generating random UUIDs.
+//  *
+//  * @param s string to hash
+//  * @param algorithm to use, currently only 'SHA-256'
+//  */
+//  export async function hash({
+//     s,
+//     algorithm = 'SHA-256',
+// }: {
+//     s: string,
+//     algorithm?: HashAlgorithm,
+// }): Promise<string> {
+//     if (!s) { return ''; }
+
+//     const validAlgorithms = Object.values(HashAlgorithm);
+//     if (!validAlgorithms.includes(algorithm)) {
+//         console.error(`Only ${validAlgorithms} implemented`); return '';
+//     }
+//     try {
+//         if (crypto) {
+//             if (crypto.subtle) {
+//                 // browser I think
+//                 const msgUint8 = new TextEncoder().encode(s);
+//                 // const buffer = await crypto.subtle.digest('SHA-256', msgUint8);
+//                 const buffer = await crypto.subtle.digest(algorithm, msgUint8);
+//                 const asArray = Array.from(new Uint8Array(buffer));
+//                 return asArray.map(b => b.toString(16).padStart(2, '0')).join('');
+//             } else if (crypto.createHash) {
+//                 // node
+//                 // let hash = crypto.createHash('sha256');
+//                 let hash = crypto.createHash(algorithm.replace('-', '').toLowerCase());
+//                 hash.update(s);
+//                 return hash.digest('hex');
+//             } else {
+//                 throw new Error('Cannot create hash, as unknown crypto library version.');
+//             }
+//         }
+//         else {
+//             throw new Error('Cannot create hash, crypto falsy.');
+//         }
+//     } catch (e) {
+//         console.error(e.message);
+//         return '';
+//     }
+// }
 
 /**
  * Simple func to generate UUID (sha-256 hash basically).
@@ -213,3 +249,32 @@ function utf8BytesToString(bytes: Uint8Array): string {
 }
 
 // #endregion
+
+/**
+ * extracts the error message from an error object/string/falsy arg.
+ *
+ * ## notes
+ *
+ * * some libs throw errors, some throw just strings.
+ * * who knows what else it could be.
+ *
+ * ## todo
+ *
+ * * extract inner errors/causes if we ever use this function extensively.
+ *
+ * @param error the error object in the catch area of the try..catch block.
+ * @returns error.message if it's a string, error itself if it's a string, or canned error messages if it's falsy or none of the above.
+ */
+export function extractErrorMsg(error: any): string {
+    if (!error && error !== 0) {
+        return '[error is falsy]';
+    } else if (typeof error === 'string') {
+        return error;
+    } else if (typeof error.message === 'string') {
+        return error.message;
+    } else if (typeof error === 'number') {
+        return JSON.stringify(error);
+    } else {
+        return `[error is not a string and error.message is not a string. typeof error: ${typeof error}]`;
+    }
+}

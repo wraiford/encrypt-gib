@@ -1,4 +1,4 @@
-import { HashAlgorithm, SaltStrategy } from ".";
+import { HashAlgorithm, SaltStrategy } from "./index.mjs";
 
 export var DEFAULT_SALT_STRATEGY: SaltStrategy = SaltStrategy.appendPerHash;
 // export var DEFAULT_HASH_ALGORITHM: HashAlgorithm = 'SHA-256';

@@ -1,5 +1,15 @@
-.git
-./dist/test/
-encrypt-gib*.tgz
+# packed npm packages
+published
+*.tgz
 
-# going to include src for the time being with the package.
+# version control
+.git
+# include src for the time being with the package.
+# src/
+
+# typescript
+*.tsbuildinfo
+
+# renamed backup files (usually dev cruft)
+*.bak
+*.BAK

@@ -2,9 +2,9 @@ import {
     EncryptArgs, EncryptResult,
     DecryptArgs, DecryptResult,
     SALT_STRATEGIES, SaltStrategy, HashAlgorithm,
-} from './types';
-import * as c from './constants';
-import * as h from './helper';
+} from './types.mjs';
+import * as c from './constants.mjs';
+import * as h from './helper.mjs';
 
 /**
  * Encrypts given `dataToEncrypt` using the secret and other

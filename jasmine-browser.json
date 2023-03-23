@@ -1,0 +1,18 @@
+{
+  "srcDir": "dist",
+  "srcFiles": [
+    "**/*[!spec].mjs"
+  ],
+  "specDir": "dist",
+  "specFiles": [
+    "**/*.spec.mjs"
+  ],
+  "env": {
+    "stopSpecOnExpectationFailure": false,
+    "stopOnSpecFailure": false,
+    "random": true
+  },
+  "browser": {
+    "name": "headlessChrome"
+  }
+}

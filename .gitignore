@@ -3,6 +3,7 @@ npm-debug.log*
 
 # npm
 node_modules
+published
 *.tgz
 
 # compiled targets
@@ -10,7 +11,9 @@ dist/*
 
 # backups
 *.BAK
+*.bak
 
-# tsconfig
+# vim
+
+# typescript
 *.tsbuildinfo
-

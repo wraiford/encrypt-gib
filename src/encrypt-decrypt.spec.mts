@@ -2,18 +2,17 @@
  * Test helper functions.
  */
 
-import { expect } from 'chai';
-import * as h from './helper';
-import * as c from './constants';
-import * as encryptGib from './encrypt-decrypt';
-import { SaltStrategy, HashAlgorithm } from './types';
+import * as h from './helper.mjs';
+import * as c from './constants.mjs';
+import * as encryptGib from './encrypt-decrypt.mjs';
+import { SaltStrategy, HashAlgorithm } from './types.mjs';
 
 const SIMPLEST_DATA = 'a';
 /**
  * Just looking to do some basic characters, not all unicode (not my specialty).
  */
 const CHARS_WE_CHAR_ABOUT_SINGLE_STRING = `abcdefghijklmnopqrstuvwxyz\`1234567890-=ABCDEFGHIJKLMNOPQRSTUVWXYZ~!@#$%^&*()_+,./;'[]\\<>?:"{}|`;
-const CHARS_WE_CHAR_ABOUT = [];
+const CHARS_WE_CHAR_ABOUT: string[] = [];
 for (let i = 0; i < CHARS_WE_CHAR_ABOUT_SINGLE_STRING.length; i++) {
     const char = CHARS_WE_CHAR_ABOUT_SINGLE_STRING[i];
     CHARS_WE_CHAR_ABOUT.push(char);
@@ -87,8 +86,10 @@ async function initData(): Promise<void> {
 
 describe(`encrypting & decrypting`, () => {
 
-    describe(`stress testing... (not-so-"unit"-testy)`, async () => {
-        await initData();
+    describe(`stress testing... (not-so-"unit"-testy)`, () => {
+        beforeAll(async () => {
+            await initData();
+        });
 
         TEST_DATAS.push(LONG_DATA); // comment this if you don't want a long data test
         TEST_SECRETS.push(LONG_SECRET); // comment this if you don't want a long secret test
@@ -121,12 +122,10 @@ describe(`encrypting & decrypting`, () => {
                 if (resEncrypt.errors) {
                     console.error(resEncrypt.errors.toString())
                 }
-                expect(resEncrypt).to.not.be.undefined;
-                expect(resEncrypt).to.not.be.null;
-                expect((resEncrypt.errors || []).length).to.equal(0, 'no errors');
-                expect((resEncrypt.warnings || []).length).to.equal(0, 'no warnings equal');
-                expect(resEncrypt.encryptedData, 'encryptedData').to.not.be.undefined;
-                expect(resEncrypt.encryptedData, 'encryptedData').to.not.be.null;
+                expect(resEncrypt).toBeTruthy();
+                expect((resEncrypt.errors || []).length).withContext('no errors').toEqual(0);
+                expect((resEncrypt.warnings || []).length).withContext('no warnings equal').toEqual(0);
+                expect(resEncrypt.encryptedData).withContext('encryptedData').toBeTruthy();
 
                 // console.log(`resEncryptedData.encryptedData.length: ${resEncrypt.encryptedData!.length}`);
 
@@ -142,14 +141,12 @@ describe(`encrypting & decrypting`, () => {
                 });
 
                 // console.log(`resEncryptedData.encryptedData:\n${resEncryptedData.encryptedData}`);
-                expect(resDecrypt).to.not.be.undefined;
-                expect(resDecrypt).to.not.be.null;
-                expect((resDecrypt.errors || []).length).to.equal(0, 'no errors');
-                expect((resDecrypt.warnings || []).length).to.equal(0, 'no warnings equal');
-                expect(resDecrypt.decryptedData, 'decryptedData').to.not.be.undefined;
-                expect(resDecrypt.decryptedData, 'decryptedData').to.not.be.null;
+                expect(resDecrypt).toBeTruthy();
+                expect((resDecrypt.errors || []).length).withContext('no errors').toEqual(0);
+                expect((resDecrypt.warnings || []).length).withContext('no warnings equal').toEqual(0);
+                expect(resDecrypt.decryptedData).withContext('decryptedData').toBeTruthy();
 
-                expect(resDecrypt.decryptedData).to.equal(dataToEncrypt, 'decryptedData equal dataToEncrypt');
+                expect(resDecrypt.decryptedData).withContext('decryptedData equal dataToEncrypt').toEqual(dataToEncrypt);
             });
 
         }}}}}}}} // for..of data test case permutations

@@ -1,8 +1,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist",                        /* Redirect output structure to the directory. */
-    "rootDir": "./",                       /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
-    "composite": true,                     /* Enable project compilation */
-  }
+    "outDir": "./dist", /* Redirect output structure to the directory. */
+    "module": "ESNext", /* https://www.typescriptlang.org/docs/handbook/esm-node.html */
+  },
+  "exclude": [
+    // override inherited exclude of spec files
+  ]
 }

@@ -1,9 +1,8 @@
 /**
  * Test helper functions.
  */
+import * as h from './helper.mjs';
 
-import { expect } from 'chai';
-import * as h from './helper';
 
 const SOME_STRING = "This is some stringy stuff...";
 const SOME_STRING_HASH = "5DC14EA1027B956AD6BA51F11372DF823FCF3429B5F2063F1DDA358E0F4F2992";
@@ -23,16 +22,16 @@ describe(`when cloning`, () => {
             }
         };
         const cloneADeep = h.clone(objADeep);
-        expect(cloneADeep?.levelOne?.levelTwo?.buckle).to.equal("your shoe");
-        expect(cloneADeep?.levelOne?.levelTwo?.three).to.equal("four");
-        expect(cloneADeep?.levelOne?.levelTwo?.objSimple).to.deep.equal(objSimple);
+        expect(cloneADeep?.levelOne?.levelTwo?.buckle).toEqual("your shoe");
+        expect(cloneADeep?.levelOne?.levelTwo?.three).toEqual("four");
+        expect(cloneADeep?.levelOne?.levelTwo?.objSimple).toEqual(objSimple);
 
         cloneADeep.levelOne.levelTwo.objSimple.a = SOME_OTHER_STRING;
 
         // original should **still** be the first value
-        expect(objSimple.a).to.equal(SOME_STRING);
+        expect(objSimple.a).toEqual(SOME_STRING);
         // clone should be changed.
-        expect(cloneADeep.levelOne.levelTwo.objSimple.a).to.equal(SOME_OTHER_STRING);
+        expect(cloneADeep.levelOne.levelTwo.objSimple.a).toEqual(SOME_OTHER_STRING);
     });
 });
 
@@ -42,18 +41,18 @@ describe(`when getting timestamp`, () => {
         const timestamp = h.getTimestamp();
         const date = new Date(timestamp);
         const dateAsUTCString = date.toUTCString();
-        expect(timestamp).to.equal(dateAsUTCString);
+        expect(timestamp).toEqual(dateAsUTCString);
     });
 });
 
 describe(`when hashing (helper)`, () => {
     it(`should hash consistently with implicit sha256`, async () => {
         const hash = await h.hash({s: SOME_STRING}) || "";
-        expect(hash.toUpperCase()).to.equal(SOME_STRING_HASH);
+        expect(hash.toUpperCase()).toEqual(SOME_STRING_HASH);
     });
     it(`should hash consistently with explicit sha256`, async () => {
         const hash = await h.hash({s: SOME_STRING, algorithm: "SHA-256"}) || "";
-        expect(hash.toUpperCase()).to.equal(SOME_STRING_HASH);
+        expect(hash.toUpperCase()).toEqual(SOME_STRING_HASH);
     });
     it(`should hash without collisions, 1000 times`, async () => {
         const hashes: string[] = [];
@@ -62,7 +61,7 @@ describe(`when hashing (helper)`, () => {
         for (let i = 0; i < 1000; i++) {
             const hash = await h.hash({s: salt + i.toString(), algorithm: "SHA-256"}) || "";
             // console.log(hash);
-            expect(hashes).not.to.include(hash);
+            expect(hashes).not.toContain(hash);
             hashes.push(hash);
         }
     });
@@ -73,7 +72,7 @@ describe(`when generating UUIDs`, () => {
         const ids: string[] = [];
         for (let i = 0; i < 100; i++) {
             const id = await h.getUUID();
-            expect(ids).not.to.contain(id);
+            expect(ids).not.toContain(id);
             ids.push(id);
         }
     });
@@ -144,17 +143,15 @@ describe(`when encoding string to hex string`, () => {
 
             it(`should not error`, async () => {
                 let hexString = await h.encodeStringToHexString(data);
-                expect(hexString).to.not.be.null;
-                expect(hexString).to.not.be.undefined;
+                expect(hexString).toBeTruthy();
             });
 
             it(`should convert back to original string from hex`, async () => {
                 let hexString = await h.encodeStringToHexString(data);
-                expect(hexString).to.not.be.null;
-                expect(hexString).to.not.be.undefined;
+                expect(hexString).toBeTruthy();
 
                 let data2 = await h.decodeHexStringToString(hexString);
-                expect(data2).to.equal(data);
+                expect(data2).toEqual(data);
                 // just to look at the data
                 // console.log(`data: ${data}`);
                 // console.log(`hexString: ${hexString}`);
@@ -166,7 +163,7 @@ describe(`when encoding string to hex string`, () => {
                 let hexString = await h.encodeStringToHexString(data);
                 for (let i = 0; i < hexString.length; i++) {
                     let char = hexString.charAt(i);
-                    expect(HEX_CHARACTERS).to.include(char);
+                    expect(HEX_CHARACTERS).toContain(char);
                 }
             });
         });
@@ -177,7 +174,7 @@ describe(`when encoding string to hex string`, () => {
 
             it(`hex string should NOT be equal to original string, even though original had "hex" characters only`, async () => {
                 let hexString = await h.encodeStringToHexString(data);
-                expect(hexString).to.not.equal(data);
+                expect(hexString).not.toEqual(data);
             });
         });
     });
@@ -188,7 +185,7 @@ describe(`when encoding string to hex string`, () => {
 
             it(`hex string should NOT be equal to original string`, async () => {
                 let hexString = await h.encodeStringToHexString(data);
-                expect(hexString).to.not.equal(data);
+                expect(hexString).not.toEqual(data);
             });
         });
     });
