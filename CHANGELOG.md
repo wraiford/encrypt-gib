@@ -1,4 +1,4 @@
-# 0.1.4
+# 0.1.4/5
   * changed npm package to scoped name @ibgib/encrypt-gib
   * simplified isomorphic crypto
     * removed all aspects of `set_target.sh` hack
