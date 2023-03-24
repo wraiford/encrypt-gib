@@ -17,3 +17,6 @@ dist/*
 
 # typescript
 *.tsbuildinfo
+
+# mac
+.DS_Store

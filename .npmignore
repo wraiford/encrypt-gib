@@ -13,3 +13,6 @@ published
 # renamed backup files (usually dev cruft)
 *.bak
 *.BAK
+
+# mac
+.DS_Store
