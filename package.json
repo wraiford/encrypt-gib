@@ -10,7 +10,7 @@
     "type": "individual",
     "url": "https://paypal.me/ibGib"
   },
-  "main": "dist/index.js",
+  "main": "dist/index.mjs",
   "scripts": {
     "build": "npm run clean && tsc -b tsconfig.json --force",
     "build:test": "npm run clean && tsc -b tsconfig.test.json --force",
