@@ -1,10 +1,12 @@
+import * as h from '@ibgib/helper-gib';
+
+import * as c from './constants.mjs';
 import {
     EncryptArgs, EncryptResult,
     DecryptArgs, DecryptResult,
     SALT_STRATEGIES, SaltStrategy, HashAlgorithm,
 } from './types.mjs';
-import * as c from './constants.mjs';
-import * as h from './helper.mjs';
+import { decodeHexStringToString, encodeStringToHexString } from './helper.mjs';
 
 /**
  * Encrypts given `dataToEncrypt` using the secret and other
@@ -134,11 +136,11 @@ async function encryptImpl({
     // #region encode data to just hex (i.e. only have 0-9, a-f)
 
     // console.log(`${lc} hex encoding dataToEncrypt: ${dataToEncrypt}`);
-    const hexEncodedData: string = await h.encodeStringToHexString(dataToEncrypt);
+    const hexEncodedData: string = await encodeStringToHexString(dataToEncrypt);
     if (confirm) {
         // confirm data can be converted back into the original data
         // console.log(`${lc} hex decoding back to check with dataToEncrypt: ${hexEncodedData}`);
-        const confirmDecodedData = await h.decodeHexStringToString(hexEncodedData);
+        const confirmDecodedData = await decodeHexStringToString(hexEncodedData);
         // console.log(`${lc} checkDecodedData: ${confirmDecodedData}`);
         if (confirmDecodedData !== dataToEncrypt) {
             throw new Error(`decoding encoded hex failed for this data: The encoded hex did not reverse to the original data.`);
@@ -421,7 +423,7 @@ async function decryptImpl({
 
     // console.log(`${lc} hexEncodedData: ${hexEncodedData}`);
     // decode hex back into original data
-    const decryptedData: string = await h.decodeHexStringToString(hexEncodedData);
+    const decryptedData: string = await decodeHexStringToString(hexEncodedData);
 
     return {
         decryptedData,

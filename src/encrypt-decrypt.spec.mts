@@ -2,7 +2,8 @@
  * Test helper functions.
  */
 
-import * as h from './helper.mjs';
+// import * as h from './helper.mjs';
+import * as h from '@ibgib/helper-gib';
 import * as c from './constants.mjs';
 import * as encryptGib from './encrypt-decrypt.mjs';
 import { SaltStrategy, HashAlgorithm } from './types.mjs';

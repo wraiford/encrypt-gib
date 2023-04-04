@@ -484,6 +484,46 @@ But you can also find my email address on my GitHub profile for [wraiford](https
   * THE MOST IMPORTANT THING IS DON'T LOG ANYTHING TO DO WITH DATA PROPERTIES IN PROD!
 * Obviously none of this is hyper-optimized for performance.
 
+### importmaps - `npm run test:browser` fails
+
+as a workaround for bleeding edge ES module consumption (let alone testing
+frameworks for them), I have kluged a workaround by editing
+`/node_modules/jasmine-browser-runner/run.html.ejs` to include an import map
+section. So atow paste the following code before any other `script` tags in the
+`head` section.  (the versions may need to change):
+
+
+_note: atow I am copy/pasting this text whenever I reinstall `node_modules` folder._
+
+_note: if you are having CORS issues, it may be due to the cdn being down._
+
+
+using **unpkg**:
+
+```html
+  <script type="importmap">
+    {
+      "imports": {
+        "@ibgib/helper-gib": "https://unpkg.com/@ibgib/helper-gib@0.0.4/dist/index.mjs",
+        "@ibgib/helper-gib/": "https://unpkg.com/@ibgib/helper-gib@0.0.4/"
+      }
+    }
+  </script>
+```
+
+**using jsdelivr.net**:
+
+```html
+  <script type="importmap">
+    {
+      "imports": {
+        "@ibgib/helper-gib": "https://cdn.jsdelivr.net/npm/@ibgib/helper-gib@0.0.4/dist/index.mjs",
+        "@ibgib/helper-gib/": "https://cdn.jsdelivr.net/npm/@ibgib/helper-gib@0.0.4/"
+      }
+    }
+  </script>
+```
+
 ## footnotes
 
 [^1] so simple, I'm sure someone here on Earth must have done this before...but I can't find it on the interweb.

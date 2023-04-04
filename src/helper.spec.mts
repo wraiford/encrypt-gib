@@ -1,7 +1,9 @@
 /**
  * Test helper functions.
  */
-import * as h from './helper.mjs';
+// import * as h from './helper.mjs';
+import * as h from '@ibgib/helper-gib';
+import { decodeHexStringToString, encodeStringToHexString } from './helper.mjs';
 
 
 const SOME_STRING = "This is some stringy stuff...";
@@ -142,15 +144,15 @@ describe(`when encoding string to hex string`, () => {
             const data = DATAS[msg];
 
             it(`should not error`, async () => {
-                let hexString = await h.encodeStringToHexString(data);
+                let hexString = await encodeStringToHexString(data);
                 expect(hexString).toBeTruthy();
             });
 
             it(`should convert back to original string from hex`, async () => {
-                let hexString = await h.encodeStringToHexString(data);
+                let hexString = await encodeStringToHexString(data);
                 expect(hexString).toBeTruthy();
 
-                let data2 = await h.decodeHexStringToString(hexString);
+                let data2 = await decodeHexStringToString(hexString);
                 expect(data2).toEqual(data);
                 // just to look at the data
                 // console.log(`data: ${data}`);
@@ -160,7 +162,7 @@ describe(`when encoding string to hex string`, () => {
             });
 
             it(`should only contain hex chars in string ${HEX_CHARACTERS}`, async () => {
-                let hexString = await h.encodeStringToHexString(data);
+                let hexString = await encodeStringToHexString(data);
                 for (let i = 0; i < hexString.length; i++) {
                     let char = hexString.charAt(i);
                     expect(HEX_CHARACTERS).toContain(char);
@@ -173,7 +175,7 @@ describe(`when encoding string to hex string`, () => {
             const data = HEX_ONLY_DATAS[msg];
 
             it(`hex string should NOT be equal to original string, even though original had "hex" characters only`, async () => {
-                let hexString = await h.encodeStringToHexString(data);
+                let hexString = await encodeStringToHexString(data);
                 expect(hexString).not.toEqual(data);
             });
         });
@@ -184,7 +186,7 @@ describe(`when encoding string to hex string`, () => {
             const data = SIMPLE_DATAS[msg];
 
             it(`hex string should NOT be equal to original string`, async () => {
-                let hexString = await h.encodeStringToHexString(data);
+                let hexString = await encodeStringToHexString(data);
                 expect(hexString).not.toEqual(data);
             });
         });
