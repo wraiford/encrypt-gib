@@ -1,12 +1,15 @@
 /**
+ * There are multiple ways to incorporate the salt into the overall algorithm.
+ * See the individual constant properties for details.
+ *
  * {@link SaltStrategy} constant
  */
 export type SaltStrategy =
     'prependPerHash' | 'appendPerHash' |
     'initialPrepend' | 'initialAppend';
-
 /**
- * There are multiple ways to incorporate the salt into the overall algorithm.
+ * enum-like constant for use in tandem with `SaltStrategy` type.
+ *
  * See the individual constant properties for details.
  */
 export const SaltStrategy: { [key: string]: SaltStrategy } = {
@@ -33,10 +36,22 @@ export const SaltStrategy: { [key: string]: SaltStrategy } = {
      */
     initialAppend: 'initialAppend' as SaltStrategy,
 }
-
+/**
+ * convenience constant array containing all of `Object.values(SaltStrategy)`
+ */
 export const SALT_STRATEGIES: SaltStrategy[] = Object.values(SaltStrategy);
 
+/**
+ * Hash algorithm type.
+ *
+ * atow this is only SHA-256 and SHA-512 because both of these are relatively
+ * strong and are supported in both node and browser environments. I have found
+ * conflicting information on whether or not these are post-quantum secure.
+ */
 export type HashAlgorithm = 'SHA-256' | 'SHA-512';
+/**
+ * enum-like constant for use in tandem with `HashAlgorithm` type.
+ */
 export const HashAlgorithm: { [key: string]: HashAlgorithm } = {
     'sha_256': 'SHA-256' as HashAlgorithm,
     'sha_512': 'SHA-512' as HashAlgorithm,
@@ -122,10 +137,18 @@ interface BaseBase {
     encryptedDataDelimiter?: string;
 }
 
+/**
+ * Args-specific info, in contrast to result-specific info
+ *
+ * @see {@link BaseResult}
+ */
 interface BaseArgs extends BaseBase {
     secret: string;
 }
 
+/**
+ * Info passed to the `encrypt` function.
+ */
 export interface EncryptArgs extends BaseArgs {
     dataToEncrypt: string;
     /**
@@ -136,10 +159,18 @@ export interface EncryptArgs extends BaseArgs {
     confirm?: boolean;
 }
 
+/**
+ * Info passed to the `decrypt` function.
+ */
 export interface DecryptArgs extends BaseArgs {
     encryptedData: string;
 }
 
+/**
+ * Result-specific info, in contrast to args-specific info
+ *
+ * @see {@link BaseArgs}
+ */
 interface BaseResult extends BaseBase {
     /**
      * If truthy, there were big problems...
@@ -151,27 +182,16 @@ interface BaseResult extends BaseBase {
     warnings?: string[];
 }
 
+/**
+ * Result info from `encrypt` function.
+ */
 export interface EncryptResult extends BaseResult {
     encryptedData?: string;
 }
 
+/**
+ * Result info from `decrypt` function.
+ */
 export interface DecryptResult extends BaseResult {
     decryptedData?: string;
 }
-
-// export interface EncodeArg {
-//     /**
-//      * This data conceivable contains all sorts of non-hex characters
-//      * like symbols (e.g., _.,\/!?:...) and who knows what.
-//      */
-//     unencodedData: string;
-// }
-
-// export interface EncodeResult {
-//     /**
-//      * This should only contain characters 0-9 and a-z
-//      */
-//     encodedData: string;
-//     errors: string[];
-//     warnings: string[];
-// }
