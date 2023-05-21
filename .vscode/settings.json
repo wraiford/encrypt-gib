@@ -11,6 +11,7 @@
     "files.trimTrailingWhitespace": true,
     "files.trimFinalNewlines": true,
     "files.insertFinalNewline": true,
+    "editor.formatOnSave": true,
     "peacock.color": "#8f0c93",
     "workbench.colorCustomizations": {
         "activityBar.activeBackground": "#bd10c2",
