@@ -4,6 +4,9 @@
 
 // import * as h from './helper.mjs';
 import * as h from '@ibgib/helper-gib';
+import { firstOfAll, ifWe, ifWeMight, iReckon, respecfully } from '@ibgib/helper-gib/dist/respec-gib/respec-gib.mjs';
+const maam = `[${import.meta.url}]`, sir = maam;
+
 import * as c from './constants.mjs';
 import * as encryptGib from './encrypt-decrypt.mjs';
 import { SaltStrategy, HashAlgorithm } from './types.mjs';
@@ -85,10 +88,10 @@ async function initData(): Promise<void> {
     }
 }
 
-describe(`encrypting & decrypting`, () => {
+await respecfully(sir, `encrypting & decrypting`, async () => {
 
-    describe(`stress testing... (not-so-"unit"-testy)`, () => {
-        beforeAll(async () => {
+    await respecfully(sir, `stress testing... (not-so-"unit"-testy)`, async () => {
+        firstOfAll(sir, async () => {
             await initData();
         });
 
@@ -107,7 +110,7 @@ describe(`encrypting & decrypting`, () => {
             // const hashAlgorithm: HashAlgorithm = 'SHA-256'; // only one hash algorithm for now
             const hashAlgorithm: HashAlgorithm = 'SHA-512'; // only one hash algorithm for now
 
-            it(`enc<->dec,${dataToEncrypt.slice(0, 7)}...(${dataToEncrypt.length}),${secret.slice(0, 7)}...(${secret.length}),${initialRecursions},${recursionsPerHash},${salt.slice(0,7)}(${salt.length}),${saltStrategy},"${encryptedDataDelimiter}",${confirm}`, async () => {
+            await ifWe(sir, `enc<->dec,${dataToEncrypt.slice(0, 7)}...(${dataToEncrypt.length}),${secret.slice(0, 7)}...(${secret.length}),${initialRecursions},${recursionsPerHash},${salt.slice(0,7)}(${salt.length}),${saltStrategy},"${encryptedDataDelimiter}",${confirm}`, async () => {
 
                 const resEncrypt = await encryptGib.encrypt({
                     dataToEncrypt,
@@ -123,10 +126,10 @@ describe(`encrypting & decrypting`, () => {
                 if (resEncrypt.errors) {
                     console.error(resEncrypt.errors.toString())
                 }
-                expect(resEncrypt).toBeTruthy();
-                expect((resEncrypt.errors || []).length).withContext('no errors').toEqual(0);
-                expect((resEncrypt.warnings || []).length).withContext('no warnings equal').toEqual(0);
-                expect(resEncrypt.encryptedData).withContext('encryptedData').toBeTruthy();
+                iReckon(sir, resEncrypt).isGonnaBeTruthy();
+                iReckon(sir, (resEncrypt.errors || []).length).asTo('no errors').isGonnaBe(0);
+                iReckon(sir, (resEncrypt.warnings || []).length).asTo('no warnings equal').isGonnaBe(0);
+                iReckon(sir, resEncrypt.encryptedData).asTo('encryptedData').isGonnaBeTruthy();
 
                 // console.log(`resEncryptedData.encryptedData.length: ${resEncrypt.encryptedData!.length}`);
 
@@ -142,12 +145,12 @@ describe(`encrypting & decrypting`, () => {
                 });
 
                 // console.log(`resEncryptedData.encryptedData:\n${resEncryptedData.encryptedData}`);
-                expect(resDecrypt).toBeTruthy();
-                expect((resDecrypt.errors || []).length).withContext('no errors').toEqual(0);
-                expect((resDecrypt.warnings || []).length).withContext('no warnings equal').toEqual(0);
-                expect(resDecrypt.decryptedData).withContext('decryptedData').toBeTruthy();
+                iReckon(sir, resDecrypt).isGonnaBeTruthy();
+                iReckon(sir, (resDecrypt.errors || []).length).asTo('no errors').isGonnaBe(0);
+                iReckon(sir, (resDecrypt.warnings || []).length).asTo('no warnings equal').isGonnaBe(0);
+                iReckon(sir, resDecrypt.decryptedData).asTo('decryptedData').isGonnaBeTruthy();
 
-                expect(resDecrypt.decryptedData).withContext('decryptedData equal dataToEncrypt').toEqual(dataToEncrypt);
+                iReckon(sir, resDecrypt.decryptedData).asTo('decryptedData equal dataToEncrypt').isGonnaBe(dataToEncrypt);
             });
 
         }}}}}}}} // for..of data test case permutations

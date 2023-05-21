@@ -5,6 +5,8 @@
     "module": "ESNext", /* https://www.typescriptlang.org/docs/handbook/esm-node.html */
   },
   "exclude": [
-    // override inherited exclude of spec files
+    // override inherited exclude of respec files
+    "./dist",
+    "**/*.spec.mts"
   ]
 }

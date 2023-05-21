@@ -3,6 +3,8 @@
  */
 // import * as h from './helper.mjs';
 import * as h from '@ibgib/helper-gib';
+import { ifWe, ifWeMight, iReckon, respecfully } from '@ibgib/helper-gib/dist/respec-gib/respec-gib.mjs';
+const maam = `[${import.meta.url}]`, sir = maam;
 import { decodeHexStringToString, encodeStringToHexString } from './helper.mjs';
 
 
@@ -10,9 +12,9 @@ const SOME_STRING = "This is some stringy stuff...";
 const SOME_STRING_HASH = "5DC14EA1027B956AD6BA51F11372DF823FCF3429B5F2063F1DDA358E0F4F2992";
 const SOME_OTHER_STRING = "This is quite a different string of stuff.";
 
-describe(`when cloning`, () => {
+await respecfully(sir, `when cloning`, async () => {
 
-    it(`should copy deep objects`, async () => {
+    await ifWe(sir, `should copy deep objects`, async () => {
         const objSimple = { a: SOME_STRING };
         const objADeep = {
             levelOne: {
@@ -24,57 +26,57 @@ describe(`when cloning`, () => {
             }
         };
         const cloneADeep = h.clone(objADeep);
-        expect(cloneADeep?.levelOne?.levelTwo?.buckle).toEqual("your shoe");
-        expect(cloneADeep?.levelOne?.levelTwo?.three).toEqual("four");
-        expect(cloneADeep?.levelOne?.levelTwo?.objSimple).toEqual(objSimple);
+        iReckon(sir, cloneADeep?.levelOne?.levelTwo?.buckle).isGonnaBe("your shoe");
+        iReckon(sir, cloneADeep?.levelOne?.levelTwo?.three).isGonnaBe("four");
+        iReckon(sir, cloneADeep?.levelOne?.levelTwo?.objSimple).isGonnaBe(objSimple);
 
         cloneADeep.levelOne.levelTwo.objSimple.a = SOME_OTHER_STRING;
 
         // original should **still** be the first value
-        expect(objSimple.a).toEqual(SOME_STRING);
+        iReckon(sir, objSimple.a).isGonnaBe(SOME_STRING);
         // clone should be changed.
-        expect(cloneADeep.levelOne.levelTwo.objSimple.a).toEqual(SOME_OTHER_STRING);
+        iReckon(sir, cloneADeep.levelOne.levelTwo.objSimple.a).isGonnaBe(SOME_OTHER_STRING);
     });
 });
 
-describe(`when getting timestamp`, () => {
-    it(`should get the current date as UTCString`, async () => {
+await respecfully(sir, `when getting timestamp`, async () => {
+    await ifWe(sir, `should get the current date as UTCString`, async () => {
         // implementation detail hmm....
         const timestamp = h.getTimestamp();
         const date = new Date(timestamp);
         const dateAsUTCString = date.toUTCString();
-        expect(timestamp).toEqual(dateAsUTCString);
+        iReckon(sir, timestamp).isGonnaBe(dateAsUTCString);
     });
 });
 
-describe(`when hashing (helper)`, () => {
-    it(`should hash consistently with implicit sha256`, async () => {
+await respecfully(sir, `when hashing (helper)`, async () => {
+    await ifWe(sir, `should hash consistently with implicit sha256`, async () => {
         const hash = await h.hash({s: SOME_STRING}) || "";
-        expect(hash.toUpperCase()).toEqual(SOME_STRING_HASH);
+        iReckon(sir, hash.toUpperCase()).isGonnaBe(SOME_STRING_HASH);
     });
-    it(`should hash consistently with explicit sha256`, async () => {
+    await ifWe(sir, `should hash consistently with explicit sha256`, async () => {
         const hash = await h.hash({s: SOME_STRING, algorithm: "SHA-256"}) || "";
-        expect(hash.toUpperCase()).toEqual(SOME_STRING_HASH);
+        iReckon(sir, hash.toUpperCase()).isGonnaBe(SOME_STRING_HASH);
     });
-    it(`should hash without collisions, 1000 times`, async () => {
+    await ifWe(sir, `should hash without collisions, 1000 times`, async () => {
         const hashes: string[] = [];
         const salt = await h.getUUID(1024);
         // console.log(`salt: ${salt}`);
         for (let i = 0; i < 1000; i++) {
             const hash = await h.hash({s: salt + i.toString(), algorithm: "SHA-256"}) || "";
             // console.log(hash);
-            expect(hashes).not.toContain(hash);
+            iReckon(sir, hashes).not.includes(hash);
             hashes.push(hash);
         }
     });
 });
 
-describe(`when generating UUIDs`, () => {
-    it(`shouldn't duplicate UUIDs`, async () => {
+await respecfully(sir, `when generating UUIDs`, async () => {
+    await ifWe(sir, `shouldn't duplicate UUIDs`, async () => {
         const ids: string[] = [];
         for (let i = 0; i < 100; i++) {
             const id = await h.getUUID();
-            expect(ids).not.toContain(id);
+            iReckon(sir, ids).not.includes(id);
             ids.push(id);
         }
     });
@@ -138,22 +140,26 @@ const DATAS: { [msg: string]: string } = {
 
 const HEX_CHARACTERS = '0123456789abcdef';
 
-describe(`when encoding string to hex string`, () => {
-    Object.keys(DATAS).forEach(msg => {
-        describe(`with ${msg}`, () => {
+await respecfully(sir, `when encoding string to hex string`, async () => {
+    for (let i = 0; i < Object.keys(DATAS).length; i++) {
+        const msg = Object.keys(DATAS)[i];
+
+    // }
+    // Object.keys(DATAS).forEach(msg => {
+        await respecfully(sir, `with ${msg}`, async () => {
             const data = DATAS[msg];
 
-            it(`should not error`, async () => {
+            await ifWe(sir, `should not error`, async () => {
                 let hexString = await encodeStringToHexString(data);
-                expect(hexString).toBeTruthy();
+                iReckon(sir, hexString).isGonnaBeTruthy();
             });
 
-            it(`should convert back to original string from hex`, async () => {
+            await ifWe(sir, `should convert back to original string from hex`, async () => {
                 let hexString = await encodeStringToHexString(data);
-                expect(hexString).toBeTruthy();
+                iReckon(sir, hexString).isGonnaBeTruthy();
 
                 let data2 = await decodeHexStringToString(hexString);
-                expect(data2).toEqual(data);
+                iReckon(sir, data2).isGonnaBe(data);
                 // just to look at the data
                 // console.log(`data: ${data}`);
                 // console.log(`hexString: ${hexString}`);
@@ -161,35 +167,44 @@ describe(`when encoding string to hex string`, () => {
                 // console.log('');
             });
 
-            it(`should only contain hex chars in string ${HEX_CHARACTERS}`, async () => {
+            await ifWe(sir, `should only contain hex chars in string ${HEX_CHARACTERS}`, async () => {
                 let hexString = await encodeStringToHexString(data);
                 for (let i = 0; i < hexString.length; i++) {
                     let char = hexString.charAt(i);
-                    expect(HEX_CHARACTERS).toContain(char);
+                    iReckon(sir, HEX_CHARACTERS).includes(char);
                 }
             });
         });
-    });
-    Object.keys(HEX_ONLY_DATAS).forEach(msg => {
-        describe(`with ${msg}`, () => {
+    }
+    // });
+    for (let i = 0; i < Object.keys(HEX_ONLY_DATAS).length; i++) {
+        const msg = Object.keys(HEX_ONLY_DATAS)[i];
+
+    // }
+    // Object.keys(HEX_ONLY_DATAS).forEach(msg => {
+        await respecfully(sir, `with ${msg}`, async () => {
             const data = HEX_ONLY_DATAS[msg];
 
-            it(`hex string should NOT be equal to original string, even though original had "hex" characters only`, async () => {
+            await ifWe(sir, `hex string should NOT be equal to original string, even though original had "hex" characters only`, async () => {
                 let hexString = await encodeStringToHexString(data);
-                expect(hexString).not.toEqual(data);
+                iReckon(sir, hexString).not.isGonnaBe(data);
             });
         });
-    });
+    // });
+    }
 
-    Object.keys(SIMPLE_DATAS).forEach(msg => {
-        describe(`with ${msg}`, () => {
+    const keysSimpleDatas = Object.keys(SIMPLE_DATAS);
+    for (let i = 0; i < keysSimpleDatas.length; i++) {
+        const msg = keysSimpleDatas[i];
+    // Object.keys(SIMPLE_DATAS).forEach(msg => {
+        await respecfully(sir, `with ${msg}`, async () => {
             const data = SIMPLE_DATAS[msg];
-
-            it(`hex string should NOT be equal to original string`, async () => {
+            await ifWe(sir, `hex string should NOT be equal to original string`, async () => {
                 let hexString = await encodeStringToHexString(data);
-                expect(hexString).not.toEqual(data);
+                iReckon(sir, hexString).not.isGonnaBe(data);
             });
         });
-    });
+    // });
+    }
 
 });

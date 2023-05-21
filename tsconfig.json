@@ -10,6 +10,8 @@
     "module": "ESNext", /* https://www.typescriptlang.org/docs/handbook/esm-node.html */
   },
   "exclude": [
-    "**/*.spec.mts"
+    "./dist",
+    "**/*.spec.mts",
+    "**/*.respec.mts"
   ]
 }
