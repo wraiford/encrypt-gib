@@ -105,7 +105,7 @@ for (const dataToEncrypt of TEST_DATAS) {
                                 const hashAlgorithm: HashAlgorithm = 'SHA-512'; // only one hash algorithm for now
 
                                 await respecfully(sir, `enc/dec stress`, async () => {
-                                    await ifWeMight(sir, `${dataToEncrypt.slice(0, 7)}...(${dataToEncrypt.length}),${secret.slice(0, 7)}...(${secret.length}),${initialRecursions},${recursionsPerHash},${salt.slice(0, 7)}(${salt.length}),${saltStrategy},"${encryptedDataDelimiter}",${confirm}`, async () => {
+                                    await ifWe(sir, `${dataToEncrypt.slice(0, 7)}...(${dataToEncrypt.length}),${secret.slice(0, 7)}...(${secret.length}),${initialRecursions},${recursionsPerHash},${salt.slice(0, 7)}(${salt.length}),${saltStrategy},"${encryptedDataDelimiter}",${confirm}`, async () => {
 
                                         const resEncrypt = await encryptGib.encrypt({
                                             dataToEncrypt,
