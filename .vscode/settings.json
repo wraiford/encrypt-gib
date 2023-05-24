@@ -32,5 +32,6 @@
         "titleBar.inactiveBackground": "#8f0c9399",
         "titleBar.inactiveForeground": "#e7e7e799",
         "commandCenter.border": "#e7e7e799"
-    }
+    },
+    "insertGuid.pasteAutomatically": "{n}"
 }
