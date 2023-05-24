@@ -16,7 +16,7 @@
     "build:test": "npm run clean && tsc -b tsconfig.test.json --force",
     "build:test:noclean": "tsc -b tsconfig.test.json --force",
     "clean": "rm -rf ./dist",
-    "test": "npm run test:both",
+    "test": "npm run test:node",
     "test:both": "npm run build:test && npm run test:node:nobuild && npm run test:browser:nobuild",
     "man:test:both": "use this if you want to test in both node and browser contexts",
     "pretest:node": "npm run build:test",
