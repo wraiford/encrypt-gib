@@ -50,12 +50,18 @@ export async function encryptFromHex_multipass({
          * The higher the pass length, the more a brute force attack has to
          * calculate before determining if a secret guess is correct.
          *
-         *  todo: move this into args
+         * todo: move this into args (args type)
          */
         let maxPassLength: number = 1000;
+        /**
+         * Number of passes within a pass section.
+         *
+         * todo: move this into args (args type)
+         */
+        let numOfPasses: number = 3;
 
-        /** index into the `hexEncodedData` */
-        let indexData: number = 0;
+        /** index into the `hexEncodedData` that we're working with */
+        let indexHexEncodedData: number = 0;
         /**
          * ultimate indexes that will be stored in output.
          *
@@ -85,19 +91,42 @@ export async function encryptFromHex_multipass({
         /**
          * This will be adjusted after each pass
          */
-        let indexStartOfPass = 0;
+        let indexHexEncodedDataAtStartOfPass = 0;
         for (let indexSection = 0; indexSection < passSections; indexSection++) {
-            /**
-             * index into this is index in this pass (`indexPass`).
-             */
-            const alphabetsThisSection: string[] = [];
-            const isFinalPassSection = indexSection === passSections - 1;
-            // let hexDataIndexOffset = indexSection *
-            // iterate through plaintext
-            for (let indexPass = 0; indexPass < passLength; indexPass++) {
-                // let passSize =
 
+            // adjust the passLength if it's the final one which might be shorter
+            const isFinalPassSection = indexSection === passSections - 1;
+            if (isFinalPassSection) { passLength = finalPassLength; }
+
+            const resGetAlphabet = await getAlphabetsThisSection({
+                passLength,
+                indexHexEncodedDataAtStartOfPass,
+                numOfPasses,
+                hexEncodedData,
+                recursionsPerHash,
+                salt,
+                saltStrategy,
+                prevHash,
+                hashAlgorithm,
+            });
+
+            let alphabetsThisSection = resGetAlphabet.alphabetsThisSection;
+            prevHash = resGetAlphabet.prevHash;
+
+            const encryptedIndexesThisSection = await getEncryptedIndexesThisSection({
+                alphabetsThisSection,
+                passLength,
+                indexHexEncodedDataAtStartOfPass,
+                hexEncodedData,
+            });
+
+
+
+            for (let indexThisPass = 0; indexThisPass < passLength; indexThisPass++) {
+                indexHexEncodedData = indexHexEncodedDataAtStartOfPass + indexThisPass;
+                const hexCharFromData: string = hexEncodedData[indexHexEncodedData];
             }
+
 
         }
 
@@ -132,6 +161,119 @@ export async function encryptFromHex_multipass({
 
         const encryptedData = encryptedDataIndexes.join(encryptedDataDelimiter);
         return encryptedData;
+    } catch (error) {
+        console.error(`${lc} ${error.message}`);
+        throw error;
+    }
+}
+
+async function getAlphabetsThisSection({
+    passLength,
+    numOfPasses,
+    indexHexEncodedDataAtStartOfPass,
+    hexEncodedData,
+    recursionsPerHash,
+    salt,
+    saltStrategy,
+    prevHash,
+    hashAlgorithm,
+}: {
+    /** size of the pass, i.e. number of characters to process */
+    passLength: number,
+    /** number of times to iterate over the pass section */
+    numOfPasses: number,
+    indexHexEncodedDataAtStartOfPass: number,
+    hexEncodedData: string,
+    recursionsPerHash: number,
+    salt: string,
+    saltStrategy: SaltStrategy,
+    prevHash: string,
+    hashAlgorithm: HashAlgorithm,
+}): Promise<{ alphabetsThisSection: string[], prevHash: string }> {
+    const lc = `[${getAlphabetsThisSection.name}]`;
+    try {
+        /**
+         * one alphabet per plaintext character (hex only atow).
+         *
+         * index into this is index in this pass (`indexPass`).
+         *
+         * Instead of building each plaintext character's alphabet until at
+         * least one instance of that character is found, we will build up
+         * each of the alphabets for the entire pass. Then we will add on to
+         * those alphabets, depending on if the character is found (and once
+         * I implement it, additionalSuperfluousAlphabetExtensions).
+         */
+        let alphabetsThisSection: string[] = [];
+        let indexHexEncodedData: number;
+        let hash: string;
+        // first construct all alphabets for this pass section using the
+        // given number of passes. Note that zero or more of these alphabets
+        // may NOT include the hex character to encode, but this will be
+        // addressed in the next step.
+        for (let passNum = 0; passNum < numOfPasses; passNum++) {
+            for (let indexIntoPassSection = 0; indexIntoPassSection < passLength; indexIntoPassSection++) {
+                indexHexEncodedData = indexHexEncodedDataAtStartOfPass + indexIntoPassSection;
+                let alphabet = alphabetsThisSection[indexIntoPassSection] ?? '';
+
+                for (let j = 0; j < recursionsPerHash; j++) {
+                    const preHash = getPreHash({ prevHash, salt, saltStrategy });
+                    // console.log(`${lc} preHash: ${preHash}`);
+                    hash = await h.hash({ s: preHash, algorithm: hashAlgorithm });
+                    prevHash = hash;
+                }
+                alphabet += hash!;
+
+                alphabetsThisSection[indexIntoPassSection] = alphabet;
+            }
+        }
+
+        // at this point, each alphabet is the same size (numOfPasses * hash
+        // size), but it's not guaranteed that each alphabet will contain the
+        // plaintext character.  so go through and extend any alphabets that do
+        // not yet contain the plaintext character
+        for (let indexIntoPassSection = 0; indexIntoPassSection < passLength; indexIntoPassSection++) {
+            indexHexEncodedData = indexHexEncodedDataAtStartOfPass + indexIntoPassSection;
+            const hexCharFromData: string = hexEncodedData[indexHexEncodedData];
+            let alphabet = alphabetsThisSection[indexIntoPassSection];
+
+            while (!alphabet.includes(hexCharFromData)) {
+                // only executes if alphabet doesnt already contain hexChar
+                for (let j = 0; j < recursionsPerHash; j++) {
+                    const preHash = getPreHash({ prevHash, salt, saltStrategy });
+                    // console.log(`${lc} preHash: ${preHash}`);
+                    hash = await h.hash({ s: preHash, algorithm: hashAlgorithm });
+                    prevHash = hash;
+                }
+                alphabet += hash!;
+            }
+
+            alphabetsThisSection[indexIntoPassSection] = alphabet;
+        }
+
+        // at this point, each alphabet is at least the minimum size and is
+        // guaranteed to have at least once instance of the plaintext hexChar.
+        return { alphabetsThisSection, prevHash };
+    } catch (error) {
+        console.error(`${lc} error: ${h.extractErrorMsg(error)}`);
+        throw error;
+    }
+}
+
+// const encryptedIndexesThisSection = await getEncryptedIndexesThisSection({
+async function getEncryptedIndexesThisSection({
+    alphabetsThisSection,
+    passLength,
+    indexHexEncodedDataAtStartOfPass,
+    hexEncodedData,
+}: {
+    alphabetsThisSection: string[],
+    passLength: number,
+    indexHexEncodedDataAtStartOfPass: number,
+    hexEncodedData: string,
+}): Promise<number[]> {
+    const lc = `[${getEncryptedIndexesThisSection.name}]`;
+    try {
+
     } catch (error) {
         console.error(`${lc} ${error.message}`);
         throw error;

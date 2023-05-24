@@ -41,10 +41,6 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
         console.warn(`${lc} initial recursions required. defaulting to ${c.DEFAULT_INITIAL_RECURSIONS}`);
         initialRecursions = c.DEFAULT_INITIAL_RECURSIONS;
     }
-    recursionsPerHash = recursionsPerHash || c.DEFAULT_RECURSIONS_PER_HASH;
-    saltStrategy = saltStrategy || c.DEFAULT_SALT_STRATEGY;
-    hashAlgorithm = hashAlgorithm || c.DEFAULT_HASH_ALGORITHM;
-    salt = salt || await h.getUUID(c.DEFAULT_GETUUID_SEEDSIZE);
     encryptedDataDelimiter = encryptedDataDelimiter || c.DEFAULT_ENCRYPTED_DATA_DELIMITER;
     indexingMode = indexingMode || c.DEFAULT_ALPHABET_INDEXING_MODE;
 
@@ -56,7 +52,6 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
 
     if (!initialRecursions || initialRecursions < 1) { const e = `${lcv} initialRecursions required, and greater than 0 (E: dd96a75f0c504f34b1f9f2f32e011c50)`; console.error(e); errors.push(e); }
     if (!recursionsPerHash || recursionsPerHash < 1) { const e = `${lcv} recursionsPerHash required, and greater than 0 (E: 64cf53e0bf9f4963be6b165ca4e6566d)`; console.error(e); errors.push(e); }
-    if (!dataToEncrypt) { const e = `${lcv} dataToEncrypt required (E: 168c9076e5434c83ba81e3485ee6f3e4)`; console.error(e); errors.push(e); }
     if (!salt) { const e = `${lcv} salt required (E: 136a5d237e0f4b1d89f8c87ac12a1507)`; console.error(e); errors.push(e); }
     if (!saltStrategy) { const e = `${lcv} saltStrategy required (E: 457ed117bf224b9f86fe81ab6bc35381)`; console.error(e); errors.push(e); }
     if (!secret) { const e = `${lcv} secret required (E: 5c363255055a45cfb07656e2f4854ed7)`; console.error(e); errors.push(e); }
@@ -65,7 +60,7 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
     if (!ALPHABET_INDEXING_MODES.includes(indexingMode)) { const e = `${lcv} invalid indexingMode (${indexingMode}). Must be one of ${ALPHABET_INDEXING_MODES} (E: 17435268651444e0b7a594135635fc58)`; console.error(e); errors.push(e); }
 
     // if (hashAlgorithm !== 'SHA-256') { const e = `${lcv} only SHA-256 implemented`; console.error(e); errors.push(e); }
-    if (!Object.values(HashAlgorithm).includes(hashAlgorithm)) {
+    if (!Object.values(HashAlgorithm).includes(hashAlgorithm!)) {
         const e = `${lcv} only ${Object.values(HashAlgorithm)} hash algorithms implemented`; console.error(e); errors.push(e);
     }
 
@@ -103,11 +98,11 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
     const encryptedData: string = await encryptFromHex_multipass({
         hexEncodedData,
         initialRecursions,
-        recursionsPerHash,
+        recursionsPerHash: recursionsPerHash!,
         salt,
-        saltStrategy,
+        saltStrategy: saltStrategy!,
         secret,
-        hashAlgorithm,
+        hashAlgorithm: hashAlgorithm!,
         encryptedDataDelimiter,
         indexingMode,
     });
