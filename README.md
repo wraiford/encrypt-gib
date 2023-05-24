@@ -1,35 +1,42 @@
-# encrypt-gib white paper
+# encrypt-gib - hash-based encryption
 
-I need some simple encryption. I have no idea how weak this is, but since encryption is so
-hard it probably is super weak.
-
-That said, we'll go over the algorithm.
-
-This README will go over the basics of the approach, but there are two better sources: jsdocs in code & the code itself.
-So the real "White Paper" would include at least those jsdocs, in case I don't do a good enough job here (never written one).
+The encrypt-gib algorithm is a Feistel-like cipher that uses cryptographic hash
+algorithms as its only magical primitive, combined with moderately simple
+programming, to encrypt data at the hex (i.e. not binary) level. It is offered
+as an alternative candidate to existing approaches with the possibility of
+complementing them in an emerging ecosystem of increasingly DLT- and
+Merkle-based architectures.
 
 ## tl;dr - up & running
 
 1.  [Clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repo, [encrypt-gib](https://github.com/wraiford/encrypt-gib/)
-2. `npm install` (inside repo folder)
+2. `cd encrypt-gib`
+2. `npm install`
 3. `npm test`
+  * _note: atow with testing framework reshuffle to respec-gib, this only runs node tests - not browser tests._
 
-You can fiddle around with different types of data/params to test in `encrypt-decrypt.spec.ts`.
+You can find API usage examples in the following respecs:
+
+* [`encrypt-decrypt.light.respec.mts`](./src/encrypt-decrypt.light.respec.mts)
+* [`encrypt-decrypt.heavy.respec.mts`](./src/encrypt-decrypt.heavy.respec.mts)
+* [`encrypt-decrypt.mitigation.respec.mts`](./src/encrypt-decrypt.mitigation.respec.mts)
 
 ## how it works
 
-The basic idea is relatively simple[^1]: Leverage the randomness of hex character
-distribution in hashes by creating just-in-time (JIT) "one-time alphabets"
-via recursive hashing, and publicly record the indices into those alphabets.
+The basic idea is simple[^1]: Leverage the randomness of hex character
+distribution in hashes by creating just-in-time (JIT) one-time alphabets via
+rounding functions composed of variations on recursive hashing, and publicly
+record the indices into those alphabets to create the ciphertext.
 
-Note that these alphabets are very similar to the keystreams of other stream ciphers,
-with the recursive hashing used as the round function. But since the combining function
-is not an XOR, and indeed the stream is not at the bit level but the hex level, the term
-"alphabet" seems to be more appropriate. The output cipher text is then the accumulation
-of these **indices**.
+Note that these alphabets are very similar to the keystreams of other stream
+ciphers, with the recursive hashing used as the round function. But since the
+combining function is not an XOR, and indeed the stream is not at the bit level
+but the hex level, the term "alphabet" is more appropriate. The output
+ciphertext is then the accumulation of these **indices**.
 
-This list of indices ciphertext can then be decrypted into the original by rebuilding the
-same alphabets based on the same private secret and other (public!) encryption parameters.
+This list of indices ciphertext can then be decrypted into the original by
+rebuilding the same alphabets based on the same private secret and other
+(public!) encryption parameters.
 
 ## core implementation
 
@@ -143,10 +150,11 @@ function getPreHash({
 }
 ```
 
-So to summarize, we get the extreme starting point for our alphabets (`preHash`) from the
-private `secret`, the public `salt` and the `saltStrategy`. We then use this and
-`initialRecursions` to produce the "previous" hash (`prevHash`). It's "previous" in the
-context of the next iteration loop.
+So to summarize, we essentially perform a step of key stretching to get the
+extreme starting point for our alphabets (`preHash`) from the private `secret`,
+the public `salt` and the `saltStrategy`. We then use this and
+`initialRecursions` to produce the "previous" hash (`prevHash`). It's "previous"
+in the context of the next iteration loop.
 
 _Note that `initialRecursions` adds a one-time processing cost when encrypting/decrypting._
 
@@ -425,6 +433,12 @@ for your computer to run depending on the parameters and data you choose!
 It contains helper/util functions like `getUUID` and `hash`, as well as the functions
 related to converting to/from hex.
 
+## regarding timing attacks
+
+Because each cipher round checks for a plaintext character's index into a
+cryptographic hash, given that the hash is relatively "random", the timing of
+indexing into it should not yield any additional information.
+
 ## future improvements
 
 Though I'm not sure of this project's overall viability vis-a-vis hash-based encryption,
@@ -484,19 +498,11 @@ But you can also find my email address on my GitHub profile for [wraiford](https
   * THE MOST IMPORTANT THING IS DON'T LOG ANYTHING TO DO WITH DATA PROPERTIES IN PROD!
 * Obviously none of this is hyper-optimized for performance.
 
-### importmaps - `npm run test:browser` fails
+### importmaps - `npm run test:browser`
 
-as a workaround for bleeding edge ES module consumption (let alone testing
-frameworks for them), I have kluged a workaround by editing
-`/node_modules/jasmine-browser-runner/run.html.ejs` to include an import map
-section. So atow paste the following code before any other `script` tags in the
-`head` section.  (the versions may need to change):
-
-
-_note: atow I am copy/pasting this text whenever I reinstall `node_modules` folder._
+to be implemented using respec-gib...
 
 _note: if you are having CORS issues, it may be due to the cdn being down._
-
 
 using **unpkg**:
 
@@ -504,8 +510,8 @@ using **unpkg**:
   <script type="importmap">
     {
       "imports": {
-        "@ibgib/helper-gib": "https://unpkg.com/@ibgib/helper-gib@0.0.4/dist/index.mjs",
-        "@ibgib/helper-gib/": "https://unpkg.com/@ibgib/helper-gib@0.0.4/"
+        "@ibgib/helper-gib": "https://unpkg.com/@ibgib/helper-gib@0.0.7/dist/index.mjs",
+        "@ibgib/helper-gib/": "https://unpkg.com/@ibgib/helper-gib@0.0.7/"
       }
     }
   </script>
@@ -517,16 +523,40 @@ using **unpkg**:
   <script type="importmap">
     {
       "imports": {
-        "@ibgib/helper-gib": "https://cdn.jsdelivr.net/npm/@ibgib/helper-gib@0.0.4/dist/index.mjs",
-        "@ibgib/helper-gib/": "https://cdn.jsdelivr.net/npm/@ibgib/helper-gib@0.0.4/"
+        "@ibgib/helper-gib": "https://cdn.jsdelivr.net/npm/@ibgib/helper-gib@0.0.7/dist/index.mjs",
+        "@ibgib/helper-gib/": "https://cdn.jsdelivr.net/npm/@ibgib/helper-gib@0.0.7/"
       }
     }
   </script>
 ```
 
+## codebase notes
+
+### length of naming conventions
+This codebase prefers LongAndExplanatoryNames for readability usually without the need
+for comments. Extremely short variables are used though, but only in special cases:
+
+* `lc` is extremely terse for `log context`.
+  * this is nearly ubiquitous and is set/augmented in almost every function
+    where logging occurs.
+* `x` is commonly used in array functions where the type should be evident
+  * e.g. `map(x => foo(x))` or `filter(x => !!x)`
+
+### objects for function parameters
+
+In general, `foo(directVar: SomeType)` is avoided. Instead, something like
+
+`foo({ name, x, y, }: ArgObjectType)`
+
+or
+
+`foo({ name, x, y, }: {name: string, x: number, y: number})`
+
+should be used.
+
 ## footnotes
 
-[^1] so simple, I'm sure someone here on Earth must have done this before...but I can't find it on the interweb.
+[^1] so simple, it is possible that this algorithm already exists elsewhere. but given that hashes are considered NOT to be used for encryption (it's the first thing you learn when studying encryption, signatures, etc.) and hex is considered to be inefficient compared to binary, it's also possible this algorithm is a novel creation in the blindspot of assumptions.
 
 [^2] perhaps there is a mathematical proof covering these probabilities.
 
