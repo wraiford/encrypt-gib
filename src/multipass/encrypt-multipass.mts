@@ -30,10 +30,13 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
         encryptedDataDelimiter,
         confirm,
         indexingMode,
+        multipass,
     } = args;
 
     const errors: string[] = [];
     let warnings: string[] = [];
+
+    if (!multipass) { throw new Error(`(UNEXPECTED) multipass required. This should be truthy in order to get to this impl fn. (E: 1dcbfb18f3794803a2520a6a78e59ed5)`); }
 
     // #region set args defaults
 
@@ -42,9 +45,13 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
         initialRecursions = c.DEFAULT_INITIAL_RECURSIONS;
     }
     encryptedDataDelimiter = encryptedDataDelimiter || c.DEFAULT_ENCRYPTED_DATA_DELIMITER;
-    indexingMode = indexingMode || c.DEFAULT_ALPHABET_INDEXING_MODE;
+    indexingMode = indexingMode || c.DEFAULT_ALPHABET_INDEXING_MODE_MULTIPASS;
 
-    // #endregion
+    let { maxPassSectionLength, numOfPasses } = multipass;
+    maxPassSectionLength = maxPassSectionLength || c.DEFAULT_ADDITIONAL_PASSES_INTERMEDIATE_SECRET_LENGTH
+    numOfPasses = numOfPasses || c.DEFAULT_NUM_OF_PASSES;
+
+    // #endregion set args defaults
 
     // #region args validation
 
@@ -58,6 +65,8 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
     if (!encryptedDataDelimiter) { const e = `${lcv} encryptedDataDelimiter required (E: 1bbeb4dce19e4ac2bbe7d1e373739298)`; console.error(e); errors.push(e); }
     if (!indexingMode) { const e = `${lcv} indexingMode required (E: 693ebd2be64a438aa3b075d0cb0d92bf)`; console.error(e); errors.push(e); }
     if (!ALPHABET_INDEXING_MODES.includes(indexingMode)) { const e = `${lcv} invalid indexingMode (${indexingMode}). Must be one of ${ALPHABET_INDEXING_MODES} (E: 17435268651444e0b7a594135635fc58)`; console.error(e); errors.push(e); }
+    if (maxPassSectionLength < 1) { const e = `${lcv} maxPassSectionLength must be greater than 0 (E: 9f268207ae274b958fb91855331be259)`; console.error(e); errors.push(e); }
+    if (numOfPasses < 1) { const e = `${lcv} numOfPasses must be greater than 0 (E: c3bcab79bb024d65b84947806290a7d4)`; console.error(e); errors.push(e); }
 
     // if (hashAlgorithm !== 'SHA-256') { const e = `${lcv} only SHA-256 implemented`; console.error(e); errors.push(e); }
     if (!Object.values(HashAlgorithm).includes(hashAlgorithm!)) {
@@ -74,7 +83,7 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
         return result;
     }
 
-    // #endregion
+    // #endregion args validation
 
     // #region encode data to just hex (i.e. only have 0-9, a-f)
 
@@ -105,7 +114,14 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
         hashAlgorithm: hashAlgorithm!,
         encryptedDataDelimiter,
         indexingMode,
+        maxPassSectionLength,
+        numOfPasses,
     });
+
+    // DO NOT LEAVE THIS IN PROD!!!
+    console.warn(`${lc} TAKE THIS OUT!! encryptedData: ${encryptedData}`); // DO NOT LEAVE THIS IN PROD!!!
+    // DO NOT LEAVE THIS IN PROD!!!
+
 
     if (confirm) {
         try {
@@ -124,8 +140,8 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
                 throw new Error(`Confirm check call to decrypt produced falsy decryptedData (E: a4fe82dee61f497e9dea188ea9c287a4)`);
             } else if (resDecrypt.decryptedData !== dataToEncrypt) {
                 // DO NOT LEAVE THIS IN PROD!!!
-                // console.log(`resDecrypt.decryptedData: ${resDecrypt.decryptedData}`); // DO NOT LEAVE THIS IN PROD!!!
-                // console.log(`dataToEncrypt: ${dataToEncrypt}`); // DO NOT LEAVE THIS IN PROD!!!
+                // console.warn(`resDecrypt.decryptedData: ${resDecrypt.decryptedData}`); // DO NOT LEAVE THIS IN PROD!!!
+                // console.warn(`dataToEncrypt: ${dataToEncrypt}`); // DO NOT LEAVE THIS IN PROD!!!
                 // DO NOT LEAVE THIS IN PROD!!!
                 throw new Error(`The ENCRYPTED data did not decrypt back to the original data. (E: 16b5f1a11e4f438ab38a7f124178a7b8)`);
             } else {
@@ -141,14 +157,22 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
 
     // #endregion
 
-    return {
+    const result: EncryptResult = {
+        ...args,
         encryptedData,
-        initialRecursions,
-        recursionsPerHash,
-        salt,
-        saltStrategy,
-        hashAlgorithm,
-        encryptedDataDelimiter,
         warnings: warnings.length > 0 ? warnings : undefined,
     };
+    delete (result as any).dataToEncrypt;
+    return result;
+
+    // return {
+    //     encryptedData,
+    //     initialRecursions,
+    //     recursionsPerHash,
+    //     salt,
+    //     saltStrategy,
+    //     hashAlgorithm,
+    //     encryptedDataDelimiter,
+    //     warnings: warnings.length > 0 ? warnings : undefined,
+    // };
 }

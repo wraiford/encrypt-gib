@@ -35,17 +35,25 @@ export async function encrypt(args: EncryptArgs): Promise<EncryptResult> {
         args.recursionsPerHash = args.recursionsPerHash || c.DEFAULT_RECURSIONS_PER_HASH;
 
         // route to appropriate implementor
-        console.warn(`${lc} INCORRECT ROUTING FOR ENCRYPTIMPL. JUST TO GET GOING ATM (W: 929eac48a2aa4bda8174e892b8b73d94)`)
-        if (args.indexingMode) {
-            return await encryptImpl_multipass(args);
+        let result: EncryptResult;
+        if (args.multipass) {
+            result = await encryptImpl_multipass(args);
         } else {
-            return await encryptImpl_legacy(args);
+            result = await encryptImpl_legacy(args);
         }
+
+        // print out warnings/errors if necessary
+        if ((result.errors ?? []).length > 0) { result.errors!.forEach(e => console.warn(`${lc} ${e}`)); }
+        if ((result.warnings ?? []).length > 0) { result.warnings!.forEach(w => console.warn(`${lc} ${w}`)); }
+
+        // we're done
+        return result;
     } catch (error) {
         console.error(`${lc}${error.message}`);
-        const result = { ...args, errors: [error] };
-        delete (result as any).dataToEncrypt;
-        return result;
+        throw error;
+        // const result = { ...args, errors: [error] };
+        // delete (result as any).dataToEncrypt;
+        // return result;
     }
 }
 
@@ -73,18 +81,27 @@ export async function decrypt(args: DecryptArgs): Promise<DecryptResult> {
         args.hashAlgorithm = args.hashAlgorithm || c.DEFAULT_HASH_ALGORITHM;
         args.recursionsPerHash = args.recursionsPerHash || c.DEFAULT_RECURSIONS_PER_HASH;
 
+
         // route to appropriate implementor
-        console.warn(`${lc} incorrect routing for encryptImpl. just to get going atm (W: b0fcb8e105e34c82ba4ed63e5c7ce592)`)
-        if (args.indexingMode) {
-            return await decryptImpl_multipass(args);
+        let result: DecryptResult;
+        if (args.multipass) {
+            result = await decryptImpl_multipass(args);
         } else {
-            return await decryptImpl_legacy(args);
+            result = await decryptImpl_legacy(args);
         }
+
+        // print out warnings/errors if necessary
+        if ((result.warnings ?? []).length > 0) { result.warnings!.forEach(w => console.warn(`${lc} ${w}`)); }
+        if ((result.errors ?? []).length > 0) { result.errors!.forEach(e => console.warn(`${lc} ${e}`)); }
+
+        // we're done
+        return result;
         // console.log(`${lc} encryptedDataDelimiter: ${encryptedDataDelimiter}`);
     } catch (error) {
         console.error(`${lc}${error.message}`);
-        const result = { ...args, errors: [error] };
-        delete (result as any).encryptedData;
-        return result;
+        throw error;
+        // const result = { ...args, errors: [error] };
+        // delete (result as any).encryptedData;
+        // return result;
     }
 }

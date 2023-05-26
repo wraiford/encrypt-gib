@@ -6,6 +6,8 @@ import { pretty } from '@ibgib/helper-gib';
 import { getGlobalRespecGib } from '@ibgib/helper-gib/dist/respec-gib/respec-gib.mjs';
 
 // #region settings
+const timerName = '[respec time to complete]';
+console.time(timerName);
 /**
  * This is how I enable/disable verbose logging. Do with it what you will.
  */
@@ -196,3 +198,5 @@ async function respecFileHasExtraRespec(respecPath: string): Promise<boolean> {
 }
 
 // #endregion helper functions
+
+console.timeEnd(timerName);

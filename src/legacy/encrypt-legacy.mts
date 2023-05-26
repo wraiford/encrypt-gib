@@ -3,7 +3,7 @@ import * as h from '@ibgib/helper-gib';
 import * as c from '../constants.mjs';
 import { decodeHexStringToString, encodeStringToHexString } from '../helper.mjs';
 import { ALPHABET_INDEXING_MODES, EncryptArgs, EncryptResult, HashAlgorithm, SALT_STRATEGIES } from "../types.mjs";
-import { encryptFromHex } from './encrypt-from-hex-legacy.mjs';
+import { encryptFromHex_legacy } from './encrypt-from-hex-legacy.mjs';
 import { decryptImpl_legacy } from './decrypt-legacy.mjs';
 
 /**
@@ -26,6 +26,7 @@ export async function encryptImpl_legacy({
     hashAlgorithm,
     encryptedDataDelimiter,
     confirm,
+    indexingMode,
 }: EncryptArgs): Promise<EncryptResult> {
     const lc = `[${encryptImpl_legacy.name}]`;
 
@@ -43,6 +44,7 @@ export async function encryptImpl_legacy({
     hashAlgorithm = hashAlgorithm || c.DEFAULT_HASH_ALGORITHM;
     salt = salt || await h.getUUID(c.DEFAULT_GETUUID_SEEDSIZE);
     encryptedDataDelimiter = encryptedDataDelimiter || c.DEFAULT_ENCRYPTED_DATA_DELIMITER;
+    indexingMode = indexingMode || c.DEFAULT_ALPHABET_INDEXING_MODE_LEGACY;
 
     // #endregion
 
@@ -57,6 +59,7 @@ export async function encryptImpl_legacy({
     if (!saltStrategy) { const e = `${lcv} saltStrategy required`; console.error(e); errors.push(e); }
     if (!secret) { const e = `${lcv} secret required`; console.error(e); errors.push(e); }
     if (!encryptedDataDelimiter) { const e = `${lcv} encryptedDataDelimiter required`; console.error(e); errors.push(e); }
+    if (!ALPHABET_INDEXING_MODES.includes(indexingMode)) { const e = `${lcv} invalid indexingMode (${indexingMode}). Must be one of ${ALPHABET_INDEXING_MODES} (E: 5955c46755434982982823c97adcf076)`; console.error(e); errors.push(e); }
 
 
     // if (hashAlgorithm !== 'SHA-256') { const e = `${lcv} only SHA-256 implemented`; console.error(e); errors.push(e); }
@@ -101,7 +104,7 @@ export async function encryptImpl_legacy({
     // #region encrypt hex
 
     // comma-delimited indexes string
-    let encryptedData: string = await encryptFromHex({
+    let encryptedData: string = await encryptFromHex_legacy({
         hexEncodedData,
         initialRecursions,
         recursionsPerHash,

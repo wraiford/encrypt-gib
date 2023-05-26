@@ -106,30 +106,56 @@ export const ALPHABET_INDEXING_MODES: AlphabetIndexingMode[] = Object.values(Alp
 /**
  * The multipass works as follows:
  *
+ * ## encrypting
+ *
  * * plaintext characters - p0, p1, .., pi
  * * jit alphabet hashes - [a0.0, a0.1, a0.2, .., a0.j], [a1.0, a1.1, a1.2, .., a1.j], .., [ai.0, ai.1, ai.2, .., ai.j]
  *   * i = plaintext index
  *   * j = alphabet expansion index
  * * passes - PASS1, PASS2, .., PASSn
- *   *
  *
+ * 1. First we iterate through the plaintext data in "pass sections", the size
+ * of which is parameterized by `maxPassSectionLength`. If this is larger than
+ * data, then the entire plaintext will be used.
  *
- * * p1 alphabet hash 1 is created
- * *
+ * 2. Then we create the initial alphabets for the entire section, determined by
+ * our pass section size and the number of passes.
+ *
+ * 3. We then extend any individual alphabets that do not contain an instance of
+ * the plaintext character yet. We are extending only those alphabets in need of
+ * extending, as opposed to the previous step where we extended all alphabets in
+ * the pass section.
+ *
+ * 4. Finally we get the indexes of each plaintext character in their
+ * corresponding alphabets and store these into an array and then appending this
+ * array to our global encryption index result. Of course we return the array as
+ * a string, joined by our delimiter.
+ *
+ * ## decrypting
  */
 export interface MultipassOptions {
     /**
-     * Maximum number of characters per pass.
+     * Maximum number of **hex-encoded** plaintext characters per section when
+     * making multiple passes. Each pass extends the jit alphabet per character
+     * in that pass.
      *
      * * If this is greater than the hex-encoded dataToEncrypt length, then each
-     *   pass will be the length of data.
-     * * Each pass will require additional memory roughly equal to the
-     *   dataToEncrypt length.
+     *   pass section will be the length of data (it's goin to do the whole thing).
+     * * Each pass will require additional memory roughly linearly proportional to
+     *   * dataToEncrypt length
+     *   * numOfPasses to make
+     *   * length of the hash used in creating the jit alphabets (`hashAlgorithm`)
+     * * The higher the pass length, the more a brute force attack has to
+     *   calculate before determining if a secret guess is correct.
      */
-    maxPassLength: number;
+    maxPassSectionLength: number;
+    /**
+     * Number of "passes" to make over the pass section. Each pass will
+     * extend the jit alphabet for each character in the pass section by
+     * the length of the hash digest string used in `hashAlgorithm`.
+     */
+    numOfPasses: number;
 }
-
-export type MultipassInfo = []
 
 /**
  * Shared interface among both args and results.
@@ -169,6 +195,14 @@ interface BaseBase {
      * @default `'indexOf'`
      */
     indexingMode?: AlphabetIndexingMode;
+    /**
+     * Settings to use if we want to use multiple passes when encrypting/decrypting.
+     *
+     * This is one way to help mitigate against short-circuit brute force attacks.
+     *
+     * @see {@link MultipassOptions}
+     */
+    multipass?: MultipassOptions;
     /**
      * Minimum number of expansions BEYOND that required (once a match in the alphabet for
      * the hex character to be encoded is found).
