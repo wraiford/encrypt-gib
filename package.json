@@ -18,24 +18,31 @@
     "clean": "rm -rf ./dist",
     "test": "npm run test:node",
     "test:both": "npm run build:test && npm run test:node:nobuild && npm run test:browser:nobuild",
-    "man:test:both": "use this if you want to test in both node and browser contexts",
+    "man:test:both": "echo 'use this if you want to test respec in both node and browser contexts'",
+    "test:quick": "npm run test:node:quick",
+    "man:test:quick": "echo 'use this if you want to build+test QUICK respec tests'",
     "pretest:node": "npm run build:test",
-    "test:node": "node dist/respec-gib.node.mjs --inspect",
-    "man:test:node": "use this if you want to build+test in node",
+    "test:node": "node dist/respec-gib.stress-test.node.mjs --inspect",
+    "man:test:node": "echo 'use this if you want to build+test in node'",
     "test:node:nobuild": "node dist/respec-gib.node.mjs --inspect",
-    "man:test:node:nobuild": "use this if you want to test in node but its already built",
+    "man:test:node:nobuild": "echo 'use this if you want to test in node but its already built'",
+    "pretest:node:quick": "npm run build:test",
+    "test:node:quick": "node dist/respec-gib.quick-test.node.mjs --inspect",
+    "man:test:node:quick": "echo 'use this if you want to build+test QUICK respec tests in node'",
+    "test:node:quick:nobuild": "node dist/respec-gib.quick-test.node.mjs --inspect",
+    "man:test:node:quick:nobuild": "echo 'use this if you want to execute QUICK respec tests in node but its already built'",
     "pretest:browser": "npm run build:test",
     "test:browser": "echo \"not implemented yet\"",
-    "man:test:browser": "use this if you want to build+test only the browser context",
+    "man:test:browser": "echo 'use this if you want to build+test only the browser context'",
     "test:browser:nobuild": "echo \"not implemented yet\"",
-    "man:test:browser:nobuild": "use this if you want to test only the browser context but its already built",
+    "man:test:browser:nobuild": "echo 'use this if you want to test only the browser context but its already built'",
     "test:browser:serve": "npm run build:test && echo \"not implemented yet\"",
-    "man:test:browser:serve": "use this if you want to build+test in the browser and don't want the browser to close when your done. (i.e. you're debugging)",
+    "man:test:browser:serve": "echo 'use this if you want to build+test in the browser and don't want the browser to close when your done. (i.e. you're debugging)'",
     "test:browser:serve:nobuild": "echo \"not implemented yet\"",
-    "man:test:browser:serve:nobuild": "use this if you are troubleshooting existing dist output and don't want to overwrite those files. (and you're debugging in the browser)",
+    "man:test:browser:serve:nobuild": "echo 'use this if you are troubleshooting existing dist output and don't want to overwrite those files. (and you're debugging in the browser)'",
     "pack": "npm pack --pack-destination=\"./published\"",
     "prepare:publish": "npm run clean && npm version patch && npm run build && npm run pack",
-    "man:prepare:publish": "use this to patch > build > pack for publishing to npm repo"
+    "man:prepare:publish": "echo 'use this to patch > build > pack for publishing to npm repo'"
   },
   "type": "module",
   "keywords": [
@@ -54,7 +61,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.2.1",
-    "typescript": "^4.9.5"
+    "typescript": "^5.0.4"
   },
   "engines": {
     "node": ">=19.0.0"
