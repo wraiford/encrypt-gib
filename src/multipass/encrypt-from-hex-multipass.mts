@@ -52,7 +52,7 @@ export async function encryptFromHex_multipass({
             indexingMode === 'indexOf' ?
                 (alphabet: string, hexChar: string) => { return alphabet.indexOf(hexChar) } :
                 (alphabet: string, hexChar: string) => { return alphabet.lastIndexOf(hexChar) };
-        console.log(`${lc} using getIndexOfCharInAlphabet (indexingMode: ${indexingMode})`);
+        // console.log(`${lc} using getIndexOfCharInAlphabet (indexingMode: ${indexingMode})`);
 
         /**
          * ultimate indexes that will be stored in output.
@@ -65,9 +65,9 @@ export async function encryptFromHex_multipass({
         // set the initial pass length.
         let totalLength = hexEncodedData.length;
         let passSectionLength = maxPassSectionLength;
-        console.warn(`${lc} todo: off by one error check. should be resolved with data in === data out (encrypted/decrypted) (W: 44e9ad4eb2cf43b3bba636a02f0db084)`)
+        // console.warn(`${lc} todo: off by one error check. should be resolved with data in === data out (encrypted/decrypted) (W: 44e9ad4eb2cf43b3bba636a02f0db084)`)
         if (passSectionLength > totalLength) { passSectionLength = totalLength; }
-        console.warn(`${lc} totalLength (hexEncodedData.length): ${totalLength}, passSectionLength: ${passSectionLength} (W: 1529570c6b474ad1a24f3a4c5b7eceb0)`);
+        // console.warn(`${lc} totalLength (hexEncodedData.length): ${totalLength}, passSectionLength: ${passSectionLength} (W: 1529570c6b474ad1a24f3a4c5b7eceb0)`);
 
         /**
          * We are doing multiple passes, but possibly only on subsets of
@@ -77,13 +77,13 @@ export async function encryptFromHex_multipass({
          * _note: I am avoiding the use of "block" since that is an overloaded term in cryptography._
          */
         let passSections = Math.ceil(totalLength / passSectionLength);
-        console.warn(`${lc} passSections: ${passSections}`);
+        // console.warn(`${lc} passSections: ${passSections}`);
         /**
          * the final pass may be less than the pass length.
          */
         // let finalPassSectionLength = (passSectionLength - ((passSections * passSectionLength) - totalLength)) || passSectionLength; // if 0, then the last pass is full length
         let finalPassSectionLength = (totalLength % passSectionLength) || passSectionLength; // if 0, then the last pass is full length
-        console.warn(`${lc} finalPassSectionLength: ${finalPassSectionLength}`);
+        // console.warn(`${lc} finalPassSectionLength: ${finalPassSectionLength}`);
         /**
          * index into hexEncodedData at the start of each pass.
          *
@@ -127,7 +127,7 @@ export async function encryptFromHex_multipass({
             });
 
             // console.warn(`${lc} info before add to encryptedDataIndexes info: ${h.pretty({ indexSection, isFinalPassSection, passSectionLength, prevHash, encryptedDataIndexes, encryptedIndexesThisSection })}`);
-            console.warn(`${lc} info before add to encryptedDataIndexes info: ${h.pretty({ indexSection, isFinalPassSection, passSectionLength, prevHash, encryptedIndexesThisSection })}`);
+            // console.warn(`${lc} info before add to encryptedDataIndexes info: ${h.pretty({ indexSection, isFinalPassSection, passSectionLength, prevHash, encryptedIndexesThisSection })}`);
             encryptedDataIndexes = encryptedDataIndexes.concat(encryptedIndexesThisSection);
 
             indexHexEncodedDataAtStartOfPass += passSectionLength;
@@ -135,7 +135,7 @@ export async function encryptFromHex_multipass({
 
         // we now have populated encryptedDataIndexes fully.
         const resEncryptedData = encryptedDataIndexes.join(encryptedDataDelimiter);
-        console.warn(`${lc} resEncryptedData: ${resEncryptedData}`);
+        // console.warn(`${lc} resEncryptedData: ${resEncryptedData}`);
         return resEncryptedData;
     } catch (error) {
         console.error(`${lc} ${error.message}`);
@@ -168,7 +168,7 @@ async function getAlphabetsThisSection({
 }): Promise<{ alphabetsThisSection: string[], prevHash: string }> {
     const lc = `[${getAlphabetsThisSection.name}]`;
     try {
-        console.warn(`${lc} info: ${h.pretty({ passSectionLength, numOfPasses, indexHexEncodedDataAtStartOfPass, prevHash })}`);
+        // console.warn(`${lc} info: ${h.pretty({ passSectionLength, numOfPasses, indexHexEncodedDataAtStartOfPass, prevHash })}`);
         /**
          * one alphabet per plaintext character (hex only atow).
          *
@@ -204,7 +204,7 @@ async function getAlphabetsThisSection({
                 alphabetsThisSection[indexIntoPassSection] = alphabet;
             }
         }
-        console.warn(`${lc} initial alphabetsThisSection (${alphabetsThisSection.length}): ${h.pretty(alphabetsThisSection)}`);
+        // console.warn(`${lc} initial alphabetsThisSection (${alphabetsThisSection.length}): ${h.pretty(alphabetsThisSection)}`);
 
         // at this point, each alphabet is the same size (numOfPasses * hash
         // size), but it's not guaranteed that each alphabet will contain the
@@ -228,11 +228,11 @@ async function getAlphabetsThisSection({
 
             alphabetsThisSection[indexIntoPassSection] = alphabet;
         }
-        console.warn(`${lc} guaranteed alphabetsThisSection (${alphabetsThisSection.length}): ${h.pretty(alphabetsThisSection)}`);
+        // console.warn(`${lc} guaranteed alphabetsThisSection (${alphabetsThisSection.length}): ${h.pretty(alphabetsThisSection)}`);
 
         // at this point, each alphabet is at least the minimum size and is
         // guaranteed to have at least once instance of the plaintext hexChar.
-        console.warn(`${lc} return prevHash: ${prevHash}`)
+        // console.warn(`${lc} return prevHash: ${prevHash}`)
         return { alphabetsThisSection, prevHash };
     } catch (error) {
         console.error(`${lc} error: ${h.extractErrorMsg(error)}`);

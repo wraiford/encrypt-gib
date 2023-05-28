@@ -142,7 +142,7 @@ await respecfully(sir, `decryptToHex_multipass`, async () => {
             }
             {
                 const expectedHexEncodedData = 'abc123def';
-                await ifWeMight(sir, `lastIndexOf, expected hex: "${expectedHexEncodedData}"`, async () => {
+                await ifWe(sir, `lastIndexOf, expected hex: "${expectedHexEncodedData}"`, async () => {
                     const decryptedData = await decryptToHex_multipass({
                         encryptedData: '62,36,115,63,62,54,61,59,48',
                         initialRecursions,

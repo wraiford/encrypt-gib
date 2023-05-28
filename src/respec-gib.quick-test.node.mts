@@ -17,7 +17,7 @@ const logalot = false;
 const RESPEC_ROOT_DIR_RELATIVE_TO_BASE = './dist';
 
 /** change this to suit your naming convention */
-const RESPEC_FILE_REG_EXP = /^.+respec\.mjs$/;
+const RESPEC_FILE_REG_EXP = /^.+quick\.respec\.mjs$/;
 // const RESPEC_FILE_REG_EXP = /^.*respec-gib.respec\.mjs$/; // example
 
 /**

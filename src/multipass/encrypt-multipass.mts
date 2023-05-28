@@ -119,7 +119,7 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
     });
 
     // DO NOT LEAVE THIS IN PROD!!!
-    console.warn(`${lc} TAKE THIS OUT!! encryptedData: ${encryptedData}`); // DO NOT LEAVE THIS IN PROD!!!
+    // console.warn(`${lc} TAKE THIS OUT!! encryptedData: ${encryptedData}`); // DO NOT LEAVE THIS IN PROD!!!
     // DO NOT LEAVE THIS IN PROD!!!
 
 
@@ -135,6 +135,7 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
                 hashAlgorithm,
                 encryptedDataDelimiter,
                 indexingMode,
+                multipass,
             });
             if (!resDecrypt.decryptedData) {
                 throw new Error(`Confirm check call to decrypt produced falsy decryptedData (E: a4fe82dee61f497e9dea188ea9c287a4)`);

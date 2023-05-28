@@ -46,7 +46,7 @@ export async function encryptFromHex_legacy({
             indexingMode === 'indexOf' ?
                 (alphabet: string, hexChar: string) => { return alphabet.indexOf(hexChar) } :
                 (alphabet: string, hexChar: string) => { return alphabet.lastIndexOf(hexChar) };
-        console.log(`${lc} using getIndex (indexingMode: ${indexingMode})`);
+        // console.log(`${lc} using getIndex (indexingMode: ${indexingMode})`);
 
         // we have our prevHash starting point, so now we can iterate through the data
         let encryptedDataIndexes = [];
@@ -56,9 +56,9 @@ export async function encryptFromHex_legacy({
             let alphabet: string = "";
             let hash: string;
             while (!alphabet.includes(hexCharFromData)) {
-                if (alphabet.length > 64) {
-                    console.log(`alphabet is extending past 64... alphabet.length: ${alphabet.length}`);
-                }
+                // if (alphabet.length > 64) {
+                //     console.log(`alphabet is extending past 64... alphabet.length: ${alphabet.length}`);
+                // }
                 // console.log(`${lc} doing iteration...`);
                 for (let j = 0; j < recursionsPerHash; j++) {
                     const preHash = getPreHash({ prevHash, salt, saltStrategy });

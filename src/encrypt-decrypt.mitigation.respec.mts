@@ -9,7 +9,7 @@ const maam = `[${import.meta.url}]`, sir = maam;
 
 import * as c from './constants.mjs';
 import * as encryptGib from './encrypt-decrypt.mjs';
-import { SaltStrategy, HashAlgorithm, BruteForceShortCircuitMitigationInfo, AlphabetIndexingMode, ALPHABET_INDEXING_MODES } from './types.mjs';
+import { SaltStrategy, HashAlgorithm, BruteForceShortCircuitMitigationInfo, AlphabetIndexingMode, ALPHABET_INDEXING_MODES, SALT_STRATEGIES } from './types.mjs';
 import { encodeStringToHexString } from './helper.mjs';
 
 const SIMPLEST_DATA = 'a';
@@ -61,7 +61,7 @@ const TEST_SALTS = [
     ...CHARS_WE_CHAR_ABOUT.slice(0, 2),
     CHARS_WE_CHAR_ABOUT_SINGLE_STRING,
 ];
-const TEST_SALT_STRATEGIES: SaltStrategy[] = Object.keys(SaltStrategy).map((x: string) => SaltStrategy[x] as SaltStrategy);
+const TEST_SALT_STRATEGIES: SaltStrategy[] = SALT_STRATEGIES.concat();
 const SHORT_SECRET = 'p4ss';
 /**
  * requires call to `initData` below

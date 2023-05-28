@@ -8,7 +8,7 @@ import { decryptToHex_multipass } from './decrypt-to-hex-multipass.mjs';
 /**
  * Does the actual decryption work using shortCircuit mitigation strategies.
  *
- * {@link decrypt}
+//  * {@link decrypt}
  * {@link DecryptArgs}
  * {@link DecryptResult}
  *

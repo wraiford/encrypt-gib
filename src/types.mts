@@ -12,7 +12,7 @@ export type SaltStrategy =
  *
  * See the individual constant properties for details.
  */
-export const SaltStrategy: { [key: string]: SaltStrategy } = {
+export const SaltStrategy = {
     /**
      * Each time we hash whatever, we will prepend the salt
      * via string concatenation with the secret, if initial (salt + secret),
@@ -35,7 +35,7 @@ export const SaltStrategy: { [key: string]: SaltStrategy } = {
      * string concatenation in the initial recusions hash phase.
      */
     initialAppend: 'initialAppend' as SaltStrategy,
-} satisfies { [key: string]: SaltStrategy };
+} as const satisfies { [key: string]: SaltStrategy };
 /**
  * convenience constant array containing all of `Object.values(SaltStrategy)`
  */
@@ -56,6 +56,7 @@ export const HashAlgorithm = {
     'sha_256': 'SHA-256' as HashAlgorithm,
     'sha_512': 'SHA-512' as HashAlgorithm,
 } satisfies { [key: string]: HashAlgorithm };
+export const HASH_ALGORITHMS: HashAlgorithm[] = Object.values(HashAlgorithm);
 
 /**
  * THIS PARAMETER SETTING IS PUBLIC AND VIEWABLE IN PLAINTEXT.

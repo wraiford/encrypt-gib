@@ -71,9 +71,9 @@ export async function decryptToHex_multipass({
         // set the initial pass length.
         let totalLength = encryptedDataIndexes.length;
         let passSectionLength = maxPassSectionLength;
-        console.warn(`${lc} todo: off by one error check. should be resolved with data in === data out (encrypted/decrypted) (W: e44e44b5bea6418f82745389a89bec33)`)
+        // console.warn(`${lc} todo: off by one error check. should be resolved with data in === data out (encrypted/decrypted) (W: e44e44b5bea6418f82745389a89bec33)`)
         if (passSectionLength > totalLength) { passSectionLength = totalLength; }
-        console.warn(`${lc} totalLength (encryptedDataIndexes.length): ${totalLength}, passSectionLength: ${passSectionLength} (W: 5241a4133f5e4e3faafe42595100474e)`);
+        // console.warn(`${lc} totalLength (encryptedDataIndexes.length): ${totalLength}, passSectionLength: ${passSectionLength} (W: 5241a4133f5e4e3faafe42595100474e)`);
 
         /**
          * We are doing multiple passes, but possibly only on subsets of
@@ -83,13 +83,13 @@ export async function decryptToHex_multipass({
          * _note: I am avoiding the use of "block" since that is an overloaded term in cryptography._
          */
         let passSections = Math.ceil(totalLength / passSectionLength);
-        console.warn(`${lc} passSections: ${passSections}`);
+        // console.warn(`${lc} passSections: ${passSections}`);
         /**
          * the final pass may be less than the pass length.
          */
         // let finalPassSectionLength = (passSectionLength - ((passSections * passSectionLength) - totalLength)) || passSectionLength; // if 0, then the last pass is full length
         let finalPassSectionLength = (totalLength % passSectionLength) || passSectionLength; // if 0, then the last pass is full length
-        console.warn(`${lc} finalPassSectionLength: ${finalPassSectionLength}`);
+        // console.warn(`${lc} finalPassSectionLength: ${finalPassSectionLength}`);
         /**
          * index into encryptedDataIndexes at the start of each pass.
          *
@@ -131,7 +131,7 @@ export async function decryptToHex_multipass({
             });
 
             // console.warn(`${lc} info before add to encryptedDataIndexes info: ${h.pretty({ indexSection, isFinalPassSection, passSectionLength, prevHash, encryptedDataIndexes, encryptedIndexesThisSection })}`);
-            console.warn(`${lc} info before add to encryptedDataIndexes info: ${h.pretty({ indexSection, isFinalPassSection, passSectionLength, prevHash, decryptedDataArrayThisSection })}`);
+            // console.warn(`${lc} info before add to encryptedDataIndexes info: ${h.pretty({ indexSection, isFinalPassSection, passSectionLength, prevHash, decryptedDataArrayThisSection })}`);
             decryptedDataArray = decryptedDataArray.concat(decryptedDataArrayThisSection);
 
             indexEncryptedDataIndexesAtStartOfPass += passSectionLength;
@@ -200,7 +200,7 @@ async function getAlphabetsThisSection({
 }): Promise<{ alphabetsThisSection: string[], prevHash: string }> {
     const lc = `[${getAlphabetsThisSection.name}]`;
     try {
-        console.warn(`${lc} info: ${h.pretty({ passSectionLength, numOfPasses, indexEncryptedDataIndexesAtStartOfPass, prevHash })}`);
+        // console.warn(`${lc} info: ${h.pretty({ passSectionLength, numOfPasses, indexEncryptedDataIndexesAtStartOfPass, prevHash })}`);
         /**
          * one alphabet per plaintext character (hex only atow).
          *
@@ -236,7 +236,7 @@ async function getAlphabetsThisSection({
                 alphabetsThisSection[indexIntoPassSection] = alphabet;
             }
         }
-        console.warn(`${lc} initial alphabetsThisSection (${alphabetsThisSection.length}): ${h.pretty(alphabetsThisSection)}`);
+        // console.warn(`${lc} initial alphabetsThisSection (${alphabetsThisSection.length}): ${h.pretty(alphabetsThisSection)}`);
 
         // at this point, each alphabet is the same size (numOfPasses * hash
         // size), but it's not guaranteed that each alphabet will contain the
@@ -261,11 +261,11 @@ async function getAlphabetsThisSection({
 
             alphabetsThisSection[indexIntoPassSection] = alphabet;
         }
-        console.warn(`${lc} guaranteed alphabetsThisSection (${alphabetsThisSection.length}): ${h.pretty(alphabetsThisSection)}`);
+        // console.warn(`${lc} guaranteed alphabetsThisSection (${alphabetsThisSection.length}): ${h.pretty(alphabetsThisSection)}`);
 
         // at this point, each alphabet is at least the minimum size and is
         // guaranteed to have at least once instance of the plaintext hexChar.
-        console.warn(`${lc} return prevHash: ${prevHash}`)
+        // console.warn(`${lc} return prevHash: ${prevHash}`)
         return { alphabetsThisSection, prevHash };
     } catch (error) {
         console.error(`${lc} error: ${h.extractErrorMsg(error)}`);

@@ -68,12 +68,15 @@ const TEST_SALTS = [
     ...CHARS_WE_CHAR_ABOUT.slice(0, 2),
     CHARS_WE_CHAR_ABOUT_SINGLE_STRING,
 ];
-const TEST_SALT_STRATEGIES: SaltStrategy[] = SALT_STRATEGIES.concat();
+const TEST_SALT_STRATEGIES: SaltStrategy[] = [
+    SaltStrategy.appendPerHash,
+    SaltStrategy.initialPrepend,
+];
 // const SHORT_SECRET = 'p4ss';
-/**
- * requires call to `initData` below
- */
-let LONG_SECRET = "this requires a call to initData function below to initialize";
+// /**
+//  * requires call to `initData` below
+//  */
+// let LONG_SECRET = "this requires a call to initData function below to initialize";
 const TEST_SECRETS: string[] = [
     'aaa',
     'secret p4$$w0rd 3v3n',
@@ -86,18 +89,25 @@ const TEST_DELIMITERS = [
     // feel free to add more but increases testing time
 ];
 // const TEST_CONFIRM_VALUES: boolean[] = [true, false];
+// // throw new Error('test BruteForceShortCircuitMitigationInfo settings not implemented yet');
+// // const BRUTE_MITIGATION_SETTINGS: (BruteForceShortCircuitMitigationInfo | undefined)[] = [
+// //     undefined,
+// //     {
+// //         additionalPasses: 1,
+// //     }
+// // ];
 
 async function initData(): Promise<void> {
     for (let i = 0; i < 10; i++) {
         let uuid = await h.getUUID();
         LONG_DATA += uuid + '\n';
     }
-    for (let i = 0; i < 100; i++) {
-        let uuid = await h.getUUID();
-        LONG_SECRET += uuid + '\n';
-    }
-    TEST_DATAS.push(LONG_DATA); // comment this if you don't want a long data test
-    TEST_SECRETS.push(LONG_SECRET); // comment this if you don't want a long secret test
+    // for (let i = 0; i < 100; i++) {
+    //     let uuid = await h.getUUID();
+    //     LONG_SECRET += uuid + '\n';
+    // }
+    // TEST_DATAS.push(LONG_DATA); // comment this if you don't want a long data test
+    // TEST_SECRETS.push(LONG_SECRET); // comment this if you don't want a long secret test
 }
 await initData(); // yay top-level await
 
@@ -259,52 +269,47 @@ await respecfully(sir, `encryptFromHex_multipass`, async () => {
 
     await respecfully(sir, `different parameter sets`, async () => {
 
+        const encryptedDataDelimiter = c.DEFAULT_ENCRYPTED_DATA_DELIMITER;
+        const secret = 'great pw here (jk)';
+        const hashAlgorithm = HashAlgorithm.sha_256;
+        const salt = 'salt here yo';
+        const initialRecursions = 5;
+        const recursionsPerHash = 3;
+
         for (const dataToEncrypt of TEST_DATAS) {
-            for (const initialRecursions of TEST_INITIAL_RECURSIONS) {
-                for (const recursionsPerHash of TEST_RECURSIONS_PER_HASH) {
-                    for (const salt of TEST_SALTS) {
-                        for (const saltStrategy of TEST_SALT_STRATEGIES) {
-                            for (const encryptedDataDelimiter of TEST_DELIMITERS) {
-                                for (const secret of TEST_SECRETS) {
-                                    for (const hashAlgorithm of Object.values(HashAlgorithm)) {
-                                        for (const maxPassSectionLength of MAX_PASS_SECTION_LENGTHS) {
-                                            for (const numOfPasses of NUM_OF_PASSES) {
-                                                for (const indexingMode of ALPHABET_INDEXING_MODES) {
+            for (const saltStrategy of TEST_SALT_STRATEGIES) {
+                for (const maxPassSectionLength of MAX_PASS_SECTION_LENGTHS) {
+                    for (const numOfPasses of NUM_OF_PASSES) {
+                        for (const indexingMode of ALPHABET_INDEXING_MODES) {
 
-                                                    const hexEncodedData = await encodeStringToHexString(dataToEncrypt);
+                            const hexEncodedData = await encodeStringToHexString(dataToEncrypt);
 
-                                                    await respecfully(sir, `datalen:${hexEncodedData.length}|initRec:${initialRecursions}|recPer:${recursionsPerHash}|saltStrat:${saltStrategy}|maxPassLen:${maxPassSectionLength}|numPass:${numOfPasses}|mode:${indexingMode}`, async () => {
-                                                        // i have manually eyeballed guaranteed alphabet extensions with
-                                                        // this parameter set + data and there were no alphabets with sizes
-                                                        // larger than a single hash, as there are no extra extensions and
-                                                        // the numOfPasses = 1
-                                                        // const hexEncodedData = 'abc123def123412341234abcabcabcdef0123456789a'; // length 44
-                                                        // const numOfPasses = 50;
-                                                        await ifWe(sir, `[${hexEncodedData}]`, async () => {
-                                                            const encryptedData = await encryptFromHex_multipass({
-                                                                hexEncodedData,
-                                                                initialRecursions,
-                                                                recursionsPerHash,
-                                                                salt,
-                                                                saltStrategy,
-                                                                secret,
-                                                                hashAlgorithm,
-                                                                encryptedDataDelimiter,
-                                                                indexingMode,
-                                                                maxPassSectionLength,
-                                                                numOfPasses,
-                                                            });
-                                                            iReckon(sir, encryptedData).asTo('encryptedData').isGonnaBeTruthy();
-                                                            iReckon(sir, encryptedData.length > hexEncodedData.length).asTo('encryptedData.length >= hexEncodedData.length').isGonnaBeTrue();
-                                                            iReckon(sir, encryptedData.split(encryptedDataDelimiter).length).isGonnaBe(hexEncodedData.length);
-                                                        });
-                                                    });
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            await respecfully(sir, `datalen:${hexEncodedData.length}|initRec:${initialRecursions}|recPer:${recursionsPerHash}|saltStrat:${saltStrategy}|maxPassLen:${maxPassSectionLength}|numPass:${numOfPasses}|mode:${indexingMode}`, async () => {
+                                // i have manually eyeballed guaranteed alphabet extensions with
+                                // this parameter set + data and there were no alphabets with sizes
+                                // larger than a single hash, as there are no extra extensions and
+                                // the numOfPasses = 1
+                                // const hexEncodedData = 'abc123def123412341234abcabcabcdef0123456789a'; // length 44
+                                // const numOfPasses = 50;
+                                await ifWe(sir, `[${hexEncodedData}]`, async () => {
+                                    const encryptedData = await encryptFromHex_multipass({
+                                        hexEncodedData,
+                                        initialRecursions,
+                                        recursionsPerHash,
+                                        salt,
+                                        saltStrategy,
+                                        secret,
+                                        hashAlgorithm,
+                                        encryptedDataDelimiter,
+                                        indexingMode,
+                                        maxPassSectionLength,
+                                        numOfPasses,
+                                    });
+                                    iReckon(sir, encryptedData).asTo('encryptedData').isGonnaBeTruthy();
+                                    iReckon(sir, encryptedData.length > hexEncodedData.length).asTo('encryptedData.length >= hexEncodedData.length').isGonnaBeTrue();
+                                    iReckon(sir, encryptedData.split(encryptedDataDelimiter).length).isGonnaBe(hexEncodedData.length);
+                                });
+                            });
                         }
                     }
                 }
