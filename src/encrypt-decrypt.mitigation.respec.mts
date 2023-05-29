@@ -9,7 +9,7 @@ const maam = `[${import.meta.url}]`, sir = maam;
 
 import * as c from './constants.mjs';
 import * as encryptGib from './encrypt-decrypt.mjs';
-import { SaltStrategy, HashAlgorithm, BruteForceShortCircuitMitigationInfo, AlphabetIndexingMode, ALPHABET_INDEXING_MODES, SALT_STRATEGIES } from './types.mjs';
+import { SaltStrategy, HashAlgorithm, BruteForceShortCircuitMitigationInfo, AlphabetIndexingMode, ALPHABET_INDEXING_MODES, SALT_STRATEGIES, MultipassOptions } from './types.mjs';
 import { encodeStringToHexString } from './helper.mjs';
 
 const SIMPLEST_DATA = 'a';
@@ -110,10 +110,14 @@ await respecfully(sir, `initial brute force mitigation tests`, async () => {
         const saltStrategy = SaltStrategy.appendPerHash;
         const hashAlgorithm = HashAlgorithm.sha_256;
         const encryptedDataDelimiter = c.DEFAULT_ENCRYPTED_DATA_DELIMITER;
+        const multipass: MultipassOptions = {
+            maxPassSectionLength: 50,
+            numOfPasses: 4,
+        }
 
         for (const indexingMode of ALPHABET_INDEXING_MODES) {
             await respecfully(sir, `${indexingMode}`, async () => {
-                await ifWe(sir, ` `, async () => {
+                await ifWe(sir, `enc-dec`, async () => {
 
                     const resEncrypt = await encryptGib.encrypt({
                         dataToEncrypt,
@@ -124,8 +128,8 @@ await respecfully(sir, `initial brute force mitigation tests`, async () => {
                         secret: secretA,
                         hashAlgorithm,
                         encryptedDataDelimiter,
-                        confirm: true,
                         indexingMode,
+                        multipass,
                     });
                     iReckon(sir, (resEncrypt.errors || []).length).asTo('resEncrypt.errors || []').isGonnaBe(0);
 
@@ -140,7 +144,11 @@ await respecfully(sir, `initial brute force mitigation tests`, async () => {
                         secret: secretA,
                         hashAlgorithm,
                         encryptedDataDelimiter,
-                    })
+                        indexingMode,
+                        multipass,
+                    });
+
+                    iReckon(sir, dataToEncrypt).asTo('dataToEncrypt===decryptedData').isGonnaBe(resDecrypt.decryptedData);
                 });
             });
         }

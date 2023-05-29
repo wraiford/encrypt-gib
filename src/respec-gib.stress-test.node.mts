@@ -44,7 +44,7 @@ const RESPEC_FILE_REG_EXP = /^.+respec\.mjs$/; // stress test ALL respecs
  *
  * stress test should not look for shortcuts to testing (?)
  */
-const LOOK_FOR_EXTRA_RESPEC = true;
+const LOOK_FOR_EXTRA_RESPEC = false;
 if (LOOK_FOR_EXTRA_RESPEC) {
     console.warn(`${lc} stress test has look for extra respec set to true (W: a00b06fdb71a4ccfac1b788454d65d61)`);
 }
