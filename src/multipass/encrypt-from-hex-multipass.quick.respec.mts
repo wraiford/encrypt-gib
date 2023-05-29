@@ -12,7 +12,7 @@ import * as c from '../constants.mjs';
 import * as encryptGib from '../encrypt-decrypt.mjs';
 import {
     SaltStrategy, HashAlgorithm,
-    BruteForceShortCircuitMitigationInfo, AlphabetIndexingMode,
+    AlphabetIndexingMode,
     ALPHABET_INDEXING_MODES,
     SALT_STRATEGIES
 } from '../types.mjs';
@@ -72,42 +72,12 @@ const TEST_SALT_STRATEGIES: SaltStrategy[] = [
     SaltStrategy.appendPerHash,
     SaltStrategy.initialPrepend,
 ];
-// const SHORT_SECRET = 'p4ss';
-// /**
-//  * requires call to `initData` below
-//  */
-// let LONG_SECRET = "this requires a call to initData function below to initialize";
-const TEST_SECRETS: string[] = [
-    'aaa',
-    'secret p4$$w0rd 3v3n',
-    // ...CHARS_WE_CHAR_ABOUT.slice(0, 2),
-    // CHARS_WE_CHAR_ABOUT_SINGLE_STRING, // imitates a long password with special characters
-];
-const TEST_DELIMITERS = [
-    c.DEFAULT_ENCRYPTED_DATA_DELIMITER,
-    ' ',
-    // feel free to add more but increases testing time
-];
-// const TEST_CONFIRM_VALUES: boolean[] = [true, false];
-// // throw new Error('test BruteForceShortCircuitMitigationInfo settings not implemented yet');
-// // const BRUTE_MITIGATION_SETTINGS: (BruteForceShortCircuitMitigationInfo | undefined)[] = [
-// //     undefined,
-// //     {
-// //         additionalPasses: 1,
-// //     }
-// // ];
 
 async function initData(): Promise<void> {
     for (let i = 0; i < 10; i++) {
         let uuid = await h.getUUID();
         LONG_DATA += uuid + '\n';
     }
-    // for (let i = 0; i < 100; i++) {
-    //     let uuid = await h.getUUID();
-    //     LONG_SECRET += uuid + '\n';
-    // }
-    // TEST_DATAS.push(LONG_DATA); // comment this if you don't want a long data test
-    // TEST_SECRETS.push(LONG_SECRET); // comment this if you don't want a long secret test
 }
 await initData(); // yay top-level await
 
@@ -125,10 +95,6 @@ const NUM_OF_PASSES: number[] = [
 
 await respecfully(sir, `encryptFromHex_multipass`, async () => {
     await respecfully(sir, `simplest cases`, async () => {
-
-
-        // for (const indexingMode of ALPHABET_INDEXING_MODES) {}
-        // const indexingMode: AlphabetIndexingMode = AlphabetIndexingMode.indexOf;
         await respecfully(sir, `varying index modes, no manual jit alphabet extensions required to guarantee`, async () => {
             // i have manually eyeballed guaranteed alphabet extensions with
             // this parameter set + data and there were no alphabets with sizes
@@ -262,13 +228,10 @@ await respecfully(sir, `encryptFromHex_multipass`, async () => {
                     iReckon(sir, allAreTheSame).isGonnaBeTrue();
                 });
             }
-
         });
-
     });
 
-    await respecfully(sir, `different parameter sets`, async () => {
-
+    await respecfully(sir, `different light parameter sets`, async () => {
         const encryptedDataDelimiter = c.DEFAULT_ENCRYPTED_DATA_DELIMITER;
         const secret = 'great pw here (jk)';
         const hashAlgorithm = HashAlgorithm.sha_256;
@@ -316,4 +279,5 @@ await respecfully(sir, `encryptFromHex_multipass`, async () => {
             }
         }
     });
+
 });

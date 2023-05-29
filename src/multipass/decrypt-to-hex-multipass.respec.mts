@@ -11,10 +11,7 @@ const maam = `[${import.meta.url}]`, sir = maam;
 import * as c from '../constants.mjs';
 import {
     SaltStrategy, HashAlgorithm,
-    BruteForceShortCircuitMitigationInfo, AlphabetIndexingMode,
-    ALPHABET_INDEXING_MODES
 } from '../types.mjs';
-import { encodeStringToHexString } from '../helper.mjs';
 import { decryptToHex_multipass } from './decrypt-to-hex-multipass.mjs';
 
 // const SIMPLEST_DATA = 'a';
@@ -83,13 +80,6 @@ let LONG_DATA = "this requires a call to initData function below to initialize";
 //     // feel free to add more but increases testing time
 // ];
 // const TEST_CONFIRM_VALUES: boolean[] = [true, false];
-// // throw new Error('test BruteForceShortCircuitMitigationInfo settings not implemented yet');
-// // const BRUTE_MITIGATION_SETTINGS: (BruteForceShortCircuitMitigationInfo | undefined)[] = [
-// //     undefined,
-// //     {
-// //         additionalPasses: 1,
-// //     }
-// // ];
 
 async function initData(): Promise<void> {
     for (let i = 0; i < 10; i++) {
@@ -132,11 +122,10 @@ await respecfully(sir, `decryptToHex_multipass`, async () => {
                         secret,
                         hashAlgorithm: HashAlgorithm.sha_256,
                         encryptedDataDelimiter: c.DEFAULT_ENCRYPTED_DATA_DELIMITER,
-                        indexingMode: AlphabetIndexingMode.indexOf,
                         maxPassSectionLength,
                         numOfPasses,
                     });
-                    console.log(decryptedData)
+                    // console.log(decryptedData)
                     iReckon(sir, decryptedData).asTo('encryptedData').isGonnaBe(expectedHexEncodedData);
                 });
             }
@@ -152,11 +141,10 @@ await respecfully(sir, `decryptToHex_multipass`, async () => {
                         secret,
                         hashAlgorithm: HashAlgorithm.sha_256,
                         encryptedDataDelimiter: c.DEFAULT_ENCRYPTED_DATA_DELIMITER,
-                        indexingMode: AlphabetIndexingMode.indexOf,
                         maxPassSectionLength,
                         numOfPasses,
                     });
-                    console.log(decryptedData)
+                    // console.log(decryptedData)
                     iReckon(sir, decryptedData).asTo('encryptedData').isGonnaBe(expectedHexEncodedData);
                 });
             }

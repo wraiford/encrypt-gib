@@ -2,14 +2,13 @@
  * Test helper functions.
  */
 
-// import * as h from './helper.mjs';
 import * as h from '@ibgib/helper-gib';
 import { firstOfAll, ifWe, ifWeMight, iReckon, respecfully } from '@ibgib/helper-gib/dist/respec-gib/respec-gib.mjs';
 const maam = `[${import.meta.url}]`, sir = maam;
 
 import * as c from './constants.mjs';
 import * as encryptGib from './encrypt-decrypt.mjs';
-import { SaltStrategy, HashAlgorithm, BruteForceShortCircuitMitigationInfo, AlphabetIndexingMode, ALPHABET_INDEXING_MODES, SALT_STRATEGIES, MultipassOptions } from './types.mjs';
+import { SaltStrategy, HashAlgorithm, AlphabetIndexingMode, ALPHABET_INDEXING_MODES, SALT_STRATEGIES, MultipassOptions } from './types.mjs';
 import { encodeStringToHexString } from './helper.mjs';
 
 const SIMPLEST_DATA = 'a';
@@ -78,13 +77,6 @@ const TEST_DELIMITERS = [
     // feel free to add more but increases testing time
 ];
 const TEST_CONFIRM_VALUES: boolean[] = [true, false];
-// throw new Error('test BruteForceShortCircuitMitigationInfo settings not implemented yet');
-// const BRUTE_MITIGATION_SETTINGS: (BruteForceShortCircuitMitigationInfo | undefined)[] = [
-//     undefined,
-//     {
-//         additionalPasses: 1,
-//     }
-// ];
 
 async function initData(): Promise<void> {
     for (let i = 0; i < 500; i++) {

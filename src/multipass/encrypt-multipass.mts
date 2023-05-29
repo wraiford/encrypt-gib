@@ -122,7 +122,6 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
     // console.warn(`${lc} TAKE THIS OUT!! encryptedData: ${encryptedData}`); // DO NOT LEAVE THIS IN PROD!!!
     // DO NOT LEAVE THIS IN PROD!!!
 
-
     if (confirm) {
         try {
             const resDecrypt = await decryptImpl_multipass({
@@ -145,7 +144,7 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
                 // console.warn(`dataToEncrypt: ${dataToEncrypt}`); // DO NOT LEAVE THIS IN PROD!!!
                 // DO NOT LEAVE THIS IN PROD!!!
                 throw new Error(`The ENCRYPTED data did not decrypt back to the original data. (E: 16b5f1a11e4f438ab38a7f124178a7b8)`);
-            } else {
+                // } else {
                 // console.log(`${lc} decrypt confirmed.`);
             }
             if ((resDecrypt.warnings || []).length > 0) {
@@ -165,15 +164,4 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
     };
     delete (result as any).dataToEncrypt;
     return result;
-
-    // return {
-    //     encryptedData,
-    //     initialRecursions,
-    //     recursionsPerHash,
-    //     salt,
-    //     saltStrategy,
-    //     hashAlgorithm,
-    //     encryptedDataDelimiter,
-    //     warnings: warnings.length > 0 ? warnings : undefined,
-    // };
 }

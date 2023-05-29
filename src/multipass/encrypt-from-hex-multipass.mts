@@ -3,7 +3,12 @@ import * as h from '@ibgib/helper-gib';
 import { doInitialRecursions, getPreHash } from "../common/encrypt-decrypt-common.mjs";
 import { AlphabetIndexingMode, HashAlgorithm, SaltStrategy } from "../types.mjs";
 
-
+/**
+ * Internal function that performs the encryption part of the overall `encrypt`
+ * function when using the `multipass` option.
+ *
+ * @returns ciphertext string
+ */
 export async function encryptFromHex_multipass({
     hexEncodedData,
     initialRecursions,

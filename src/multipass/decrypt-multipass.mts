@@ -16,7 +16,6 @@ import { decryptToHex_multipass } from './decrypt-to-hex-multipass.mjs';
  */
 export async function decryptImpl_multipass(args: DecryptArgs): Promise<DecryptResult> {
     const lc = `[${decryptImpl_multipass.name}]`;
-    // console.log(`${lc} encryptedDataDelimiter: ${encryptedDataDelimiter}`);
     let {
         encryptedData,
         initialRecursions,
@@ -86,7 +85,6 @@ export async function decryptImpl_multipass(args: DecryptArgs): Promise<DecryptR
     // #endregion args validation
 
     // decrypt from indices into hex
-    // console.log(`${lc} encryptedData: ${encryptedData}`);
     let hexEncodedData: string = await decryptToHex_multipass({
         encryptedData,
         initialRecursions,
@@ -96,12 +94,10 @@ export async function decryptImpl_multipass(args: DecryptArgs): Promise<DecryptR
         secret,
         hashAlgorithm,
         encryptedDataDelimiter,
-        indexingMode,
         maxPassSectionLength,
         numOfPasses,
     });
 
-    // console.log(`${lc} hexEncodedData: ${hexEncodedData}`);
     // decode hex back into original data
     const decryptedData: string = await decodeHexStringToString(hexEncodedData);
 
@@ -112,14 +108,4 @@ export async function decryptImpl_multipass(args: DecryptArgs): Promise<DecryptR
     };
     delete (result as any).encryptedData;
     return result;
-    // return {
-    //     decryptedData,
-    //     initialRecursions,
-    //     recursionsPerHash,
-    //     salt,
-    //     saltStrategy,
-    //     hashAlgorithm,
-    //     encryptedDataDelimiter,
-    //     warnings: warnings.length > 0 ? warnings : undefined,
-    // };
 }

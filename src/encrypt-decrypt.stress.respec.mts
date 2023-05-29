@@ -38,6 +38,7 @@ ${CHARS_WE_CHAR_ABOUT_SINGLE_STRING}
 let LONG_DATA = "this requires a call to initData function below to initialize";
 const TEST_DATAS: string[] = [
     SIMPLEST_DATA,
+    // COMPLEXEST_DATA_WE_CARE_ABOUT_RIGHT_NOW,
     // CHARS_WE_CHAR_ABOUT_SINGLE_STRING,
     // ...CHARS_WE_CHAR_ABOUT, // takes awhile, adds lots of test permutations
 ];
@@ -73,7 +74,6 @@ const TEST_SECRETS: string[] = [
 const TEST_DELIMITERS = [
     c.DEFAULT_ENCRYPTED_DATA_DELIMITER,
     // ' ',
-    // feel free to add more but increases testing time
 ];
 const TEST_CONFIRM_VALUES: boolean[] = [true, false];
 
@@ -103,7 +103,7 @@ const TEST_MULTIPASS_OPTIONS: (MultipassOptions | undefined)[] = [
     },
 ];
 
-
+// unfortunately there is not option to exclude files from autoformat on save.
 for (const dataToEncrypt of TEST_DATAS) {
     for (const initialRecursions of TEST_INITIAL_RECURSIONS) {
         for (const recursionsPerHash of TEST_RECURSIONS_PER_HASH) {
@@ -116,9 +116,8 @@ for (const dataToEncrypt of TEST_DATAS) {
                                     for (const indexingMode of ALPHABET_INDEXING_MODES) {
                                         for (const hashAlgorithm of HASH_ALGORITHMS) {
 
-
                                             await respecfully(sir, `enc/dec stress`, async () => {
-                                                await ifWeMight(sir, `${dataToEncrypt.slice(0, 7)}...(${dataToEncrypt.length}),${secret.slice(0, 7)}...(${secret.length}),${initialRecursions},${recursionsPerHash},${salt.slice(0, 7)}(${salt.length}),${saltStrategy},"${encryptedDataDelimiter}",${confirm}`, async () => {
+                                                await ifWe(sir, `${dataToEncrypt.slice(0, 7)}...(${dataToEncrypt.length}),${secret.slice(0, 7)}...(${secret.length}),${initialRecursions},${recursionsPerHash},${salt.slice(0, 7)}(${salt.length}),${saltStrategy},"${encryptedDataDelimiter}",${confirm}`, async () => {
 
                                                     const resEncrypt = await encryptGib.encrypt({
                                                         dataToEncrypt,

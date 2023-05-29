@@ -12,7 +12,7 @@ import * as c from '../constants.mjs';
 import * as encryptGib from '../encrypt-decrypt.mjs';
 import {
     SaltStrategy, HashAlgorithm,
-    BruteForceShortCircuitMitigationInfo, AlphabetIndexingMode,
+    AlphabetIndexingMode,
     ALPHABET_INDEXING_MODES,
     SALT_STRATEGIES
 } from '../types.mjs';
