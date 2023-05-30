@@ -52,19 +52,22 @@ The basic idea is this:
 
 So our ciphertext represents indexes into hashes, with configurability on how we
 generate those hashes. Currently implemented with SHA-256 or SHA-512, our hash
-"alphabets" are in hex, so our data is first hex-encoded. Once we have decided our
-hash algorithm, we will key-stretch via recursive hashing of our secret. We then
-proceed to encipher (record indexes for) either single characters or larger sections of characters.
-For both encryption and decryption, we first build the relavent alphabet(s) and we either record or dereference
-the index of the hex character into that alphabet
+"alphabets" are in hex, so our data is first hex-encoded. Once we have decided
+our hash algorithm, we will key-stretch via recursive hashing of our secret. We
+then proceed to encipher (record indexes for) either single characters or larger
+sections of characters. For both encryption and decryption, we first build the
+relevant alphabet(s) and we either record or dereference the index of the hex
+character into that alphabet.
 
-In V1 we support only - both available in both NodeJS and the browser. As such,
-our "alphabets" are in hex, so we first encode our plaintext into hex.  Once our
-plaintext data is hex-encoded, we can either stream hex character-by-character
-or encipher larger sections of hex characters. Either way, we leverage the
-randomness of hex character distribution in hashes by creating just-in-time
-(JIT) one-time alphabets via rounding functions, which build those alphabets in
-a plain, low-magic manner, using recursive hashing. We then publicly record the
+Since we currently support SHA-256 and SHA-512, both are available in NodeJS and
+the browser to maximize isomorphic JavaScript. Also as a consequence of using
+these hash algorithms, our alphabets are in hex. So, we first encode our
+plaintext into hex, and once encoded, we can either stream-encipher hex
+character-by-character or encipher larger sections of hex characters. Either
+way, we leverage the randomness of hex character distribution in hashes by
+creating just-in-time (JIT) one-time alphabets via rounding functions, which
+build those alphabets in a plain, low-magic manner, using recursive hashing. We
+then publicly record the
 **indices** of a characters into their corresponding alphabets. These indexes
 are now the ciphertext.
 
@@ -122,15 +125,14 @@ async function encrypt({
 }
 ```
 
-So for example, say we have a `secret` of `'my password'` and data of `'foo'`.
+So for example, say we have a `secret` of `'my p4ssw0rd'` and data of `'foo'`.
 
-First we encode that `'foo'` into hex, pretend it's `'42ab'` (only hex
-characters here, 0-9, a-f.  We're only pretending this is the actual encoding
-for this contrived example). Next we need to build the first JIT alphabet.
+First we encode that `'foo'` into hex - say, it comes out to `'42ab'`. Note that since it's
+now hex only (0-9, a-f), we're able to fully describe each character of data by an arbitrary length of
+concatenated hashes and an index into that JIT "alphabet". But first let's look at the key-stretching code.
 
-
-Each iteration of each character has a starting point of `prevHash`. This is
-generated via
+Each alphabet is generated via the previous alphabet's last hash, which we will store in `prevHash`.
+The very first alphabet will use the last hash generated from the key stretch.
 
 ```typescript
 let prevHash = await doInitialRecursions({
@@ -140,10 +142,10 @@ let prevHash = await doInitialRecursions({
     saltStrategy,                  // 'initialPrepend' means salt only on initialRecursions
     hashAlgorithm,                 // 'SHA-256'
 });
-// say, 'b87ac03382eb47e692e776547f89b72ea475f0a6dc4848039869b1c93a8ab3ba'
+// the last hash after initial recursions, say, 'b87ac03382eb47e692e776547f89b72ea475f0a6dc4848039869b1c93a8ab3ba'
 ```
 
-which has the following...
+which has the following implementation...
 
 ```typescript
 async function doInitialRecursions({
@@ -533,6 +535,9 @@ effectively random.
     * prepending plaintext with noise
     * additional hidden parameters
     * and more...
+* auto-generation of salt
+  * may require its own IV, or just rely on the runtime's (NodeJS/browser)
+    random bytes function.
 
 ## running respec-ful tests - `npm test` and others
 
