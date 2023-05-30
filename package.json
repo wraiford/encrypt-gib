@@ -43,8 +43,14 @@
     "test:browser:serve:nobuild": "echo \"not implemented yet\"",
     "man:test:browser:serve:nobuild": "echo 'use this if you are troubleshooting existing dist output and don't want to overwrite those files. (and you're debugging in the browser)'",
     "pack": "npm pack --pack-destination=\"./published\"",
-    "prepare:publish": "npm run clean && npm version patch && npm run build && npm run pack",
-    "man:prepare:publish": "echo 'use this to patch > build > pack for publishing to npm repo'"
+    "prepare:publish": "npm run prepare:publish:patch",
+    "prepare:publish:patch": "npm run clean && npm version patch && npm run build && npm run pack",
+    "prepare:publish:minor": "npm run clean && npm version minor && npm run build && npm run pack",
+    "prepare:publish:major": "npm run clean && npm version major && npm run build && npm run pack",
+    "man:prepare:publish": "echo 'use this to bump patch > build & tag > pack for publishing to npm repo'",
+    "man:prepare:publish:patch": "echo 'use this to bump patch > build & tag > pack for publishing to npm repo'",
+    "man:prepare:publish:minor": "echo 'use this to bump minor > build & tag > pack for publishing to npm repo'",
+    "man:prepare:publish:major": "echo 'use this to bump major > build & tag > pack for publishing to npm repo'"
   },
   "type": "module",
   "keywords": [
