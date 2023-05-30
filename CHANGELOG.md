@@ -1,3 +1,7 @@
+# 0.2.0/1
+
+* multipass mitigation against short-circuit brute force attacks.
+
 # 0.1.7
 
 * changed unit testing to use respec-gib inside helper-gib.
