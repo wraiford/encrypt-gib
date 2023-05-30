@@ -10,7 +10,7 @@ simple programming.
 2. `cd encrypt-gib`
 2. `npm install`
 3. `npm run test:quick` OR `npm test` if you want to sit around for hours admiring ibgib's custom respec-gib testing framework.
-  * _note: atow with testing framework reshuffle to respec-gib, this only runs node tests - not browser tests._
+  * _note: ATOW with testing framework reshuffle to respec-gib, this only runs node tests - not browser tests._
 
 You can find API usage examples in the following respecs:
 
@@ -518,11 +518,6 @@ The multipass mitigation technique creates a couple of dynamics:
 
 _note: so it's conceivable that this could be a memory-hard encryption algorithm a high multipass-count, but this would require analysis and I'm unsure if it could even then be guaranteed._
 
-### possible future options
-
-* prepending plaintext with noise
-  * hash delimiter deterministically derived that delimits sections of output
-
 ## timing attacks
 
 Because each cipher round checks for a plaintext character's index into a
@@ -531,67 +526,45 @@ indexing into it should not yield any additional information. Intermittent
 alphabet extensions, requiring additional round function executions, are also
 effectively random.
 
-## future improvements
+### todo
 
-There are many additional improvements that can be implemented if it seems worth
-it.
+* delimit plaintext with params+secret+data derived delimiter
+  * enables sectioning within ciphertext, which itself enables...
+    * prepending plaintext with noise
+    * additional hidden parameters
+    * and more...
 
-These are largely to increase security based on the fact that if an attacker begins to guess,
-it can look for informational non-entropy to get an early feedback for correctness of the guess.
-In other words, it won't have to decrypt the entire data if it get's sensical data for the first N characters.
-So there are several things we can do to mitigate this partial decryption hacking.
+## running respec-ful tests - `npm test` and others
 
-* "Buffering" the data in such a way that would make brute-forcing it harder to do.
-  * E.g., hashing the data itself and prepending the data with this hash (or recursive chains of hashes)
-    before encrypting to create a random-looking starting buffer.
-  * it would be better to have a hash that produces not just hex, but all UTF-8 characters.
-    * Perhaps "unencode" the checksum hex hash chain.
-* "Bloating" the encrypted data.
-  * You can spread out data by creating search parameters for the encrypt/decrypt process.
-  * E.g., whenever some set of neighbors of the output condition is met, then that encryption step
-    is invalid and repeated, and the corresponding decryption step would see it as invalid and discarded.
-    * It's possible that these conditions can be contained at the end of the data as metadata that requires
-      decrypting all data in order to see what bloating rules are in effect.
-      * (I think those bloating rules would have to not be bloated themselves.)
-* and others along these lines...
+I recently had a learning experience regarding a gate-keeper style OSS
+repository.  As such, I have moved to my own respec-gib testing framework,
+contained in [helper-gib](https://gitlab.com/ibgib/helper-gib).
 
-## investing time and/or $
+You can run these respecs via npm scripts contained in encrypt-gib's
+[package.json](./package.json).
 
-During my 42 years of human-ness, I've had one obsession that I have yet to escape:
-ibgib ([GitHub ibgib MVP monorepo](https://github.com/wraiford/ibgib) &
-[npm ts-gib DLT graph substrate](https://www.npmjs.com/package/ts-gib)).
-The current main MVP app is the [`ionic-gib` project](https://github.com/wraiford/ibgib/tree/master/ionic-gib)
-which aims to leverage ibgib's unique data capabilities with [ionic](https://ionicframework.com/) to target
-not only web, android and iOS, but also even Chrome, FireFox, Edge and other browser extensions.
+The main ones are:
 
-If you find this little encrypt-gib project,
-which I whipped up in three days, to be interesting, don't hesitate to contact me.
-An issue for public discussion would be best either at
-[ibgib's issues](https://github.com/wraiford/ibgib/issues)
-or in this repo
-[encrypt-gib issues](https://github.com/wraiford/encrypt-gib/issues).
-But you can also find my email address on my GitHub profile for [wraiford](https://github.com/wraiford).
+* `npm test`
+  * ATOW alias for `npm run test:node`
+  * runs `node dist/respec-gib.stress-test.node.mjs --inspect`
+  * ATOW only node testing implemented
+  * runs ALL respecs, which on my now aging laptop took right at 24 hours to run.
+* `npm run test:quick`
+  * ATOW alias for `npm run test:node:quick`
+  * executes a smaller subset of respecs that take much less time.
 
-## notes
-
-* Only UTF-8 data supported.
-  * I'm not expert enough to count on anything other than the basic characters in the test specs.
-* I use `lc` all over the place in code. I am usually not for single-letter or extremely
-  short variable/function/class/etc names, but I use this so often the brevity is worth the readability cost.
-  * Plus, you can tell it's used for logging pretty easily.
-* I return function parameters in result objects, and consequently it's a pain to add/remove params.
-  * May want to fix this in the future, but...
-  * But the ibgib architecture (which is paramount) is about building DLT encoding of these
-    types of parameters, so I haven't fixed it first go-round.
-* I've left in a lot of commented-out console.log calls. These take a bit to re-type.
-  * THE MOST IMPORTANT THING IS DON'T LOG ANYTHING TO DO WITH DATA PROPERTIES IN PROD!
-* Obviously none of this is hyper-optimized for performance.
+Since I don't have respec-gib documented very well yet, you can target only
+specific respecs by using `respecfullyDear` and `ifWeMight` functions instead of
+`respecfully` and `ifWe` blocks, respec-tively. To use these, ensure that the
+corresponding respec-gib node file (e.g. `respec-gib.stress-test.node.mjs`) has
+the `LOOK_FOR_EXTRA_RESPEC` flag set to true (ATOW on line 47 of
+[`respec-gib.stress-test.node.mts`](./src/respec-gib.stress-test.node.mts)).
 
 ### importmaps - `npm run test:browser`
 
-to be implemented using respec-gib...
-
-_note: if you are having CORS issues, it may be due to the cdn being down._
+import maps are not currently implemented in respec-gib. When they are, however,
+they will want to generate code as follows:
 
 using **unpkg**:
 
@@ -619,26 +592,32 @@ using **unpkg**:
   </script>
 ```
 
+_note: if you are having CORS issues, it may be due to the cdn being down._
+
 ## codebase notes
 
 ### length of naming conventions
-This codebase prefers LongAndExplanatoryNames for readability usually without the need
-for comments. Extremely short variables are used though, but only in special cases:
 
-* `lc` is extremely terse for `log context`.
-  * this is nearly ubiquitous and is set/augmented in almost every function
-    where logging occurs.
+This codebase prefers `LongAndExplanatoryNames` Pascal-cased for
+classes/interfaces/types and most other things camelCased. This is to aid in
+readability usually without the need for comments. Extremely short variables are
+used though, but only in special cases:
+
+* `lc` - "log context" used in logging
+  * this is used more in the ibgib codebase as a whole and ATOW less so in this lib.
 * `x` is commonly used in array functions where the type should be evident
   * e.g. `map(x => foo(x))` or `filter(x => !!x)`
 
-### objects for function parameters
+### objects for named function parameters
 
-In general, `foo(directVar: SomeType)` is avoided. Instead, something like
+In general, `foo(directVar: SomeType)` is avoided. This is because calling code may
+be less readable.
 
-`foo({ name, x, y, }: ArgObjectType)`
-
-or
-
+Instead, something like `foo({ name, x, y, }: ArgObjectType)` or
 `foo({ name, x, y, }: {name: string, x: number, y: number})`
+is used.
 
-should be used.
+## general notes
+
+* Only UTF-8 data is supported.
+* Nothing is overly optimized for performance.
