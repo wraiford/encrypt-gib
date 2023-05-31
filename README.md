@@ -529,7 +529,7 @@ effectively random.
 
 ## todo
 
-* delimit plaintext with params+secret+data derived delimiter
+* delimit plaintext with params+secret ~~+data~~ derived delimiter
   * enables sectioning within ciphertext, which itself enables...
     * prepending plaintext with noise
     * additional hidden parameters
