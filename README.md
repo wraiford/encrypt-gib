@@ -26,7 +26,7 @@ approaches to simplify encryption in order to...
 * maximize DRY-ness across distributed codebases
 * minimize surface attack area
 * minimize esoteric magic
-* maximize granularity for Merkle-based DLT functional programming
+* maximize granularity for Merkle-based DLT functional programming, e.g. smart contracts, API+DIDs, etc.
 
 encrypt-gib is written as a standalone encryption library. But. It's a new
 world, one which I've been anticipating for 20+ years now. And these particular
@@ -471,8 +471,7 @@ And that's it, we have our `decryptedData`!
 There are always attacks available against encryption algorithms, but again, encrypt-gib
 aims to leverage the assumption that cryptographic hashes are "effectively random".
 
-
-## short-circuit (aka shortcut) brute force attacks
+### short-circuit (aka shortcut) brute force attacks
 
 If used in non-multipass mode, encrypt-gib is susceptible to short-circuit brute
 forcing, if the brute forcer knows the expected shape that plaintext starts
@@ -520,7 +519,7 @@ The multipass mitigation technique creates a couple of dynamics:
 
 _note: so it's conceivable that this could be a memory-hard encryption algorithm a high multipass-count, but this would require analysis and I'm unsure if it could even then be guaranteed._
 
-## timing attacks
+### timing attacks
 
 Because each cipher round checks for a plaintext character's index into a
 cryptographic hash, given that the hash is effectively random, the timing of
@@ -528,7 +527,7 @@ indexing into it should not yield any additional information. Intermittent
 alphabet extensions, requiring additional round function executions, are also
 effectively random.
 
-### todo
+## todo
 
 * delimit plaintext with params+secret+data derived delimiter
   * enables sectioning within ciphertext, which itself enables...
@@ -541,9 +540,9 @@ effectively random.
 
 ## running respec-ful tests - `npm test` and others
 
-I recently had a learning experience regarding a gate-keeper style OSS
-repository.  As such, I have moved to my own respec-gib testing framework,
-contained in [helper-gib](https://gitlab.com/ibgib/helper-gib).
+I recently had a learning experience regarding an extremely popular gate-keeper
+style OSS repository. As such, I have moved to my own respec-gib testing
+framework, contained in [helper-gib](https://gitlab.com/ibgib/helper-gib).
 
 You can run these respecs via npm scripts contained in encrypt-gib's
 [package.json](./package.json).
@@ -559,14 +558,17 @@ The main ones are:
   * ATOW alias for `npm run test:node:quick`
   * executes a smaller subset of respecs that take much less time.
 
-Since I don't have respec-gib documented very well yet, you can target only
-specific respecs by using `respecfullyDear` and `ifWeMight` functions instead of
-`respecfully` and `ifWe` blocks, respec-tively. To use these, ensure that the
-corresponding respec-gib node file (e.g. `respec-gib.stress-test.node.mjs`) has
-the `LOOK_FOR_EXTRA_RESPEC` flag set to true (ATOW on line 47 of
+Since ATOW I don't have respec-gib documented very well (other than explanatory
+meta respecs on Gitlab
+[here](https://gitlab.com/ibgib/helper-gib/-/blob/main/src/respec-gib/respec-gib.respec.mts)),
+you can target only specific respecs by using `respecfullyDear` and `ifWeMight`
+functions instead of `respecfully` and `ifWe` blocks, respec-tively. To use
+these, ensure that the corresponding respec-gib node file (e.g.
+`respec-gib.stress-test.node.mjs`) has the `LOOK_FOR_EXTRA_RESPEC` flag set to
+true (ATOW on line 47 of
 [`respec-gib.stress-test.node.mts`](./src/respec-gib.stress-test.node.mts)).
 
-### importmaps - `npm run test:browser`
+### ES Module importmaps when testing with `npm run test:browser`
 
 import maps are not currently implemented in respec-gib. When they are, however,
 they will want to generate code as follows:
@@ -624,5 +626,5 @@ is used.
 
 ## general notes
 
-* Only UTF-8 data is supported.
-* Nothing is overly optimized for performance.
+* ATOW Only UTF-8 data is supported.
+* ATOW Nothing is overly optimized for runtime performance.
