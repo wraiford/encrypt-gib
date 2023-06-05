@@ -53,6 +53,7 @@ export async function encrypt(args: EncryptArgs): Promise<EncryptResult> {
         throw error;
         // const result = { ...args, errors: [error] };
         // delete (result as any).dataToEncrypt;
+        // delete (result as any).secret;
         // return result;
     }
 }
@@ -102,6 +103,7 @@ export async function decrypt(args: DecryptArgs): Promise<DecryptResult> {
         throw error;
         // const result = { ...args, errors: [error] };
         // delete (result as any).encryptedData;
+        // delete (result as any).secret;
         // return result;
     }
 }

@@ -301,7 +301,7 @@ interface BaseBase {
  *
  * @see {@link BaseResult}
  */
-interface BaseArgs extends BaseBase {
+export interface BaseArgs extends BaseBase {
     secret: string;
 }
 
