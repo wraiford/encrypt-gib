@@ -1,3 +1,5 @@
+# [limited-time opportunity](./OPPORTUNITY.md)
+
 # encrypt-gib - hash-based encryption
 
 Encrypt-gib is a genuinely novel, post quantum encryption algorithm that uses
