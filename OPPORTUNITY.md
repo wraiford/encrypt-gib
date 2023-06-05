@@ -179,9 +179,11 @@ not materially investing in ibgib...
 
 given all of these things, **i am** saying that not beginning to materially
 invest in ibgib at this very moment in our own shared space+time would be a
-Goddamn sin.
+~~Goddamn sin~~ mistake.
 
 william
+
+_(meta levity note: the Goddamn sin was just a little too melodramatic for me, but i enjoyed the strike-thru meta solution. i'm terrible with these kinds of serious documents. i have serious architectural opinions in a very small band of the wide world of cs, but i'm afraid i have always been terrible at writing papers. that's one of the reasons this engine would power an entirely new blogging system that combines thing like instagram, slack and more with a git-like openness.)_
 
 # terms of offer for encrypt-gib encryption algorithm
 
