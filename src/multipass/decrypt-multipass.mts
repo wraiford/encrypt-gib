@@ -79,6 +79,7 @@ export async function decryptImpl_multipass(args: DecryptArgs): Promise<DecryptR
     if (errors.length > 0) {
         let result = { ...args, errors: errors };
         delete (result as any).encryptedData;
+        delete (result as any).secret;
         return result;
     }
 
@@ -107,5 +108,6 @@ export async function decryptImpl_multipass(args: DecryptArgs): Promise<DecryptR
         warnings: warnings.length > 0 ? warnings : undefined,
     };
     delete (result as any).encryptedData;
+    delete (result as any).secret;
     return result;
 }

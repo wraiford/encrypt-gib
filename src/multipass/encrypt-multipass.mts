@@ -80,6 +80,7 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
     if (errors.length > 0) {
         let result = { ...args, errors: errors };
         delete (result as any).dataToEncrypt;
+        delete (result as any).secret;
         return result;
     }
 
@@ -163,5 +164,6 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
         warnings: warnings.length > 0 ? warnings : undefined,
     };
     delete (result as any).dataToEncrypt;
+    delete (result as any).secret;
     return result;
 }
