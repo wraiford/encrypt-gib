@@ -1,6 +1,6 @@
 {
   "name": "@ibgib/encrypt-gib",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Experimental (weak?) encryption based on cryptographic hashing as the only primitive.",
   "repository": {
     "url": "https://github.com/wraiford/encrypt-gib/",
