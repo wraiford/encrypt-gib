@@ -10,7 +10,10 @@
     "type": "individual",
     "url": "https://paypal.me/ibGib"
   },
-  "main": "dist/index.mjs",
+  "main": "dist/rli/rli.mjs",
+  "bin": {
+    "encrypt-gib": "dist/rli/rli.mjs"
+  },
   "scripts": {
     "build": "npm run clean && tsc -b tsconfig.json --force",
     "build:test": "npm run clean && tsc -b tsconfig.test.json --force",
