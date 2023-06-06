@@ -177,6 +177,12 @@ ${pretty(ARG_INFOS)}
 
     THIS IS INCOMPLETE, STUBBED HELP DOCUMENTATION ATOW. CHECK OUT RLI.MTS AND
     THE LIBRARY ITSELF.
+
+    atow I use the following in encrypt-gib's root dir (stronger may take awhile):
+    node . --encrypt --data-string="inline raw msg" --output-path="./ciphertext_file" --strength="weaker"
+    node . --encrypt --data-path="./plaintext_file.md" --output-path="./ciphertext_file" --strength="stronger"
+    node . --decrypt --data-path="./ciphertext_file.encrypt-gib" --output-path="./deciphered_file.md"
+
     `;
     console.log(helpMsg);
 }
@@ -382,9 +388,11 @@ export async function getOutputPath({
             relOrAbsPath = pathUtils.join(relOrAbsPath, filename);
         }
 
-        if (!relOrAbsPath.endsWith(ENCRYPTED_OUTPUT_FILE_EXT)) {
+        // add file extension only if we're encrypting and it isn't already there
+        const isEncrypt = argInfos.some(x => x.name === ARG_INFO_ENCRYPT.name);
+        if (isEncrypt && !relOrAbsPath.endsWith(ENCRYPTED_OUTPUT_FILE_EXT)) {
             console.log(`${lc} adding file extension .${ENCRYPTED_OUTPUT_FILE_EXT}`);
-            relOrAbsPath += `.${ENCRYPTED_OUTPUT_FILE_EXT}`;
+            relOrAbsPath += (relOrAbsPath.endsWith('.') ? ENCRYPTED_OUTPUT_FILE_EXT : `.${ENCRYPTED_OUTPUT_FILE_EXT}`);
         }
 
         return relOrAbsPath;
