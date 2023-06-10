@@ -12,7 +12,8 @@
   },
   "main": "dist/rli/rli.mjs",
   "bin": {
-    "encrypt-gib": "dist/rli/rli.mjs"
+    "encrypt-gib": "dist/rli/rli.mjs",
+    "@ibgib/encrypt-gib": "dist/rli/rli.mjs"
   },
   "scripts": {
     "build": "npm run clean && tsc -b tsconfig.json --force",
