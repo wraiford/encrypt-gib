@@ -1,5 +1,7 @@
 import { AlphabetIndexingMode, HashAlgorithm, SaltStrategy } from "./index.mjs";
 
+export const ENCRYPT_LOG_A_LOT = false;
+
 export var DEFAULT_SALT_STRATEGY: SaltStrategy = SaltStrategy.appendPerHash;
 // export var DEFAULT_HASH_ALGORITHM: HashAlgorithm = 'SHA-256';
 export var DEFAULT_HASH_ALGORITHM: HashAlgorithm = 'SHA-512';
