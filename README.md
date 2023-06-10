@@ -8,6 +8,19 @@ simple programming.
 
 ## tl;dr - up & running
 
+Node V19+ is required
+
+### request line interface
+
+RLI is a work in progress.
+
+1. npm install --global @ibgib/encrypt-gib
+2. encrypt-gib --help
+
+_note: the term "request line interface" itself is in line with my vision of a more dynamic, vibrant, and hopefully more polite future for distributed computation._
+
+### development
+
 1.  [Clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repo, [encrypt-gib](https://github.com/wraiford/encrypt-gib/)
 2. `cd encrypt-gib`
 2. `npm install`
@@ -19,32 +32,6 @@ You can find API usage examples in the following respecs:
 * [`encrypt-decrypt.light.respec.mts`](./src/encrypt-decrypt.light.respec.mts)
 * [`encrypt-decrypt.heavy.respec.mts`](./src/encrypt-decrypt.heavy.respec.mts)
 * [`encrypt-decrypt.mitigation.respec.mts`](./src/encrypt-decrypt.mitigation.respec.mts)
-
-## why does this lib exist?
-
-To provide an alternative post quantum candidate to supplement existing
-approaches to simplify encryption in order to...
-
-* maximize DRY-ness across distributed codebases
-* minimize surface attack area
-* minimize esoteric magic
-* maximize granularity for Merkle-based DLT functional programming, e.g. smart contracts, API+DIDs, etc.
-
-encrypt-gib is written as a standalone encryption library. But. It's a new
-world, one which I've been anticipating for 20+ years now. And these particular
-qualities were baked in specifically for use in an open, transparent ecosystem.
-This is especially true when used in tandem with the ibgib DLT protocol. The
-overall streamlined architecture unifies:
-
-* Version control for mostly text-based source codebases
-* Version control for AI model branching and mobility
-* Public Key Infrastructure, including Certificate Authorities
-* File replication across both fixed and ad hoc configurations
-* Consensus across both fixed and ad hoc configurations
-* Sovereign DLT-based identity
-* Multi/Cross-chain interoperability and collaboration
-
-**Novel innovation to transition from opacity to translucency.**
 
 ## how it works
 
@@ -625,6 +612,32 @@ be less readable.
 Instead, something like `foo({ name, x, y, }: ArgObjectType)` or
 `foo({ name, x, y, }: {name: string, x: number, y: number})`
 is used.
+
+## why does this lib exist?
+
+To provide an alternative post quantum candidate to supplement existing
+approaches to simplify encryption in order to...
+
+* maximize DRY-ness across distributed codebases
+* minimize surface attack area
+* minimize esoteric magic
+* maximize granularity for Merkle-based DLT functional programming, e.g. smart contracts, API+DIDs, etc.
+
+encrypt-gib is written as a standalone encryption library. But. It's a new
+world, one which I've been anticipating for 20+ years now. And these particular
+qualities were baked in specifically for use in an open, transparent ecosystem.
+This is especially true when used in tandem with the ibgib DLT protocol. The
+overall streamlined architecture unifies:
+
+* Version control for mostly text-based source codebases
+* Version control for AI model branching and mobility
+* Public Key Infrastructure, including Certificate Authorities
+* File replication across both fixed and ad hoc configurations
+* Consensus across both fixed and ad hoc configurations
+* Sovereign DLT-based identity
+* Multi/Cross-chain interoperability and collaboration
+
+**Novel innovation to transition from opacity to translucency.**
 
 ## general notes
 
