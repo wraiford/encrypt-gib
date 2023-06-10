@@ -14,8 +14,8 @@ Node V19+ is required
 
 RLI is a work in progress.
 
-1. npm install --global @ibgib/encrypt-gib
-2. encrypt-gib --help
+1. `npm install --global @ibgib/encrypt-gib`
+2. `encrypt-gib --help`
 
 _note: the term "request line interface" itself is in line with my vision of a more dynamic, vibrant, and hopefully more polite future for distributed computation._
 
