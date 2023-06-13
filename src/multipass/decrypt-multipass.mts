@@ -46,7 +46,7 @@ export async function decryptImpl_multipass(args: DecryptArgs): Promise<DecryptR
     indexingMode = indexingMode || c.DEFAULT_ALPHABET_INDEXING_MODE_MULTIPASS;
 
     let { maxPassSectionLength, numOfPasses } = multipass;
-    maxPassSectionLength = maxPassSectionLength || c.DEFAULT_ADDITIONAL_PASSES_INTERMEDIATE_SECRET_LENGTH
+    maxPassSectionLength = maxPassSectionLength || c.DEFAULT_MAX_PASS_SECTION_LENGTH;
     numOfPasses = numOfPasses || c.DEFAULT_NUM_OF_PASSES;
 
     // #endregion

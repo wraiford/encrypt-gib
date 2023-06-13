@@ -19,13 +19,19 @@ export var DEFAULT_ALPHABET_INDEXING_MODE_LEGACY: AlphabetIndexingMode = 'indexO
  * unnecessary.
  */
 export var DEFAULT_ALPHABET_INDEXING_MODE_MULTIPASS: AlphabetIndexingMode = 'lastIndexOf';
-export var DEFAULT_MAX_PASS_SECTION_LENGTH: number = 500;
-export var DEFAULT_NUM_OF_PASSES: number = 4;
-export var DEFAULT_ADDITIONAL_PASSES_INTERMEDIATE_SECRET_LENGTH: number = 32;
 /**
- * used in `generateNewIntermediatePassSecretAddendum`
- * @internal
+ * Maximum size of a section, when using multipass mode.
+ *
+ * This is similar to a block size, but the final data section may not be the same size.
+ *
+ * Used in Multipass mode.
  */
-export var INTERNAL_MAGIC_DEFAULT_ADDITIONAL_PASSES_MIN_LENGTH: number = 10;
+export var DEFAULT_MAX_PASS_SECTION_LENGTH: number = 500;
+/**
+ * Default value for the number of passes when using multipass mode.
+ *
+ * Used in Multipass mode
+ */
+export var DEFAULT_NUM_OF_PASSES: number = 4;
 
 export var DEFAULT_ENCRYPTED_DATA_DELIMITER: string = ',';

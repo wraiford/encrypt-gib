@@ -1,10 +1,17 @@
 import * as h from '@ibgib/helper-gib';
 
-import * as c from '../constants.mjs';
 import { decodeHexStringToString, encodeStringToHexString } from '../helper.mjs';
 import { ALPHABET_INDEXING_MODES, EncryptArgs, EncryptResult, HashAlgorithm, SALT_STRATEGIES } from "../types.mjs";
 import { encryptFromHex_multipass } from './encrypt-from-hex-multipass.mjs';
 import { decryptImpl_multipass } from './decrypt-multipass.mjs';
+import {
+    DEFAULT_ALPHABET_INDEXING_MODE_MULTIPASS,
+    DEFAULT_ENCRYPTED_DATA_DELIMITER, DEFAULT_INITIAL_RECURSIONS,
+    DEFAULT_MAX_PASS_SECTION_LENGTH, DEFAULT_NUM_OF_PASSES,
+    ENCRYPT_LOG_A_LOT
+} from '../constants.mjs';
+
+// const logalot = ENCRYPT_LOG_A_LOT || true;
 
 /**
  * Does the actual encryption work using the original "legacy" streaming
@@ -41,15 +48,15 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
     // #region set args defaults
 
     if (!initialRecursions) {
-        console.warn(`${lc} initial recursions required. defaulting to ${c.DEFAULT_INITIAL_RECURSIONS}`);
-        initialRecursions = c.DEFAULT_INITIAL_RECURSIONS;
+        console.warn(`${lc} initial recursions required. defaulting to ${DEFAULT_INITIAL_RECURSIONS}`);
+        initialRecursions = DEFAULT_INITIAL_RECURSIONS;
     }
-    encryptedDataDelimiter = encryptedDataDelimiter || c.DEFAULT_ENCRYPTED_DATA_DELIMITER;
-    indexingMode = indexingMode || c.DEFAULT_ALPHABET_INDEXING_MODE_MULTIPASS;
+    encryptedDataDelimiter = encryptedDataDelimiter || DEFAULT_ENCRYPTED_DATA_DELIMITER;
+    indexingMode = indexingMode || DEFAULT_ALPHABET_INDEXING_MODE_MULTIPASS;
 
     let { maxPassSectionLength, numOfPasses } = multipass;
-    maxPassSectionLength = maxPassSectionLength || c.DEFAULT_ADDITIONAL_PASSES_INTERMEDIATE_SECRET_LENGTH
-    numOfPasses = numOfPasses || c.DEFAULT_NUM_OF_PASSES;
+    maxPassSectionLength = maxPassSectionLength || DEFAULT_MAX_PASS_SECTION_LENGTH;
+    numOfPasses = numOfPasses || DEFAULT_NUM_OF_PASSES;
 
     // #endregion set args defaults
 
@@ -93,6 +100,7 @@ export async function encryptImpl_multipass(args: EncryptArgs): Promise<EncryptR
     if (confirm) {
         // confirm data can be converted back into the original data
         // console.log(`${lc} hex decoding back to check with dataToEncrypt: ${hexEncodedData}`);
+        // if (logalot) { console.log(`${lc} hexEncodedData: ${hexEncodedData} (I: 5568ee9bad6bfaa6f266bc9c5b5fc423)`); }
         const confirmDecodedData = await decodeHexStringToString(hexEncodedData);
         // console.log(`${lc} checkDecodedData: ${confirmDecodedData}`);
         if (confirmDecodedData !== dataToEncrypt) {

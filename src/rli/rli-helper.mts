@@ -6,18 +6,18 @@ import * as tty from 'node:tty';
 import * as readline from 'node:readline/promises';
 import { stdin, stdout } from 'node:process'; // decide if use this or not
 
-import { extractErrorMsg, getTimestampInTicks, getUUID } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
+import { extractErrorMsg, getTimestampInTicks, getUUID, pretty } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 
-import { ENCRYPT_LOG_A_LOT } from "../constants.mjs";
+import { DEFAULT_MAX_PASS_SECTION_LENGTH, DEFAULT_NUM_OF_PASSES, ENCRYPT_LOG_A_LOT } from "../constants.mjs";
 import {
-    ARG_INFO_DATA_PATH, ARG_INFO_DATA_STRING, ARG_INFO_ENCRYPT, ARG_INFO_OUTPUT_PATH, ARG_INFO_SALT, ARG_INFO_STRENGTH, ENCRYPTED_OUTPUT_FILE_EXT
+    PARAM_INFO_DATA_PATH, PARAM_INFO_DATA_STRING, PARAM_INFO_ENCRYPT, PARAM_INFO_OUTPUT_PATH, PARAM_INFO_SALT, PARAM_INFO_STRENGTH, ENCRYPTED_OUTPUT_FILE_EXT, PARAM_INFO_INDEXING_MODE, PARAM_INFO_MULTIPASS_FLAG, PARAM_INFO_MULTIPASS_SECTION_LENGTH, PARAM_INFO_MULTIPASS_NUM_OF_PASSES, PARAM_INFO_HASH_ALGORITHM, PARAM_INFO_SALT_STRATEGY, PARAM_INFO_INITIAL_RECURSIONS
 } from "./rli-constants.mjs";
-import { ArgInfo, GenericEncryptionStrengthSetting } from "./rli-types.mjs";
-import { BaseArgs, EncryptResult } from '../types.mjs';
+import { RLIArgInfo, GenericEncryptionStrengthSetting, RLIArgType, RLIParamInfo, RLIArgTypeName } from "./rli-types.mjs";
+import { ALPHABET_INDEXING_MODES, AlphabetIndexingMode, BaseArgs, EncryptResult, HASH_ALGORITHMS, HashAlgorithm, MultipassOptions, SALT_STRATEGIES, SaltStrategy } from '../types.mjs';
 
 
 /**
- * used in verbose logging (across all ibgib libs atow)
+ * used in verbose logging
  */
 const logalot = ENCRYPT_LOG_A_LOT || false;
 
@@ -34,7 +34,6 @@ export async function tryRead({
         const resRead = await readFile(relOrAbsPath, { encoding: 'utf8' as BufferEncoding });
         if (logalot) {
             console.log(`${lc} record found. data length: ${resRead?.length ?? 0}. fullPath: ${relOrAbsPath}  (I: aa81b3d01e9542788b07302dd174c03d)`);
-            // console.dir(resRead)
         }
         return resRead;
     } catch (error) {
@@ -45,33 +44,28 @@ export async function tryRead({
     }
 }
 
-
 // #region extractArg functions
 
 export async function extractArg_dataToEncrypt({
     argInfos,
 }: {
-    argInfos: ArgInfo[],
+    argInfos: RLIArgInfo<RLIArgType>[],
 }): Promise<string> {
     const lc = `[${extractArg_dataToEncrypt.name}]`;
     try {
         if (logalot) { console.log(`${lc} starting... (I: 656ba405a9b42769d50d67e651b84823)`); }
         let resDataToEncrypt: string | undefined = undefined;
 
-        if (argInfos.some(x => x.name === ARG_INFO_DATA_PATH.name)) {
-            const argInfo = argInfos.filter(x => x.name === ARG_INFO_DATA_PATH.name)[0];
-            if (!argInfo.value) { throw new Error(`data path argInfo.value is falsy (E: 8ee94fe777615cac74aca495a5e2d923)`); }
-            resDataToEncrypt = await tryRead({ relOrAbsPath: argInfo.value! as string });
-        } else if (argInfos.some(x => x.name === ARG_INFO_DATA_STRING.name)) {
-            const argInfo = argInfos.filter(x => x.name === ARG_INFO_DATA_STRING.name)[0];
-            if (!argInfo.value) { throw new Error(`data path argInfo.value is falsy (E: e201fd0f95a641418bb735eb43a38c0b)`); }
-            resDataToEncrypt = argInfo.value! as string;
+        let dataPath = extractArgValue({ paramInfo: PARAM_INFO_DATA_PATH, argInfos }) as string | undefined;
+        if (dataPath) {
+            // data path given, so load from the path
+            resDataToEncrypt = await tryRead({ relOrAbsPath: dataPath });
         } else {
-            throw new Error(`(UNEXPECTED) encrypt chosen but neither data path nor data string provided? validation should have caught this. (E: c238fa6aab12684bc1582e618977a623)`);
+            // data path not given, so should have raw data string
+            resDataToEncrypt = extractArgValue({ paramInfo: PARAM_INFO_DATA_STRING, argInfos }) as string | undefined;
         }
 
         if (!resDataToEncrypt) { throw new Error(`could not get dataToEncrypt (E: 36ce341bc5b45394fbc97fab808d3823)`); }
-
         return resDataToEncrypt;
     } catch (error) {
         console.error(`${lc} ${error.message}`);
@@ -81,13 +75,15 @@ export async function extractArg_dataToEncrypt({
     }
 }
 
-export function extractArg_strength({ argInfos }: { argInfos: ArgInfo[]; }): GenericEncryptionStrengthSetting {
+export function extractArg_strength({ argInfos }: { argInfos: RLIArgInfo<RLIArgType>[]; }): GenericEncryptionStrengthSetting {
     const lc = `[${extractArg_strength.name}]`;
     let resStrength: GenericEncryptionStrengthSetting = 'stronger'; // default
-    if (argInfos.some(x => x.name === ARG_INFO_STRENGTH.name)) {
-        const argInfo = argInfos.filter(x => x.name === ARG_INFO_STRENGTH.name)[0]!;
-        if (['stronger', 'weaker'].includes(argInfo.value as string)) {
-            resStrength = argInfo.value! as GenericEncryptionStrengthSetting;
+
+    const strength =
+        extractArgValue({ paramInfo: PARAM_INFO_STRENGTH, argInfos }) as string | undefined;
+    if (strength) {
+        if (['stronger', 'weaker'].includes(strength)) {
+            resStrength = strength as GenericEncryptionStrengthSetting;
         } else {
             console.warn(`${lc}[WARNING] strength arg present but not valid. only "stronger" and "weaker" atow. defaulting to ${resStrength} (W: 979262e68df54b5a9aadcf514c7b54ad)`);
         }
@@ -100,17 +96,17 @@ export function extractArg_strength({ argInfos }: { argInfos: ArgInfo[]; }): Gen
 export async function extractArg_outputPath({
     argInfos,
 }: {
-    argInfos: ArgInfo[],
+    argInfos: RLIArgInfo<RLIArgType>[],
 }): Promise<string> {
     const lc = `[${extractArg_outputPath.name}]`;
     try {
         if (logalot) { console.log(`${lc} starting... (I: 0602544df47c3d8ec4201804657c9223)`); }
 
-        if (!argInfos.some(x => x.name === ARG_INFO_OUTPUT_PATH.name)) {
+        if (!argInfos.some(x => x.name === PARAM_INFO_OUTPUT_PATH.name)) {
             throw new Error(`not output path arg provided (E: 343f869cf386c3162702d4f5955e0323)`);
         }
 
-        const argInfo = argInfos.filter(x => x.name === ARG_INFO_OUTPUT_PATH.name)[0];
+        const argInfo = argInfos.filter(x => x.name === PARAM_INFO_OUTPUT_PATH.name)[0];
         if (!argInfo.value) {
             throw new Error(`(UNEXPECTED) output path arg found but value is falsy? (E: d8980a9ee032f093d1dac84706611f23)`);
         }
@@ -129,7 +125,7 @@ export async function extractArg_outputPath({
         }
 
         // add file extension only if we're encrypting and it isn't already there
-        const isEncrypt = argInfos.some(x => x.name === ARG_INFO_ENCRYPT.name);
+        const isEncrypt = argInfos.some(x => x.name === PARAM_INFO_ENCRYPT.name);
         if (isEncrypt && !relOrAbsPath.endsWith(ENCRYPTED_OUTPUT_FILE_EXT)) {
             console.log(`${lc} adding file extension .${ENCRYPTED_OUTPUT_FILE_EXT}`);
             relOrAbsPath += (relOrAbsPath.endsWith('.') ? ENCRYPTED_OUTPUT_FILE_EXT : `.${ENCRYPTED_OUTPUT_FILE_EXT}`);
@@ -147,22 +143,23 @@ export async function extractArg_outputPath({
 export async function extractArg_dataPath({
     argInfos,
 }: {
-    argInfos: ArgInfo[],
+    argInfos: RLIArgInfo<RLIArgType>[],
 }): Promise<string> {
     const lc = `[${extractArg_dataPath.name}]`;
     try {
         if (logalot) { console.log(`${lc} starting... (I: c2208d316e854be4a1d3a905d62c718a)`); }
 
-        if (!argInfos.some(x => x.name === ARG_INFO_DATA_PATH.name)) {
-            throw new Error(`not output path arg provided (E: 53650a263b2843b18a69f772464019e0)`);
-        }
+        // if (!argInfos.some(x => x.name === PARAM_INFO_DATA_PATH.name)) {
+        //     throw new Error(`not output path arg provided (E: 53650a263b2843b18a69f772464019e0)`);
+        // }
 
-        const argInfo = argInfos.filter(x => x.name === ARG_INFO_DATA_PATH.name)[0];
-        if (!argInfo.value) {
-            throw new Error(`(UNEXPECTED) data path arg found but value is falsy? (E: 4dda29a594584d548765a3123a4ef65b)`);
-        }
+        // const argInfo = argInfos.filter(x => x.name === PARAM_INFO_DATA_PATH.name)[0];
+        // if (!argInfo.value) {
+        //     throw new Error(`(UNEXPECTED) data path arg found but value is falsy? (E: 4dda29a594584d548765a3123a4ef65b)`);
+        // }
 
-        let relOrAbsPath = argInfo.value! as string;
+        // let relOrAbsPath = argInfo.value! as string;
+        const relOrAbsPath = extractArgValue({ paramInfo: PARAM_INFO_DATA_PATH, argInfos, throwIfNotFound: true }) as string;
 
         const stat = statSync(relOrAbsPath, { throwIfNoEntry: false });
         if (stat === undefined) {
@@ -186,21 +183,286 @@ export async function extractArg_dataPath({
 export function extractArg_salt({
     argInfos,
 }: {
-    argInfos: ArgInfo[],
+    argInfos: RLIArgInfo<RLIArgType>[],
 }): string | undefined {
     const lc = `[${extractArg_salt.name}]`;
     try {
         if (logalot) { console.log(`${lc} starting... (I: 839bf1336c0a46e9bbb32a079fe1d921)`); }
 
-        if (!argInfos.some(x => x.name === ARG_INFO_SALT.name)) {
-            throw new Error(`not output path arg provided (E: 7e297223571142dea62679ce4743a2b3)`);
+        const salt = extractArgValue({ paramInfo: PARAM_INFO_SALT, argInfos }) as string | undefined;
+        return salt;
+    } catch (error) {
+        console.error(`${lc} ${error.message}`);
+        throw error;
+    } finally {
+        if (logalot) { console.log(`${lc} complete.`); }
+    }
+}
+
+export function extractArg_indexingMode({
+    argInfos,
+}: {
+    argInfos: RLIArgInfo<RLIArgType>[],
+}): AlphabetIndexingMode | undefined {
+    const lc = `[${extractArg_indexingMode.name}]`;
+    try {
+        if (logalot) { console.log(`${lc} starting... (I: 2a761049c6494a429a749a06573793ef)`); }
+
+        const indexingModeRaw = extractArgValue({ paramInfo: PARAM_INFO_INDEXING_MODE, argInfos }) as string | undefined;
+
+        if (indexingModeRaw) {
+            if (!ALPHABET_INDEXING_MODES.includes(indexingModeRaw as AlphabetIndexingMode)) {
+                throw new Error(`unknown indexingMode: ${indexingModeRaw}. Must be one of: ${ALPHABET_INDEXING_MODES.join(", ")} (E: 107a4f075cfff0fdd5305908c8026623)`);
+            }
+            return indexingModeRaw as AlphabetIndexingMode;
+        } else {
+            return undefined;
+        }
+    } catch (error) {
+        console.error(`${lc} ${error.message}`);
+        throw error;
+    } finally {
+        if (logalot) { console.log(`${lc} complete.`); }
+    }
+}
+
+export function extractArg_multipass({
+    argInfos,
+}: {
+    argInfos: RLIArgInfo<RLIArgType>[],
+}): MultipassOptions | undefined {
+    const lc = `[${extractArg_multipass.name}]`;
+    try {
+        if (logalot) { console.log(`${lc} starting... (I: 965c3f7914054754a678767eae1d1afd)`); }
+
+        const multipassFlag = extractArgValue({ paramInfo: PARAM_INFO_MULTIPASS_FLAG, argInfos }) as boolean | undefined;
+        if (!multipassFlag) { return undefined; /* <<<< returns early */ }
+
+        let maxPassSectionLength = extractArgValue({
+            paramInfo: PARAM_INFO_MULTIPASS_SECTION_LENGTH,
+            argInfos,
+        }) as number | undefined;
+        if (maxPassSectionLength === 0) { throw new Error(`max section length cannot be 0 (E: e76c559f00d24401ead8cf23649a4523)`); }
+        if (maxPassSectionLength) {
+            if (!Number.isInteger(maxPassSectionLength)) { throw new Error(`invalid maxPassSectionLength (${maxPassSectionLength}). must be a valid integer (E: 66da0180dcb7f2fc0a57e47c8e230223)`); }
+        } else {
+            console.warn(`${lc} maxPassSectionLength not specified. using default ${DEFAULT_MAX_PASS_SECTION_LENGTH}. (W: 8e7a702553564c0ab8e578d34ce204ff)`);
+            maxPassSectionLength = DEFAULT_MAX_PASS_SECTION_LENGTH;
+        }
+        let numOfPasses = extractArgValue({
+            paramInfo: PARAM_INFO_MULTIPASS_NUM_OF_PASSES,
+            argInfos,
+        }) as number | undefined;
+        if (numOfPasses === 0) { throw new Error(`numOfPasses cannot be 0 (E: a6c7c54acf9045a5b0567ab7a78b15c1)`); }
+        if (numOfPasses) {
+            if (!Number.isInteger(numOfPasses)) { throw new Error(`invalid numOfPasses (${numOfPasses}). must be a valid integer (E: bbe19aab3a9c4277b4aa53a693d83398)`); }
+        } else {
+            console.warn(`${lc} numOfPasses not specified. using default ${DEFAULT_NUM_OF_PASSES} (W: 398983d673234ffb933eec64334fc806)`);
+            numOfPasses = DEFAULT_NUM_OF_PASSES;
         }
 
-        const argInfo = argInfos.filter(x => x.name === ARG_INFO_SALT.name)[0];
-        if (!argInfo.value) { return undefined; /* <<<< returns early */ }
+        const resMultipassOptions: MultipassOptions = {
+            maxPassSectionLength,
+            numOfPasses,
+        };
 
-        const salt = argInfo.value! as string;
-        return salt;
+        if (logalot) { console.log(`${lc} resMultipassOptions: ${pretty(resMultipassOptions)} (I: e9e1ee59a99ce2e7c614ff0663a5d323)`); }
+
+        return resMultipassOptions;
+    } catch (error) {
+        console.error(`${lc} ${error.message}`);
+        throw error;
+    } finally {
+        if (logalot) { console.log(`${lc} complete.`); }
+    }
+}
+
+export function extractArg_hashAlgorithm({
+    argInfos,
+}: {
+    argInfos: RLIArgInfo<RLIArgType>[],
+}): HashAlgorithm | undefined {
+    const lc = `[${extractArg_hashAlgorithm.name}]`;
+    try {
+        if (logalot) { console.log(`${lc} starting... (I: 6f42818e6a7a4c05a3d8a3da8e625598)`); }
+
+        const hashAlgorithm = extractArgValue({ paramInfo: PARAM_INFO_HASH_ALGORITHM, argInfos }) as string | undefined;
+
+        if (hashAlgorithm) {
+            if (!HASH_ALGORITHMS.includes(hashAlgorithm as HashAlgorithm)) {
+                throw new Error(`unknown hashAlgorithm: ${hashAlgorithm}. Must be one of: ${HASH_ALGORITHMS.join(", ")} (E: dae1ceaf6bfd4f82b9342a51c37ab1b2)`);
+            }
+            return hashAlgorithm as HashAlgorithm;
+        } else {
+            return undefined;
+        }
+    } catch (error) {
+        console.error(`${lc} ${error.message}`);
+        throw error;
+    } finally {
+        if (logalot) { console.log(`${lc} complete.`); }
+    }
+}
+
+export function extractArg_saltStrategy({
+    argInfos,
+}: {
+    argInfos: RLIArgInfo<RLIArgType>[],
+}): SaltStrategy | undefined {
+    const lc = `[${extractArg_saltStrategy.name}]`;
+    try {
+        if (logalot) { console.log(`${lc} starting... (I: dd727da94f2b410ebb1fa87a6213f3c5)`); }
+
+        const saltStrategy = extractArgValue({ paramInfo: PARAM_INFO_SALT_STRATEGY, argInfos }) as string | undefined;
+
+        if (saltStrategy) {
+            if (!SALT_STRATEGIES.includes(saltStrategy as SaltStrategy)) {
+                throw new Error(`unknown saltStrategy: ${saltStrategy}. Must be one of: ${SALT_STRATEGIES.join(", ")} (E: dae1ceaf6bfd4f82b9342a51c37ab1b2)`);
+            }
+            return saltStrategy as SaltStrategy;
+        } else {
+            return undefined;
+        }
+    } catch (error) {
+        console.error(`${lc} ${error.message}`);
+        throw error;
+    } finally {
+        if (logalot) { console.log(`${lc} complete.`); }
+    }
+}
+
+export function extractArg_initialRecursions({
+    argInfos,
+}: {
+    argInfos: RLIArgInfo<RLIArgType>[],
+}): number | undefined {
+    const lc = `[${extractArg_initialRecursions.name}]`;
+    try {
+        if (logalot) { console.log(`${lc} starting... (I: 336f7c30c8f142288b6b66dddf2e4f9a)`); }
+
+        const initialRecursions = extractArgValue({ paramInfo: PARAM_INFO_INITIAL_RECURSIONS, argInfos }) as number | undefined;
+
+        if (initialRecursions && typeof initialRecursions !== 'number') {
+            throw new Error(`(UNEXPECTED) initialRecursions expected to be a number at this point. (E: 8f31c7c7492b508a09e801e52775c323)`);
+        } else if (initialRecursions === 0) {
+            throw new Error(`initialRecursions cannot be 0. Must be a positive integer. (E: 1f312b78a1f384f97d97471923bcbc23)`);
+        } else if (initialRecursions) {
+            return initialRecursions;
+        } else {
+            return undefined;
+        }
+    } catch (error) {
+        console.error(`${lc} ${error.message}`);
+        throw error;
+    } finally {
+        if (logalot) { console.log(`${lc} complete.`); }
+    }
+}
+
+export function getValueFromRawString({
+    paramInfo,
+    valueString,
+}: {
+    paramInfo: RLIParamInfo;
+    valueString: string | undefined;
+}): RLIArgType | undefined {
+    const lc = `[${getValueFromRawString.name}]`;
+    try {
+        switch (paramInfo.argTypeName) {
+            case 'string':
+                // no conversion required
+                return valueString;
+            case 'integer':
+                // convert to a number
+                if (valueString === undefined) { throw new Error(`integer arg value is undefined. integers must be a valid integer string (E: ce17acde3b863ec5e2fdcc594f0f1423)`); }
+                const argValueInt = Number.parseInt(valueString);
+                if (typeof argValueInt !== 'number') { throw new Error(`arg value string (${valueString})did not parse to an integer. parse result: ${argValueInt} (E: 43cde93160458610ffb49fd16a02d123)`); }
+                return argValueInt;
+            case 'boolean':
+                // convert to a boolean
+                if (valueString === undefined || valueString === '') {
+                    if (!paramInfo.isFlag) { throw new Error(`valueString is undefined or empty string but paramInfo.argTypeName === 'boolean' and paramInfo.isFlag is falsy. (E: 482e595c0ec7344b04def76c1441d623)`); }
+                    // value is not provided, so the arg string is empty. the param is
+                    // a flag, so just its presence means the value is "true".
+                    return true;
+                } else if (valueString === null) {
+                    // ? is this even possible to get here?
+                    throw new Error(`(UNEXPECTED) valueString === null? (E: 78f548b93026407968356d9c4f106223)`);
+                } else {
+                    // typos will evaluate
+                    if (!['true', 'false'].includes(valueString)) {
+                        throw new Error(`invalid boolean valueString ("${valueString}"). must be either "true" or "false" (E: ba7a0d0804131acc2bd9ab37c0382523)`);
+                    }
+                    return valueString === 'true';
+                }
+            default:
+                throw new Error(`(UNEXPECTED) invalid paramInfo.argTypeName (E: c8b03ccb71394d22a29858b98753a123)`);
+        }
+    } catch (error) {
+        console.error(`${lc} ${error.message}`);
+        throw error;
+    }
+}
+
+/**
+ * extracts the arg value(s) from the given `argInfos` that correspond to the
+ * given `paramInfo`.
+ *
+ * @returns the arg.value corresponding to the given `paramInfo`
+ */
+export function extractArgValue<T extends RLIArgType>({
+    paramInfo,
+    argInfos,
+    throwIfNotFound,
+}: {
+    paramInfo: RLIParamInfo,
+    argInfos: RLIArgInfo<RLIArgType>[],
+    throwIfNotFound?: boolean,
+}): T | T[] | undefined {
+    const lc = `[${extractArgValue.name}]`;
+    try {
+        if (logalot) { console.log(`${lc} starting... (I: d376123d1e383f6323ef1fc6bb68f123)`); }
+
+        const filteredArgInfos = argInfos.filter(x => x.name === paramInfo.name);
+
+        if (logalot) { console.log(`${lc} filteredArgInfos: ${pretty(filteredArgInfos)} (I: a15831a9bf2930435960263c79d34323)`); }
+        if (filteredArgInfos.length === 0) {
+            if (throwIfNotFound) {
+                throw new Error(`param (name: ${paramInfo.name}) not found among args. (E: a74e41ca7de883f26f216a8d15ab7a23)`);
+            } else {
+                return undefined;
+            }
+        }
+
+        if (paramInfo.allowMultiple) {
+            // allow multiple args, so return type is T[]
+            if (paramInfo.isFlag) { throw new Error(`(UNEXPECTED) param (name: ${paramInfo.name}) is defined as allowMultiple and isFlag, which doesn't make sense. (E: 2854512470b2dde4b9a82fe225d22623)`); }
+            if (paramInfo.argTypeName === 'boolean') { throw new Error(`(UNEXPECTED) param (name: ${paramInfo.name}) is defined as allowMultiple and its type name is boolean, which doesn't make sense. (E: 259d77da25374726af4895eb19bb3041)`); }
+
+            if (filteredArgInfos.some(arg => arg.value !== 0 && !arg.value)) {
+                throw new Error(`param (name: ${paramInfo.name}) value is not 0 but is falsy. (E: e5af23465f6920a2ff6be7b7d49ef123)`);
+            }
+            return filteredArgInfos.map(arg => arg.value as T);
+
+        } else {
+            // allow only single arg, so return type is T
+            if (filteredArgInfos.length > 1) { throw new Error(`param (name: ${paramInfo.name}) had multiple args but param.allowMultiple is falsy. (E: 0d01157e773bd34f962f8713e7719c23)`); }
+
+            const argInfo = filteredArgInfos[0] as RLIArgInfo<T>;
+
+            // if the flag is set but no `="true"` or `="false"` provided, then
+            // we set the value to true
+            if (paramInfo.isFlag && argInfo.value === undefined) {
+                if (paramInfo.argTypeName !== 'boolean') {
+                    throw new Error(`(UNEXPECTED) paramInfo.isFlag is true but argTypeName !== 'boolean' (E: 79a86d0c6ef4c7740aa84211ebadbb23)`);
+                }
+                argInfo.value = true as T;
+            }
+
+            if (logalot) { console.log(`argInfo.value: ${argInfo.value}`) }
+
+            return argInfo.value;
+        }
     } catch (error) {
         console.error(`${lc} ${error.message}`);
         throw error;
@@ -211,12 +473,12 @@ export function extractArg_salt({
 
 // #endregion extractArg functions
 
-export async function getSecretFromUser({
+export async function promptForSecret({
     confirm,
 }: {
     confirm: boolean,
 }): Promise<string> {
-    const lc = `[${getSecretFromUser.name}]`;
+    const lc = `[${promptForSecret.name}]`;
     try {
         console.warn(`WARNING: THIS IS NOT IMPLEMENTED CORRECTLY WITH REGARDS TO PRIVACY`);
         const rl = readline.createInterface({
@@ -269,10 +531,20 @@ export async function getBaseArgsSet({
     secret,
     salt,
     strength,
+    indexingMode,
+    multipass,
+    hashAlgorithm,
+    saltStrategy,
+    initialRecursions,
 }: {
     secret: string,
     salt: string | undefined,
     strength: GenericEncryptionStrengthSetting,
+    indexingMode: AlphabetIndexingMode | undefined,
+    multipass: MultipassOptions | undefined,
+    hashAlgorithm: HashAlgorithm | undefined,
+    saltStrategy: SaltStrategy | undefined,
+    initialRecursions: number | undefined,
 }): Promise<BaseArgs> {
     const lc = `[${getBaseArgsSet.name}]`;
     if (!salt) {
@@ -282,34 +554,68 @@ export async function getBaseArgsSet({
     if (strength === 'weaker') {
         const args: BaseArgs = {
             secret,
-            initialRecursions: 1000,
+            initialRecursions: initialRecursions ?? 1000,
             salt,
-            saltStrategy: 'initialAppend',
-            hashAlgorithm: 'SHA-256',
-            indexingMode: 'indexOf',
-            multipass: undefined,
+            saltStrategy: saltStrategy ?? 'initialAppend',
+            hashAlgorithm: hashAlgorithm ?? 'SHA-256',
+            indexingMode: indexingMode ?? 'indexOf',
             recursionsPerHash: 2,
+            multipass,
         }
         return args;
     } else if (strength === 'stronger') {
+        multipass ??= {
+            maxPassSectionLength: 1000,
+            // every pass is c. 100 in length, so every 10 passes is 1000 characters per character,
+            // really selection of this depends on the length of data, but
+            // we'll assume it's relatively small data
+            numOfPasses: 100,
+        };
         const args: BaseArgs = {
             secret,
-            initialRecursions: 30_000,
+            initialRecursions: initialRecursions ?? 30_000,
             salt,
-            saltStrategy: 'prependPerHash',
-            hashAlgorithm: 'SHA-512',
-            indexingMode: 'lastIndexOf',
+            saltStrategy: saltStrategy ?? 'prependPerHash',
+            hashAlgorithm: hashAlgorithm ?? 'SHA-512',
+            indexingMode: indexingMode ?? 'lastIndexOf',
             recursionsPerHash: 10,
-            multipass: {
-                maxPassSectionLength: 1000,
-                // every pass is c. 100 in length, so every 10 passes is 1000 characters per character,
-                // really selection of this depends on the length of data, but
-                // we'll assume it's relatively small data
-                numOfPasses: 100,
-            }
+            multipass,
         }
         return args;
     } else {
         throw new Error(`unknown strength (${strength}) (E: 8eb1c2c865bd0514b8efd2149fb26523)`);
+    }
+}
+
+/**
+ * gets the paramInfo corresponding to the given argIdentifier
+ * @returns paramInfo from given `paramInfos`
+ */
+export function getParamInfo({ argIdentifier, paramInfos }: {
+    /**
+     * arg identifier is either a name or a synonym. atow only a name.
+     */
+    argIdentifier: string,
+    /**
+     * All possible param infos that the given arg identifier could be.
+     *
+     * I have this separate as I plan to pull this out into a separate lib
+     * (maybe helper-gib).
+     */
+    paramInfos: RLIParamInfo[]
+}): RLIParamInfo {
+    const lc = `[${getParamInfo.name}]`;
+    try {
+        const filteredParamInfos = paramInfos.filter(p => p.name === argIdentifier);
+        if (filteredParamInfos.length === 1) {
+            return filteredParamInfos[0];
+        } else if (filteredParamInfos.length > 1) {
+            throw new Error(`(UNEXPECTED) multiple param infos found with argIdentifier (${argIdentifier}) (E: d599a6647c5ead6d9fbac4e4c96e6d23)`);
+        } else {
+            throw new Error(`(UNEXPECTED) param info not found for argIdentifier (${argIdentifier}) (E: 47e704068f2eb5a0551cf45d0e72c823)`);
+        }
+    } catch (error) {
+        console.error(`${lc} ${error.message}`);
+        throw error;
     }
 }

@@ -1,3 +1,13 @@
+# 0.2.14
+
+* added multipass mode walkthrough section in the readme to contrast with
+  the default cipher stream mode.
+  * stubbed verbose logalot tracing throughout multipass mode for the
+    walkthrough, but commented all out.
+* request line interface (RLI) parameters added to expose more available
+  parameters.
+  * `initialRecursions`, `hashAlgorithm`, `saltSrategy`, etc.
+
 # 0.2.0/1
 
 * multipass mitigation against short-circuit brute force attacks.

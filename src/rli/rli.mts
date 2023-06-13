@@ -16,18 +16,20 @@
  * that matter).
  */
 
-import { execPath, cwd, stdin, stdout } from 'node:process'; // decide if use this or not
-import { statSync } from 'node:fs';
-import { readFile, writeFile } from 'node:fs/promises';
-import * as readline from 'node:readline/promises';
+import { execPath, cwd, } from 'node:process';
+import { writeFile } from 'node:fs/promises';
 
 import { decrypt, encrypt } from '../encrypt-decrypt.mjs';
-import { extractErrorMsg, getTimestamp, getTimestampInTicks, getUUID, pretty } from '@ibgib/helper-gib';
-import { BaseArgs, DecryptArgs, DecryptResult, EncryptResult } from '../types.mjs';
+import { pretty } from '@ibgib/helper-gib';
+import { DecryptArgs, DecryptResult, EncryptResult } from '../types.mjs';
 import { ENCRYPT_LOG_A_LOT } from '../constants.mjs';
-import { ArgInfo, GenericEncryptionStrengthSetting } from './rli-types.mjs';
-import { ARG_INFOS, ARG_INFO_HELP } from './rli-constants.mjs';
-import { extractArg_dataPath, extractArg_dataToEncrypt, extractArg_outputPath, extractArg_salt, extractArg_strength, getBaseArgsSet, getSecretFromUser, tryRead, validateEncryptedFile } from './rli-helper.mjs';
+import { RLIArgInfo, RLIArgType, } from './rli-types.mjs';
+import { PARAM_INFOS, PARAM_INFO_HELP, } from './rli-constants.mjs';
+import {
+    extractArg_dataPath, extractArg_dataToEncrypt, extractArg_hashAlgorithm, extractArg_indexingMode, extractArg_initialRecursions, extractArg_multipass, extractArg_outputPath,
+    extractArg_salt, extractArg_saltStrategy, extractArg_strength, getBaseArgsSet, getParamInfo, getValueFromRawString, promptForSecret,
+    tryRead, validateEncryptedFile,
+} from './rli-helper.mjs';
 
 /**
  * used in verbose logging (across all ibgib libs atow)
@@ -45,7 +47,7 @@ export async function execRLI(): Promise<void> {
         console.log(`${lc} args.join(' '): ${args.join(' ')}`);
         const validationErrors = validateArgs(args);
         if (!validationErrors) {
-            if (args.some(arg => argIs({ arg, argInfo: ARG_INFO_HELP }))) {
+            if (args.some(arg => argIs({ arg, argInfo: PARAM_INFO_HELP }))) {
                 showHelp({ args });
                 return;
             }
@@ -73,7 +75,7 @@ function argIs({
     argInfo,
 }: {
     arg: string,
-    argInfo: ArgInfo,
+    argInfo: RLIArgInfo,
 }): boolean {
     return arg?.replace('--', '').toLowerCase() === argInfo.name.toLowerCase();
 }
@@ -115,9 +117,9 @@ function showHelp({ args }: { args: string[] }): void {
 
     todo: flesh this out eh
 
-    for now, here are the ARG_INFOS in src and possibly implemented:
+    for now, here are the PARAM_INFOS in src and possibly implemented:
 
-${pretty(ARG_INFOS)}
+${pretty(PARAM_INFOS)}
 
     # examples
 
@@ -128,9 +130,9 @@ ${pretty(ARG_INFOS)}
     encrypt-gib --decrypt --data-path="./cool-encrypted-data.encrypt-gib"
 
     THIS IS INCOMPLETE, STUBBED HELP DOCUMENTATION ATOW. CHECK OUT RLI.MTS AND
-    THE LIBRARY ITSELF.
+    THE LIBRARY ITSELF. ATOW ALL NON-FLAG PARAMETER VALUES MUST BE IN DOUBLE QUOTES.
 
-    atow I use the following in encrypt-gib's root dir (stronger may take awhile):
+    atow I use the following in encrypt-gib's root dir (NOTE: "stronger" setting may take a LONG time):
     node . --encrypt --data-string="inline raw msg" --output-path="./ciphertext_file" --strength="weaker"
     node . --encrypt --data-path="./plaintext_file.md" --output-path="./ciphertext_file" --strength="stronger"
     node . --decrypt --data-path="./ciphertext_file.encrypt-gib" --output-path="./deciphered_file.md"
@@ -140,6 +142,8 @@ ${pretty(ARG_INFOS)}
 }
 
 /**
+ * stubbed validation function. there is also validation
+ * when building the arg info objects.
  *
  * @returns error string if found, otherwise null
  *
@@ -177,23 +181,33 @@ async function execRequestPlease(args: string[]): Promise<void> {
         console.log(`argsSansDashes: ${argsSansDashes}`);
 
         const argInfos = argsSansDashes.map((arg: string) => {
-            let name: string;
+            let argIdentifier: string;
+            let valueString: string;
             let value: string | number | boolean;
-            let argInfo: ArgInfo;
+            let argInfo: RLIArgInfo<RLIArgType>;
             if (arg.includes('=')) {
-                [name, value] = arg.split('=');
+                [argIdentifier, valueString] = arg.split('=');
+                const paramInfo = getParamInfo({ argIdentifier, paramInfos: PARAM_INFOS });
                 argInfo = {
-                    name,
-                    value,
+                    name: argIdentifier,
+                    value: getValueFromRawString({ paramInfo, valueString }),
                     isFlag: false,
+                    argTypeName: paramInfo.argTypeName,
+                    allowMultiple: paramInfo.allowMultiple,
                 }
             } else {
-                name = arg;
+                console.log(`${lc} arg without equals: ${arg}`)
+                argIdentifier = arg;
+                const paramInfo = getParamInfo({ argIdentifier, paramInfos: PARAM_INFOS });
                 argInfo = {
                     name: arg,
-                    isFlag: false,
+                    isFlag: true,
+                    value: getValueFromRawString({ paramInfo, valueString: undefined }),
+                    argTypeName: paramInfo.argTypeName,
+                    allowMultiple: paramInfo.allowMultiple,
                 }
             }
+            console.log(`${lc} argInfo: ${pretty(argInfo)}`);
             return argInfo!;
         });
 
@@ -217,9 +231,7 @@ async function execRequestPlease(args: string[]): Promise<void> {
     }
 }
 
-// #region encrypt
-
-async function execEncrypt({ argInfos }: { argInfos: ArgInfo[] }): Promise<void> {
+async function execEncrypt({ argInfos }: { argInfos: RLIArgInfo<RLIArgType>[] }): Promise<void> {
     const lc = `[${execEncrypt.name}]`;
     try {
         if (logalot) { console.log(`${lc} starting... (I: 6573534041881444ec8baca28c535d23)`); }
@@ -229,19 +241,28 @@ async function execEncrypt({ argInfos }: { argInfos: ArgInfo[] }): Promise<void>
         const outputPath = await extractArg_outputPath({ argInfos });
         if (!outputPath) { throw new Error(`was unable to get output data path from the args. (E: 85e4dc233e95174e9183a97a154c9223)`); }
 
-        const secret = await getSecretFromUser({ confirm: true });
+        const secret = await promptForSecret({ confirm: true });
         const dataToEncrypt = await extractArg_dataToEncrypt({ argInfos });
         const strength = extractArg_strength({ argInfos });
         const salt = extractArg_salt({ argInfos });
-        const baseArgs = await getBaseArgsSet({ secret, strength, salt });
-        const timerName = `[encrypt]`;
-        console.log(`${lc} starting timer for ${timerName}`);
-        console.time(timerName);
+        const indexingMode = extractArg_indexingMode({ argInfos });
+        const multipass = extractArg_multipass({ argInfos });
+        const hashAlgorithm = extractArg_hashAlgorithm({ argInfos });
+        const saltStrategy = extractArg_saltStrategy({ argInfos });
+        const initialRecursions = extractArg_initialRecursions({ argInfos });
+        const baseArgs = await getBaseArgsSet({
+            secret, strength,
+            salt, saltStrategy,
+            hashAlgorithm, initialRecursions, indexingMode,
+            multipass,
+        });
+        console.log(`${lc} starting timer`);
+        console.time(lc);
         const resEncrypt: EncryptResult = await encrypt({
             dataToEncrypt,
             ...baseArgs
         });
-        console.timeEnd(timerName);
+        console.timeEnd(lc);
         if ((resEncrypt.errors ?? []).length > 0) {
             throw new Error(`there were errors (E: 9dcdca9a704da976473ce396c8047123):\n${resEncrypt.errors!}`);
         }
@@ -259,12 +280,7 @@ async function execEncrypt({ argInfos }: { argInfos: ArgInfo[] }): Promise<void>
     }
 }
 
-// #endregion encrypt
-
-
-// #region decrypt
-
-async function execDecrypt({ argInfos }: { argInfos: ArgInfo[] }): Promise<void> {
+async function execDecrypt({ argInfos }: { argInfos: RLIArgInfo<RLIArgType>[] }): Promise<void> {
     const lc = `[${execDecrypt.name}]`;
     try {
         if (logalot) { console.log(`${lc} starting... (I: a45ae2cd4767411fbdea64ecc182ac93)`); }
@@ -284,14 +300,13 @@ async function execDecrypt({ argInfos }: { argInfos: ArgInfo[] }): Promise<void>
         // todo: validate the file
         await validateEncryptedFile(fileContents);
 
-        const secret = await getSecretFromUser({ confirm: false });
+        const secret = await promptForSecret({ confirm: false });
         fileContents.secret = secret!;
 
-        const timerName = `[decrypt]`;
-        console.log(`${lc} starting timer for ${timerName}`);
-        console.time(timerName);
+        console.log(`${lc} starting timer`);
+        console.time(lc);
         const resDecrypt: DecryptResult = await decrypt(fileContents);
-        console.timeEnd(timerName);
+        console.timeEnd(lc);
         if ((resDecrypt.errors ?? []).length > 0) {
             throw new Error(`there were errors (E: a3bb397a5b02439a95cc878a376c150b):\n${resDecrypt.errors!}`);
         }
@@ -310,12 +325,5 @@ async function execDecrypt({ argInfos }: { argInfos: ArgInfo[] }): Promise<void>
         if (logalot) { console.log(`${lc} complete.`); }
     }
 }
-
-// #endregion decrypt
-
-// #region common
-
-// #endregion common
-
 
 await execRLI();

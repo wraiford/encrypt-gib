@@ -1,47 +1,86 @@
-import { ArgInfo } from "./rli-types.mjs";
+import { RLIArgInfo, RLIParamInfo } from "./rli-types.mjs";
 
 export const ENCRYPTED_OUTPUT_FILE_EXT = 'encrypt-gib';
 
-export const ARG_INFO_HELP: ArgInfo = {
+export const PARAM_INFO_HELP: RLIParamInfo = {
     name: 'help',
     isFlag: true,
-}
-export const ARG_INFO_ENCRYPT: ArgInfo = {
+    argTypeName: 'boolean',
+};
+export const PARAM_INFO_ENCRYPT: RLIParamInfo = {
     name: 'encrypt',
-    isFlag: false,
-}
-export const ARG_INFO_DECRYPT: ArgInfo = {
+    isFlag: true,
+    argTypeName: 'boolean',
+};
+export const PARAM_INFO_DECRYPT: RLIParamInfo = {
     name: 'decrypt',
-    isFlag: false,
-}
-export const ARG_INFO_DATA_PATH: ArgInfo = {
+    isFlag: true,
+    argTypeName: 'boolean',
+};
+export const PARAM_INFO_DATA_PATH: RLIParamInfo = {
     name: 'data-path',
-    isFlag: false,
-}
-export const ARG_INFO_OUTPUT_PATH: ArgInfo = {
+    argTypeName: 'string',
+};
+export const PARAM_INFO_OUTPUT_PATH: RLIParamInfo = {
     name: 'output-path',
-    isFlag: false,
-}
-export const ARG_INFO_DATA_STRING: ArgInfo = {
+    argTypeName: 'string',
+};
+export const PARAM_INFO_DATA_STRING: RLIParamInfo = {
     name: 'data-string',
-    isFlag: false,
-}
-export const ARG_INFO_STRENGTH: ArgInfo = {
+    argTypeName: 'string',
+};
+export const PARAM_INFO_STRENGTH: RLIParamInfo = {
     name: 'strength',
-    isFlag: false,
-}
-export const ARG_INFO_SALT: ArgInfo = {
+    argTypeName: 'string',
+};
+export const PARAM_INFO_SALT: RLIParamInfo = {
     name: 'salt',
-    isFlag: false,
-}
+    argTypeName: 'string',
+};
+export const PARAM_INFO_INDEXING_MODE: RLIParamInfo = {
+    name: 'indexing-mode',
+    argTypeName: 'string',
+};
+export const PARAM_INFO_MULTIPASS_FLAG: RLIParamInfo = {
+    name: 'multipass',
+    argTypeName: 'boolean',
+    isFlag: true,
+};
+export const PARAM_INFO_MULTIPASS_SECTION_LENGTH: RLIParamInfo = {
+    name: 'section-length',
+    argTypeName: 'integer',
+};
+export const PARAM_INFO_MULTIPASS_NUM_OF_PASSES: RLIParamInfo = {
+    name: 'num-of-passes',
+    argTypeName: 'integer',
+};
+export const PARAM_INFO_HASH_ALGORITHM: RLIParamInfo = {
+    name: 'hash-algorithm',
+    argTypeName: 'string',
+};
+export const PARAM_INFO_SALT_STRATEGY: RLIParamInfo = {
+    name: 'salt-strategy',
+    argTypeName: 'string',
+};
+export const PARAM_INFO_INITIAL_RECURSIONS: RLIParamInfo = {
+    name: 'initial-recursions',
+    argTypeName: 'integer',
+};
 
-export const ARG_INFOS: ArgInfo[] = [
-    ARG_INFO_HELP,
-    ARG_INFO_ENCRYPT,
-    ARG_INFO_DECRYPT,
-    ARG_INFO_DATA_PATH,
-    ARG_INFO_OUTPUT_PATH,
-    ARG_INFO_DATA_STRING,
-    ARG_INFO_STRENGTH,
-    ARG_INFO_SALT,
+export const PARAM_INFOS: RLIParamInfo[] = [
+    PARAM_INFO_HELP,
+    PARAM_INFO_ENCRYPT,
+    PARAM_INFO_DECRYPT,
+    PARAM_INFO_DATA_PATH,
+    PARAM_INFO_OUTPUT_PATH,
+    PARAM_INFO_DATA_STRING,
+    PARAM_INFO_STRENGTH,
+    PARAM_INFO_SALT,
+    PARAM_INFO_INDEXING_MODE,
+    PARAM_INFO_MULTIPASS_FLAG,
+    PARAM_INFO_MULTIPASS_SECTION_LENGTH,
+    PARAM_INFO_MULTIPASS_NUM_OF_PASSES,
+    PARAM_INFO_HASH_ALGORITHM,
+    PARAM_INFO_SALT_STRATEGY,
+    PARAM_INFO_INITIAL_RECURSIONS,
 ];
