@@ -1,10 +1,14 @@
 # [limited-time opportunity](./OPPORTUNITY.md)
 
-# encrypt-gib - hash-based encryption
+# encrypt-gib - hash-based encryption at the hex level
 
 Encrypt-gib is a genuinely novel, post quantum encryption algorithm that uses
 cryptographic hashes as its only magical primitive, combined with moderately
 simple programming.
+
+The key innovation with this algorithm, which has both a relatively weaker
+stream mode **and** a multipass mode block-like mode - though the blocks in this
+case do not necessarily all have to be the same size.
 
 ## tl;dr - up & running
 
@@ -37,37 +41,41 @@ You can find API usage examples in the following respecs:
 
 The basic idea is this:
 
-**Use configurable recursive cryptographic hashes for "effectively random", one-time, just-in-time (JIT) alphabets and record indices into these alphabets as our ciphertext.**
+> Use configurable recursive cryptographic hashes for "effectively random",
+> one-time, just-in-time (JIT) alphabets and record **indices** into these alphabets
+> as our ciphertext. Combining functions such as XOR or others are not
+> available because they operate at the binary level. These are dynamically sized,
+> hex-based alphabets that act  more as a dynamic 1-time pad than a keystream.
 
-So our ciphertext represents indexes into hashes, with configurability on how we
-generate those hashes. Currently implemented with SHA-256 or SHA-512, our hash
-"alphabets" are in hex, so our data is first hex-encoded. Once we have decided
-our hash algorithm, we will key-stretch via recursive hashing of our secret. We
-then proceed to encipher (record indexes for) either single characters or larger
-sections of characters. For both encryption and decryption, we first build the
+So our ciphertext represents indexes into (possibly multiple) hash
+concatenations, with configurability on how we generate those hashes. Currently
+implemented with SHA-256 or SHA-512, our hash "alphabets" are in hex, so our
+data is first hex-encoded. Once we have decided our hash algorithm, we will
+key-stretch via recursive hashing of our secret. We then proceed to encipher
+(record indexes for) either single characters or larger sections of characters.
+Due to the non-zero probability of a single hash digest not containing an
+arbitrary plaintext hex character, these hash digests are concatenated, again in
+a configurable manner. For both encryption and decryption, we first build the
 relevant alphabet(s) and we either record or dereference the index of the hex
-character into that alphabet.
-
-Since we currently support SHA-256 and SHA-512, both are available in NodeJS and
-the browser to maximize isomorphic JavaScript. Also as a consequence of using
-these hash algorithms, our alphabets are in hex. So, we first encode our
-plaintext into hex, and once encoded, we can either stream-encipher hex
-character-by-character or encipher larger sections of hex characters. Either
-way, we leverage the randomness of hex character distribution in hashes by
-creating just-in-time (JIT) one-time alphabets via rounding functions, which
-build those alphabets in a plain, low-magic manner, using recursive hashing. We
-then publicly record the
-**indices** of a characters into their corresponding alphabets. These indexes
-are now the ciphertext.
+character into that alphabet, depending on whether we are encrypting or
+decrypting.
 
 _note: These alphabets are very similar to the keystreams, with recursive hashing used as the round function. But since the combining function is not an XOR, and indeed the stream is not at the bit level but the hex level, the term "alphabet" is more appropriate._
+
+The current implementatoin supports either SHA-256 and SHA-512 as parameters,
+because both are available in NodeJS and the browser to maximize isomorphic
+JavaScript. Conceptually, this could use any cryptographic hash or other
+function, as long as that function can deterministically build string
+concatenations into which we can index our plaintext.
 
 This index-based ciphertext can then be decrypted into the original by
 reconstructing the same alphabets based on the same private secret and other
 public encryption parameters. We then de-reference the ciphertext indices back
 into plaintext hex and finally decode to our original data.
 
-## core implementation
+## core implementation - stream mode
+
+_note: This is a description of the stream mode of the algorithm. This does not mean it is a stream-only algorithm. See the multipass section below for a block-like construction._
 
 The encryption and decryption code resides in `encrypt-decrypt.ts`.  It exports
 two public functions: `encrypt` and `decrypt`.
@@ -453,7 +461,507 @@ const decryptedData: string = await h.decodeHexStringToString(hexEncodedData);
 // 'foo'
 ```
 
-And that's it, we have our `decryptedData`!
+And that's it, we have our `decryptedData`.
+
+## core implementation - multipass mode `encrypt`
+
+The multipass mode acts similarly to the stream mode, but with a few key exceptions:
+
+1. The hex plaintext is divided into a maximum sized "sections".
+  * These are similar to "blocks", but they do not have to be the same size and the final block does not have to be padded.
+2. Each section's alphabets are constructed via a configurable number of passes. Each character's alphabet is extended only once per pass, and each is extended a minimum number of the pass count parameter.
+  * So a ciphertext's index cannot be deciphered (i.e. when brute-force guessing) until the entire alphabet is constructed, and the entire alphabet's construction depends on the previously executed rounds.
+
+So here is a walkthrough of the multipass mode. In this case, I'll add actual
+algorithm execution, as I've enabled verbose logging.
+
+_note: I will just cover the encrypt, as the decrypt works the same way as the stream version._
+
+ATOW here is the commandline I used, in the root folder after building via `npm run build`:
+
+```
+node . --encrypt --data-string="foo" --output-path="./foo.encrypt-gib" --indexing-mode="lastIndexOf" --salt-strategy="prependPerHash" --hash-algorithm="SHA-256" --salt="salt123" --initial-recursions="1000" --multipass --section-length="2" --num-of-passes="3"
+```
+
+Let's pick this up in execution at
+[`encrypt-from-hex-multipass.mts`](./src/multipass/encrypt-from-hex-multipass.mts),
+at which point we have already done initial validation of parameters, as well as
+hex-encoded the plaintext. Here is the first part (again with logging etc. removed):
+
+```typescript
+let prevHash = await doInitialRecursions({
+    secret,                         // foo
+    initialRecursions,              // 1000
+    salt,                           // salt123
+    saltStrategy: saltStrategy!,    // prependPerHash
+    hashAlgorithm: hashAlgorithm!,  // SHA-256
+});
+```
+
+So `doInitialRecursions` is our key-stretching, the same as in the stream version.
+
+Next we set our `AlphabetIndexingMode` function:
+
+```typescript
+const getIndexOfCharInAlphabet: (alphabet: string, hexChar: string) => number =
+    indexingMode === 'indexOf' ?
+        (alphabet: string, hexChar: string) => { return alphabet.indexOf(hexChar) } :
+        (alphabet: string, hexChar: string) => { return alphabet.lastIndexOf(hexChar) };
+
+// getIndexOfCharInAlphabet is (alphabet, hexChar) => { return alphabet.lastIndexOf(hexChar); }
+```
+
+In multipass mode, we want to use the `'lastIndexOf'` version. We'll go into why this is later.
+For now, the next block of code:
+
+```typescript
+let encryptedDataIndexes: number[] = [];                  // empty to start with
+let totalLength = hexEncodedData.length;                  // 6
+let passSectionLength = maxPassSectionLength;             // 2
+let passSections =
+  Math.ceil(totalLength / passSectionLength);             // 3 sections
+let finalPassSectionLength =
+  (totalLength % passSectionLength) || passSectionLength; // 2
+let indexHexEncodedDataAtStartOfPass = 0;
+```
+
+This prepares for executing the multipass sections. The `encryptedDataIndexes`
+is our ciphertext in the form of a JS array. The other variables will be used in
+iterating across the plaintext hex data. For our example, the total hex length
+is 6, which is evenly divisible by the section length 2, to give us a total of 3
+sections.
+
+Let's look at the details of that multipass iteration, as that is the guts of
+the strategy:
+
+```typescript
+for (let indexSection = 0; indexSection < passSections; indexSection++) {
+
+    // adjust the passSectionLength if it's the final one which might be shorter
+    const isFinalPassSection = indexSection === passSections - 1;
+    if (isFinalPassSection) { passSectionLength = finalPassSectionLength; }
+
+    // build all of the alphabets for the section (heart of multipass strategy)
+    const resGetAlphabets = await getAlphabetsThisSection({
+        passSectionLength, indexHexEncodedDataAtStartOfPass,
+        numOfPasses, hexEncodedData, recursionsPerHash,
+        salt, saltStrategy, prevHash, hashAlgorithm,
+    });
+
+    let alphabetsThisSection = resGetAlphabets.alphabetsThisSection;
+    // we always keep track of the prevHash, as this is used in each round function
+    prevHash = resGetAlphabets.prevHash;
+
+    // now that we have the alphabets, we can do our index substitution for each
+    // character in the section.
+    const encryptedIndexesThisSection = await getEncryptedIndexesThisSection({
+        alphabetsThisSection, passSectionLength,
+        indexHexEncodedDataAtStartOfPass, hexEncodedData,
+        numOfPasses, getIndexOfCharInAlphabet,
+    });
+
+    // add this section's ciphertext indexes to the total output
+    encryptedDataIndexes = encryptedDataIndexes.concat(encryptedIndexesThisSection);
+
+    // adjust our offset for the next section
+    indexHexEncodedDataAtStartOfPass += passSectionLength;
+}
+```
+
+So the essential part of this code is the `getAlphabetsThisSection` call. This
+is where we construct our alphabets differently than in stream mode. The rest of
+the code is relatively self-explanatory, so let's look at `getAlphabetsThisSection`:
+
+```typescript
+async function getAlphabetsThisSection(...): Promise<{ alphabetsThisSection: string[], prevHash: string }> {
+  let alphabetsThisSection: string[] = [];
+  let indexHexEncodedData: number;
+  let hash: string;
+  // first construct ALL alphabets for this pass section using the
+  // given number of passes. Note that zero or more of these alphabets
+  // may NOT include the hex character to encode, but this will be
+  // addressed in the next step.
+  for (let passNum = 0; passNum < numOfPasses; passNum++) {
+      for (let indexIntoPassSection = 0; indexIntoPassSection < passSectionLength; indexIntoPassSection++) {
+          indexHexEncodedData = indexHexEncodedDataAtStartOfPass + indexIntoPassSection;
+          let alphabet = alphabetsThisSection[indexIntoPassSection] ?? '';
+          for (let j = 0; j < recursionsPerHash; j++) {
+              const preHash = getPreHash({ prevHash, salt, saltStrategy });
+              hash = await h.hash({ s: preHash, algorithm: hashAlgorithm });
+              prevHash = hash;
+          }
+          alphabet += hash!;
+          alphabetsThisSection[indexIntoPassSection] = alphabet;
+      }
+  }
+
+  // at this point, each alphabet is the same size (numOfPasses * hash
+  // size), but it's not guaranteed that each alphabet will contain the
+  // plaintext character. so go through and extend any alphabets that do
+  // not yet contain the plaintext character
+  for (let indexIntoPassSection = 0; indexIntoPassSection < passSectionLength; indexIntoPassSection++) {
+      indexHexEncodedData = indexHexEncodedDataAtStartOfPass + indexIntoPassSection;
+      const hexCharFromData: string = hexEncodedData[indexHexEncodedData];
+      let alphabet = alphabetsThisSection[indexIntoPassSection];
+      while (!alphabet.includes(hexCharFromData)) {
+          for (let j = 0; j < recursionsPerHash; j++) {
+              const preHash = getPreHash({ prevHash, salt, saltStrategy });
+              hash = await h.hash({ s: preHash, algorithm: hashAlgorithm });
+              prevHash = hash;
+          }
+          alphabet += hash!;
+      }
+      alphabetsThisSection[indexIntoPassSection] = alphabet;
+  }
+
+  // at this point, each alphabet is at least the minimum size and is
+  // guaranteed to have at least once instance of the plaintext hexChar.
+  // we also return prevHash for use in the next section is applicable.
+  return { alphabetsThisSection, prevHash };
+  // ...
+}
+```
+
+So here is the real core of the multipass strategy. The point is that since we
+iterate over the entire section, we cannot create the early alphabets without
+going through each round function of the characters later in the section. This is
+why it is important to use the `lastIndexOf` in the enciphering, to fully utilize the
+multipass extensions of each alphabet.
+
+For our walkthrough example, here is the output of how the alphabets are constructed:
+
+```
+info: {
+  "passSectionLength": 2,
+  "numOfPasses": 3,
+  "indexHexEncodedDataAtStartOfPass": 0,
+  "prevHash": "b52d06e35b980303bc9615d27298e8ff3957ee681602ff3f87fd7dc7905b8c06"
+}
+
+```
+
+So notice here that we have the `prevHash` of
+`"b52d06e35b980303bc9615d27298e8ff3957ee681602ff3f87fd7dc7905b8c06"`. This is
+the starting point, plus our salt strategy that will generate the next alphabet.
+
+Here is the first alphabet extension for the first character in the section.
+Note that we don't care about the plaintext hex character yet, as these are the
+minimum-sized alphabets per our multipass parameters.
+
+```
+passNum: 0, indexIntoPassSection: 0
+starting alphabet:
+extended alphabet: e6d56fa02289b992a6cc5845a3c9af596cf8617239b5fa9720d2227c27e44c74
+alphabetsThisSection: [
+  "e6d56fa02289b992a6cc5845a3c9af596cf8617239b5fa9720d2227c27e44c74"
+]
+```
+
+So this means that for our first pass in our first section, our **partial**
+alphabet is
+`"e6d56fa02289b992a6cc5845a3c9af596cf8617239b5fa9720d2227c27e44c74"`.
+
+```
+passNum: 0, indexIntoPassSection: 1
+starting alphabet:
+extended alphabet: 4da38fc7ae8c5ee4f86476a34b3faf05d796e57c967ee11325914ea4a194a459
+alphabetsThisSection: [
+  "e6d56fa02289b992a6cc5845a3c9af596cf8617239b5fa9720d2227c27e44c74",
+  "4da38fc7ae8c5ee4f86476a34b3faf05d796e57c967ee11325914ea4a194a459"
+]
+```
+
+Here, we've done the first alphabet segment for the second character. Since our section
+size is 2 in this example, we are done with this pass. Now we will increment our `passNum`
+and extend each alphabet in the section:
+
+```
+passNum: 1, indexIntoPassSection: 0
+starting alphabet: e6d56fa02289b992a6cc5845a3c9af596cf8617239b5fa9720d2227c27e44c74
+extended alphabet: e6d56fa02289b992a6cc5845a3c9af596cf8617239b5fa9720d2227c27e44c7415485d12a2ecfb19624acad949dd5194b2cf4c17759cd81c6648c982a1499d01
+alphabetsThisSection: [
+  "e6d56fa02289b992a6cc5845a3c9af596cf8617239b5fa9720d2227c27e44c7415485d12a2ecfb19624acad949dd5194b2cf4c17759cd81c6648c982a1499d01",
+  "4da38fc7ae8c5ee4f86476a34b3faf05d796e57c967ee11325914ea4a194a459"
+]
+```
+Now notice that the first alphabet in the section is a length of 2 hash digests, while the second alphabet is still only
+one in length. This is because we extended the first alphabet...**but only after completing the previous pass**. We had to first
+perform our recursive hashing on `prevHash` for the second character in the section before we could extend the alphabet for our
+first character.
+
+This is the primary aspect of what helps mitigate against short-circuit brute forcing.
+
+Here is the next alphabet extension:
+
+```
+passNum: 1, indexIntoPassSection: 1
+starting alphabet: 4da38fc7ae8c5ee4f86476a34b3faf05d796e57c967ee11325914ea4a194a459
+extended alphabet: 4da38fc7ae8c5ee4f86476a34b3faf05d796e57c967ee11325914ea4a194a459e84a4fc843478f646356d9efa5368a58eb9666148d843e4b9a5b201f6653be90
+alphabetsThisSection: [
+  "e6d56fa02289b992a6cc5845a3c9af596cf8617239b5fa9720d2227c27e44c7415485d12a2ecfb19624acad949dd5194b2cf4c17759cd81c6648c982a1499d01",
+  "4da38fc7ae8c5ee4f86476a34b3faf05d796e57c967ee11325914ea4a194a459e84a4fc843478f646356d9efa5368a58eb9666148d843e4b9a5b201f6653be90"
+]
+```
+
+At this point, we have completed our (very short for pedantic reasons) second pass. Note that our alphabets are uniformly 2
+hash digests in length. Here is the output from the third and final pass:
+
+```
+passNum: 2, indexIntoPassSection: 0
+starting alphabet: e6d56fa02289b992a6cc5845a3c9af596cf8617239b5fa9720d2227c27e44c7415485d12a2ecfb19624acad949dd5194b2cf4c17759cd81c6648c982a1499d01
+extended alphabet: e6d56fa02289b992a6cc5845a3c9af596cf8617239b5fa9720d2227c27e44c7415485d12a2ecfb19624acad949dd5194b2cf4c17759cd81c6648c982a1499d017a1bdb0a395fd85b1c33c7434b6f9295ee0986ff080238fde230a865c43d57e8
+alphabetsThisSection: [
+  "e6d56fa02289b992a6cc5845a3c9af596cf8617239b5fa9720d2227c27e44c7415485d12a2ecfb19624acad949dd5194b2cf4c17759cd81c6648c982a1499d017a1bdb0a395fd85b1c33c7434b6f9295ee0986ff080238fde230a865c43d57e8",
+  "4da38fc7ae8c5ee4f86476a34b3faf05d796e57c967ee11325914ea4a194a459e84a4fc843478f646356d9efa5368a58eb9666148d843e4b9a5b201f6653be90"
+]
+passNum: 2, indexIntoPassSection: 1
+starting alphabet: 4da38fc7ae8c5ee4f86476a34b3faf05d796e57c967ee11325914ea4a194a459e84a4fc843478f646356d9efa5368a58eb9666148d843e4b9a5b201f6653be90
+extended alphabet: 4da38fc7ae8c5ee4f86476a34b3faf05d796e57c967ee11325914ea4a194a459e84a4fc843478f646356d9efa5368a58eb9666148d843e4b9a5b201f6653be904331789be106a17b1f0149e36bc615312fc53b340ac416f80484be2d529e6bd9
+alphabetsThisSection: [
+  "e6d56fa02289b992a6cc5845a3c9af596cf8617239b5fa9720d2227c27e44c7415485d12a2ecfb19624acad949dd5194b2cf4c17759cd81c6648c982a1499d017a1bdb0a395fd85b1c33c7434b6f9295ee0986ff080238fde230a865c43d57e8",
+  "4da38fc7ae8c5ee4f86476a34b3faf05d796e57c967ee11325914ea4a194a459e84a4fc843478f646356d9efa5368a58eb9666148d843e4b9a5b201f6653be904331789be106a17b1f0149e36bc615312fc53b340ac416f80484be2d529e6bd9"
+]
+```
+At this point, in addition to the aspect of the need to compute other hashes,
+note that we must also keep track of the other hashes in the section.  Either
+this will cost in terms of memory or in terms of processing+I/O (for overhead of
+temporary storage/retrieval of alphabets). For example, if you have a high
+number of passes (say 100), then for each section you not only have to execute a
+larger number of hashes, but also you have to somehow maintain all of the
+alphabet extensions for the entire section.
+
+So we now have two alphabets that each correspond to our two plaintext hex
+characters. BUT, zero or more these alphabets may not contain its corresponding
+plaintext character. This is the purpose of the second inner `for` loop. This
+additional step guarantees and extends _only those alphabets that require
+extending_. The larger the `numOfPasses`, the larger the alphabets, and
+consequently the less likely the probability of needing to extend. In our case,
+our data is too small to require any ad hoc extensions.
+
+```
+initial alphabetsThisSection (2): [
+  "e6d56fa02289b992a6cc5845a3c9af596cf8617239b5fa9720d2227c27e44c7415485d12a2ecfb19624acad949dd5194b2cf4c17759cd81c6648c982a1499d017a1bdb0a395fd85b1c33c7434b6f9295ee0986ff080238fde230a865c43d57e8",
+  "4da38fc7ae8c5ee4f86476a34b3faf05d796e57c967ee11325914ea4a194a459e84a4fc843478f646356d9efa5368a58eb9666148d843e4b9a5b201f6653be904331789be106a17b1f0149e36bc615312fc53b340ac416f80484be2d529e6bd9"
+]
+
+// at this point, each alphabet is the same size (numOfPasses * hash size), but it's not guaranteed that each alphabet will contain the plaintext character.  so go through and extend any alphabets that do not yet contain the plaintext character
+alphabetsThisSection (length 2): [
+  "e6d56fa02289b992a6cc5845a3c9af596cf8617239b5fa9720d2227c27e44c7415485d12a2ecfb19624acad949dd5194b2cf4c17759cd81c6648c982a1499d017a1bdb0a395fd85b1c33c7434b6f9295ee0986ff080238fde230a865c43d57e8",
+  "4da38fc7ae8c5ee4f86476a34b3faf05d796e57c967ee11325914ea4a194a459e84a4fc843478f646356d9efa5368a58eb9666148d843e4b9a5b201f6653be904331789be106a17b1f0149e36bc615312fc53b340ac416f80484be2d529e6bd9"
+]
+
+// no change because no extension required
+alphabetsThisSection (length 2): [
+  "e6d56fa02289b992a6cc5845a3c9af596cf8617239b5fa9720d2227c27e44c7415485d12a2ecfb19624acad949dd5194b2cf4c17759cd81c6648c982a1499d017a1bdb0a395fd85b1c33c7434b6f9295ee0986ff080238fde230a865c43d57e8",
+  "4da38fc7ae8c5ee4f86476a34b3faf05d796e57c967ee11325914ea4a194a459e84a4fc843478f646356d9efa5368a58eb9666148d843e4b9a5b201f6653be904331789be106a17b1f0149e36bc615312fc53b340ac416f80484be2d529e6bd9"
+]
+
+// guaranteed now
+guaranteed alphabetsThisSection (2): [
+  "e6d56fa02289b992a6cc5845a3c9af596cf8617239b5fa9720d2227c27e44c7415485d12a2ecfb19624acad949dd5194b2cf4c17759cd81c6648c982a1499d017a1bdb0a395fd85b1c33c7434b6f9295ee0986ff080238fde230a865c43d57e8",
+  "4da38fc7ae8c5ee4f86476a34b3faf05d796e57c967ee11325914ea4a194a459e84a4fc843478f646356d9efa5368a58eb9666148d843e4b9a5b201f6653be904331789be106a17b1f0149e36bc615312fc53b340ac416f80484be2d529e6bd9"
+]
+at this point, each alphabet is at least the minimum size and is guaranteed to have at least once instance of the plaintext hexChar.
+```
+
+Lastly, we return both the alphabets and our last generated `prevHash`, because we will use
+that `prevHash` in the next section. Here I also am logging the encrypted indexes
+both for this section and total:
+
+```
+return prevHash: 4331789be106a17b1f0149e36bc615312fc53b340ac416f80484be2d529e6bd9
+encryptedIndexesThisSection: 182,188
+encryptedDataIndexes so far: 182,188
+```
+
+This completes the first section. The second two in our walkthrough example work
+the same way (skip this if you already understand the algorithm):
+
+Here is the next section's output:
+
+```
+info: {
+  "passSectionLength": 2,
+  "numOfPasses": 3,
+  "indexHexEncodedDataAtStartOfPass": 2,
+  "prevHash": "4331789be106a17b1f0149e36bc615312fc53b340ac416f80484be2d529e6bd9"
+}
+```
+
+So we are about to start the next section. Note that here `prevHash` is the same
+as our above returned `prevHash`. Also, we are indexing into the hex plaintext
+corresponding to the next sections starting index.
+
+Here is the rest of the second section:
+
+```
+passNum: 0, indexIntoPassSection: 0
+starting alphabet:
+extended alphabet: af097e0a21ee86c3da614e84d7a9d7db5ecd712e893bc930e5d3a8d4ca22b351
+alphabetsThisSection: [
+  "af097e0a21ee86c3da614e84d7a9d7db5ecd712e893bc930e5d3a8d4ca22b351"
+]
+passNum: 0, indexIntoPassSection: 1
+starting alphabet:
+extended alphabet: 90b76a58bc1eea77cd2301f04422eb3d6715b80529b25efd203fe54a1ddb3acd
+alphabetsThisSection: [
+  "af097e0a21ee86c3da614e84d7a9d7db5ecd712e893bc930e5d3a8d4ca22b351",
+  "90b76a58bc1eea77cd2301f04422eb3d6715b80529b25efd203fe54a1ddb3acd"
+]
+passNum: 1, indexIntoPassSection: 0
+starting alphabet: af097e0a21ee86c3da614e84d7a9d7db5ecd712e893bc930e5d3a8d4ca22b351
+extended alphabet: af097e0a21ee86c3da614e84d7a9d7db5ecd712e893bc930e5d3a8d4ca22b351b7ab46d7843546c73b3b57dd84c50f1c484a972375e88101458a3fdf79ebc33f
+alphabetsThisSection: [
+  "af097e0a21ee86c3da614e84d7a9d7db5ecd712e893bc930e5d3a8d4ca22b351b7ab46d7843546c73b3b57dd84c50f1c484a972375e88101458a3fdf79ebc33f",
+  "90b76a58bc1eea77cd2301f04422eb3d6715b80529b25efd203fe54a1ddb3acd"
+]
+passNum: 1, indexIntoPassSection: 1
+starting alphabet: 90b76a58bc1eea77cd2301f04422eb3d6715b80529b25efd203fe54a1ddb3acd
+extended alphabet: 90b76a58bc1eea77cd2301f04422eb3d6715b80529b25efd203fe54a1ddb3acdba1dd5ffe6bee38c368778be7f06322dd93f24f13ba93920ab07f39aba16c6ac
+alphabetsThisSection: [
+  "af097e0a21ee86c3da614e84d7a9d7db5ecd712e893bc930e5d3a8d4ca22b351b7ab46d7843546c73b3b57dd84c50f1c484a972375e88101458a3fdf79ebc33f",
+  "90b76a58bc1eea77cd2301f04422eb3d6715b80529b25efd203fe54a1ddb3acdba1dd5ffe6bee38c368778be7f06322dd93f24f13ba93920ab07f39aba16c6ac"
+]
+passNum: 2, indexIntoPassSection: 0
+starting alphabet: af097e0a21ee86c3da614e84d7a9d7db5ecd712e893bc930e5d3a8d4ca22b351b7ab46d7843546c73b3b57dd84c50f1c484a972375e88101458a3fdf79ebc33f
+extended alphabet: af097e0a21ee86c3da614e84d7a9d7db5ecd712e893bc930e5d3a8d4ca22b351b7ab46d7843546c73b3b57dd84c50f1c484a972375e88101458a3fdf79ebc33f568134dc23212d55d35936b89488a81de25269da5637aa32d457599449d378e0
+alphabetsThisSection: [
+  "af097e0a21ee86c3da614e84d7a9d7db5ecd712e893bc930e5d3a8d4ca22b351b7ab46d7843546c73b3b57dd84c50f1c484a972375e88101458a3fdf79ebc33f568134dc23212d55d35936b89488a81de25269da5637aa32d457599449d378e0",
+  "90b76a58bc1eea77cd2301f04422eb3d6715b80529b25efd203fe54a1ddb3acdba1dd5ffe6bee38c368778be7f06322dd93f24f13ba93920ab07f39aba16c6ac"
+]
+passNum: 2, indexIntoPassSection: 1
+starting alphabet: 90b76a58bc1eea77cd2301f04422eb3d6715b80529b25efd203fe54a1ddb3acdba1dd5ffe6bee38c368778be7f06322dd93f24f13ba93920ab07f39aba16c6ac
+extended alphabet: 90b76a58bc1eea77cd2301f04422eb3d6715b80529b25efd203fe54a1ddb3acdba1dd5ffe6bee38c368778be7f06322dd93f24f13ba93920ab07f39aba16c6ac711c1a58472281001f2bedcc93984c65eb7181328e556d6224264679fd5c270c
+alphabetsThisSection: [
+  "af097e0a21ee86c3da614e84d7a9d7db5ecd712e893bc930e5d3a8d4ca22b351b7ab46d7843546c73b3b57dd84c50f1c484a972375e88101458a3fdf79ebc33f568134dc23212d55d35936b89488a81de25269da5637aa32d457599449d378e0",
+  "90b76a58bc1eea77cd2301f04422eb3d6715b80529b25efd203fe54a1ddb3acdba1dd5ffe6bee38c368778be7f06322dd93f24f13ba93920ab07f39aba16c6ac711c1a58472281001f2bedcc93984c65eb7181328e556d6224264679fd5c270c"
+]
+initial alphabetsThisSection (2): [
+  "af097e0a21ee86c3da614e84d7a9d7db5ecd712e893bc930e5d3a8d4ca22b351b7ab46d7843546c73b3b57dd84c50f1c484a972375e88101458a3fdf79ebc33f568134dc23212d55d35936b89488a81de25269da5637aa32d457599449d378e0",
+  "90b76a58bc1eea77cd2301f04422eb3d6715b80529b25efd203fe54a1ddb3acdba1dd5ffe6bee38c368778be7f06322dd93f24f13ba93920ab07f39aba16c6ac711c1a58472281001f2bedcc93984c65eb7181328e556d6224264679fd5c270c"
+]
+at this point, each alphabet is the same size (numOfPasses * hash size), but it's not guaranteed that each alphabet will contain the plaintext character.  so go through and extend any alphabets that do not yet contain the plaintext character
+alphabetsThisSection (length 2): [
+  "af097e0a21ee86c3da614e84d7a9d7db5ecd712e893bc930e5d3a8d4ca22b351b7ab46d7843546c73b3b57dd84c50f1c484a972375e88101458a3fdf79ebc33f568134dc23212d55d35936b89488a81de25269da5637aa32d457599449d378e0",
+  "90b76a58bc1eea77cd2301f04422eb3d6715b80529b25efd203fe54a1ddb3acdba1dd5ffe6bee38c368778be7f06322dd93f24f13ba93920ab07f39aba16c6ac711c1a58472281001f2bedcc93984c65eb7181328e556d6224264679fd5c270c"
+]
+alphabetsThisSection (length 2): [
+  "af097e0a21ee86c3da614e84d7a9d7db5ecd712e893bc930e5d3a8d4ca22b351b7ab46d7843546c73b3b57dd84c50f1c484a972375e88101458a3fdf79ebc33f568134dc23212d55d35936b89488a81de25269da5637aa32d457599449d378e0",
+  "90b76a58bc1eea77cd2301f04422eb3d6715b80529b25efd203fe54a1ddb3acdba1dd5ffe6bee38c368778be7f06322dd93f24f13ba93920ab07f39aba16c6ac711c1a58472281001f2bedcc93984c65eb7181328e556d6224264679fd5c270c"
+]
+guaranteed alphabetsThisSection (2): [
+  "af097e0a21ee86c3da614e84d7a9d7db5ecd712e893bc930e5d3a8d4ca22b351b7ab46d7843546c73b3b57dd84c50f1c484a972375e88101458a3fdf79ebc33f568134dc23212d55d35936b89488a81de25269da5637aa32d457599449d378e0",
+  "90b76a58bc1eea77cd2301f04422eb3d6715b80529b25efd203fe54a1ddb3acdba1dd5ffe6bee38c368778be7f06322dd93f24f13ba93920ab07f39aba16c6ac711c1a58472281001f2bedcc93984c65eb7181328e556d6224264679fd5c270c"
+]
+at this point, each alphabet is at least the minimum size and is guaranteed to have at least once instance of the plaintext hexChar.
+return prevHash: 711c1a58472281001f2bedcc93984c65eb7181328e556d6224264679fd5c270c
+[encryptFromHex_multipass] alphabetsThisSection: [
+  "af097e0a21ee86c3da614e84d7a9d7db5ecd712e893bc930e5d3a8d4ca22b351b7ab46d7843546c73b3b57dd84c50f1c484a972375e88101458a3fdf79ebc33f568134dc23212d55d35936b89488a81de25269da5637aa32d457599449d378e0",
+  "90b76a58bc1eea77cd2301f04422eb3d6715b80529b25efd203fe54a1ddb3acdba1dd5ffe6bee38c368778be7f06322dd93f24f13ba93920ab07f39aba16c6ac711c1a58472281001f2bedcc93984c65eb7181328e556d6224264679fd5c270c"
+]
+prevHash after alphabets created: 711c1a58472281001f2bedcc93984c65eb7181328e556d6224264679fd5c270c
+encryptedIndexesThisSection: 169,184
+encryptedDataIndexes so far: 182,188,169,184
+```
+
+So the second section added two more indexes.
+
+Here is the third section:
+
+```
+passSectionLength: 2
+```
+
+Note that this is the final section and could have had a shorter length.
+
+```
+[getAlphabetsThisSection] info: {
+  "passSectionLength": 2,
+  "numOfPasses": 3,
+  "indexHexEncodedDataAtStartOfPass": 4,
+  "prevHash": "711c1a58472281001f2bedcc93984c65eb7181328e556d6224264679fd5c270c"
+}
+[getAlphabetsThisSection] passNum: 0, indexIntoPassSection: 0
+starting alphabet:
+extended alphabet: 2941e321bf93d4c37cfcbb10cb1134686c835dc478c4a56ddc846806edb5cbdf
+alphabetsThisSection: [
+  "2941e321bf93d4c37cfcbb10cb1134686c835dc478c4a56ddc846806edb5cbdf"
+]
+passNum: 0, indexIntoPassSection: 1
+starting alphabet:
+extended alphabet: 512f116cdcc98e519ccdaa8794e9b60206db8c21dbd09df6459bbc3a0401370c
+alphabetsThisSection: [
+  "2941e321bf93d4c37cfcbb10cb1134686c835dc478c4a56ddc846806edb5cbdf",
+  "512f116cdcc98e519ccdaa8794e9b60206db8c21dbd09df6459bbc3a0401370c"
+]
+passNum: 1, indexIntoPassSection: 0
+starting alphabet: 2941e321bf93d4c37cfcbb10cb1134686c835dc478c4a56ddc846806edb5cbdf
+extended alphabet: 2941e321bf93d4c37cfcbb10cb1134686c835dc478c4a56ddc846806edb5cbdf2e7d955fffdc9cf3eb8e2baf3ebeec72fd88f68d8335744c891ce647b2244436
+alphabetsThisSection: [
+  "2941e321bf93d4c37cfcbb10cb1134686c835dc478c4a56ddc846806edb5cbdf2e7d955fffdc9cf3eb8e2baf3ebeec72fd88f68d8335744c891ce647b2244436",
+  "512f116cdcc98e519ccdaa8794e9b60206db8c21dbd09df6459bbc3a0401370c"
+]
+passNum: 1, indexIntoPassSection: 1
+starting alphabet: 512f116cdcc98e519ccdaa8794e9b60206db8c21dbd09df6459bbc3a0401370c
+extended alphabet: 512f116cdcc98e519ccdaa8794e9b60206db8c21dbd09df6459bbc3a0401370cfcf2d5abfb1c7d63a12025b3b610476f3fcd1e1ea9d8299ca8187bb4d6289149
+alphabetsThisSection: [
+  "2941e321bf93d4c37cfcbb10cb1134686c835dc478c4a56ddc846806edb5cbdf2e7d955fffdc9cf3eb8e2baf3ebeec72fd88f68d8335744c891ce647b2244436",
+  "512f116cdcc98e519ccdaa8794e9b60206db8c21dbd09df6459bbc3a0401370cfcf2d5abfb1c7d63a12025b3b610476f3fcd1e1ea9d8299ca8187bb4d6289149"
+]
+passNum: 2, indexIntoPassSection: 0
+starting alphabet: 2941e321bf93d4c37cfcbb10cb1134686c835dc478c4a56ddc846806edb5cbdf2e7d955fffdc9cf3eb8e2baf3ebeec72fd88f68d8335744c891ce647b2244436
+extended alphabet: 2941e321bf93d4c37cfcbb10cb1134686c835dc478c4a56ddc846806edb5cbdf2e7d955fffdc9cf3eb8e2baf3ebeec72fd88f68d8335744c891ce647b22444362d1d7e6e4650472fb7877dc268563ccf0262d0beaa5d727325d77ac659e8798c
+alphabetsThisSection: [
+  "2941e321bf93d4c37cfcbb10cb1134686c835dc478c4a56ddc846806edb5cbdf2e7d955fffdc9cf3eb8e2baf3ebeec72fd88f68d8335744c891ce647b22444362d1d7e6e4650472fb7877dc268563ccf0262d0beaa5d727325d77ac659e8798c",
+  "512f116cdcc98e519ccdaa8794e9b60206db8c21dbd09df6459bbc3a0401370cfcf2d5abfb1c7d63a12025b3b610476f3fcd1e1ea9d8299ca8187bb4d6289149"
+]
+passNum: 2, indexIntoPassSection: 1
+starting alphabet: 512f116cdcc98e519ccdaa8794e9b60206db8c21dbd09df6459bbc3a0401370cfcf2d5abfb1c7d63a12025b3b610476f3fcd1e1ea9d8299ca8187bb4d6289149
+extended alphabet: 512f116cdcc98e519ccdaa8794e9b60206db8c21dbd09df6459bbc3a0401370cfcf2d5abfb1c7d63a12025b3b610476f3fcd1e1ea9d8299ca8187bb4d628914969a999ab4297894f3f64f84ab59b61748d9e9657de819cd926a2591e82805d02
+alphabetsThisSection: [
+  "2941e321bf93d4c37cfcbb10cb1134686c835dc478c4a56ddc846806edb5cbdf2e7d955fffdc9cf3eb8e2baf3ebeec72fd88f68d8335744c891ce647b22444362d1d7e6e4650472fb7877dc268563ccf0262d0beaa5d727325d77ac659e8798c",
+  "512f116cdcc98e519ccdaa8794e9b60206db8c21dbd09df6459bbc3a0401370cfcf2d5abfb1c7d63a12025b3b610476f3fcd1e1ea9d8299ca8187bb4d628914969a999ab4297894f3f64f84ab59b61748d9e9657de819cd926a2591e82805d02"
+]
+initial alphabetsThisSection (2): [
+  "2941e321bf93d4c37cfcbb10cb1134686c835dc478c4a56ddc846806edb5cbdf2e7d955fffdc9cf3eb8e2baf3ebeec72fd88f68d8335744c891ce647b22444362d1d7e6e4650472fb7877dc268563ccf0262d0beaa5d727325d77ac659e8798c",
+  "512f116cdcc98e519ccdaa8794e9b60206db8c21dbd09df6459bbc3a0401370cfcf2d5abfb1c7d63a12025b3b610476f3fcd1e1ea9d8299ca8187bb4d628914969a999ab4297894f3f64f84ab59b61748d9e9657de819cd926a2591e82805d02"
+]
+at this point, each alphabet is the same size (numOfPasses * hash size), but it's not guaranteed that each alphabet will contain the plaintext character.  so go through and extend any alphabets that do not yet contain the plaintext character
+alphabetsThisSection (length 2): [
+  "2941e321bf93d4c37cfcbb10cb1134686c835dc478c4a56ddc846806edb5cbdf2e7d955fffdc9cf3eb8e2baf3ebeec72fd88f68d8335744c891ce647b22444362d1d7e6e4650472fb7877dc268563ccf0262d0beaa5d727325d77ac659e8798c",
+  "512f116cdcc98e519ccdaa8794e9b60206db8c21dbd09df6459bbc3a0401370cfcf2d5abfb1c7d63a12025b3b610476f3fcd1e1ea9d8299ca8187bb4d628914969a999ab4297894f3f64f84ab59b61748d9e9657de819cd926a2591e82805d02"
+]
+alphabetsThisSection (length 2): [
+  "2941e321bf93d4c37cfcbb10cb1134686c835dc478c4a56ddc846806edb5cbdf2e7d955fffdc9cf3eb8e2baf3ebeec72fd88f68d8335744c891ce647b22444362d1d7e6e4650472fb7877dc268563ccf0262d0beaa5d727325d77ac659e8798c",
+  "512f116cdcc98e519ccdaa8794e9b60206db8c21dbd09df6459bbc3a0401370cfcf2d5abfb1c7d63a12025b3b610476f3fcd1e1ea9d8299ca8187bb4d628914969a999ab4297894f3f64f84ab59b61748d9e9657de819cd926a2591e82805d02"
+]
+guaranteed alphabetsThisSection (2): [
+  "2941e321bf93d4c37cfcbb10cb1134686c835dc478c4a56ddc846806edb5cbdf2e7d955fffdc9cf3eb8e2baf3ebeec72fd88f68d8335744c891ce647b22444362d1d7e6e4650472fb7877dc268563ccf0262d0beaa5d727325d77ac659e8798c",
+  "512f116cdcc98e519ccdaa8794e9b60206db8c21dbd09df6459bbc3a0401370cfcf2d5abfb1c7d63a12025b3b610476f3fcd1e1ea9d8299ca8187bb4d628914969a999ab4297894f3f64f84ab59b61748d9e9657de819cd926a2591e82805d02"
+]
+at this point, each alphabet is at least the minimum size and is guaranteed to have at least once instance of the plaintext hexChar.
+return prevHash: 69a999ab4297894f3f64f84ab59b61748d9e9657de819cd926a2591e82805d02
+[encryptFromHex_multipass] alphabetsThisSection: [
+  "2941e321bf93d4c37cfcbb10cb1134686c835dc478c4a56ddc846806edb5cbdf2e7d955fffdc9cf3eb8e2baf3ebeec72fd88f68d8335744c891ce647b22444362d1d7e6e4650472fb7877dc268563ccf0262d0beaa5d727325d77ac659e8798c",
+  "512f116cdcc98e519ccdaa8794e9b60206db8c21dbd09df6459bbc3a0401370cfcf2d5abfb1c7d63a12025b3b610476f3fcd1e1ea9d8299ca8187bb4d628914969a999ab4297894f3f64f84ab59b61748d9e9657de819cd926a2591e82805d02"
+]
+prevHash after alphabets created: 69a999ab4297894f3f64f84ab59b61748d9e9657de819cd926a2591e82805d02
+encryptedIndexesThisSection: 183,148
+encryptedDataIndexes so far: 182,188,169,184,183,148
+final resEncryptedData: 182,188,169,184,183,148
+```
+
+So there we have it. We went from our data, "foo", which is 3 characters in
+length. Hex encoding turned this into 6 characters in length. We then, working
+with 2-character sections, built up alphabets, each one being at least 3-hash
+digest's in length. We then recorded the indexes into those alphabets. All of
+this worked at the hex level, none of it performed an XOR combining function.
+It did not act strictly as a stream cipher, because we had to process multiple
+characters' alphabets as a whole. Nor did it necessarily have to work as a
+block, because there was a non-zero probability of needing to extend an
+individual alphabet; also, the final section did not have to be padded.
+
+At this point, the rest of the algorithm works the same as the stream version.
 
 ## attacks
 
