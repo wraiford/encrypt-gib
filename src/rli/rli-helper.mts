@@ -1,8 +1,6 @@
 import * as pathUtils from 'path';
 import { statSync } from 'node:fs';
-import { readFile, writeFile } from 'node:fs/promises';
-import { ReadStream } from 'node:tty';
-import * as tty from 'node:tty';
+import { readFile, } from 'node:fs/promises';
 import * as readline from 'node:readline/promises';
 import { stdin, stdout } from 'node:process'; // decide if use this or not
 
@@ -10,10 +8,16 @@ import { extractErrorMsg, getTimestampInTicks, getUUID, pretty } from '@ibgib/he
 
 import { DEFAULT_MAX_PASS_SECTION_LENGTH, DEFAULT_NUM_OF_PASSES, ENCRYPT_LOG_A_LOT } from "../constants.mjs";
 import {
-    PARAM_INFO_DATA_PATH, PARAM_INFO_DATA_STRING, PARAM_INFO_ENCRYPT, PARAM_INFO_OUTPUT_PATH, PARAM_INFO_SALT, PARAM_INFO_STRENGTH, ENCRYPTED_OUTPUT_FILE_EXT, PARAM_INFO_INDEXING_MODE, PARAM_INFO_MULTIPASS_FLAG, PARAM_INFO_MULTIPASS_SECTION_LENGTH, PARAM_INFO_MULTIPASS_NUM_OF_PASSES, PARAM_INFO_HASH_ALGORITHM, PARAM_INFO_SALT_STRATEGY, PARAM_INFO_INITIAL_RECURSIONS
+    PARAM_INFO_DATA_PATH, PARAM_INFO_DATA_STRING, PARAM_INFO_ENCRYPT, PARAM_INFO_OUTPUT_PATH, PARAM_INFO_SALT,
+    PARAM_INFO_STRENGTH, ENCRYPTED_OUTPUT_FILE_EXT, PARAM_INFO_INDEXING_MODE, PARAM_INFO_MULTIPASS_FLAG,
+    PARAM_INFO_MULTIPASS_SECTION_LENGTH, PARAM_INFO_MULTIPASS_NUM_OF_PASSES, PARAM_INFO_HASH_ALGORITHM,
+    PARAM_INFO_SALT_STRATEGY, PARAM_INFO_INITIAL_RECURSIONS
 } from "./rli-constants.mjs";
-import { RLIArgInfo, GenericEncryptionStrengthSetting, RLIArgType, RLIParamInfo, RLIArgTypeName } from "./rli-types.mjs";
-import { ALPHABET_INDEXING_MODES, AlphabetIndexingMode, BaseArgs, EncryptResult, HASH_ALGORITHMS, HashAlgorithm, MultipassOptions, SALT_STRATEGIES, SaltStrategy } from '../types.mjs';
+import { RLIArgInfo, GenericEncryptionStrengthSetting, RLIArgType, RLIParamInfo, } from "./rli-types.mjs";
+import {
+    ALPHABET_INDEXING_MODES, AlphabetIndexingMode, BaseArgs, EncryptResult,
+    HASH_ALGORITHMS, HashAlgorithm, MultipassOptions, SALT_STRATEGIES, SaltStrategy
+} from '../types.mjs';
 
 
 /**
@@ -480,7 +484,7 @@ export async function promptForSecret({
 }): Promise<string> {
     const lc = `[${promptForSecret.name}]`;
     try {
-        console.warn(`WARNING: THIS IS NOT IMPLEMENTED CORRECTLY WITH REGARDS TO PRIVACY`);
+        console.warn(`WARNING: THIS PASSWORD INPUT IS NOT IMPLEMENTED CORRECTLY WITH REGARDS TO PRIVACY`);
         const rl = readline.createInterface({
             input: stdin,
             output: stdout

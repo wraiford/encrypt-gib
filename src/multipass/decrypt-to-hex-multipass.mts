@@ -1,6 +1,6 @@
 import * as h from '@ibgib/helper-gib';
 
-import { doInitialRecursions, getPreHash } from "../common/encrypt-decrypt-common.mjs";
+import { doInitialRecursions_keystretch, execRound_getNextHash, getPreHash } from "../common/encrypt-decrypt-common.mjs";
 import { AlphabetIndexingMode, HashAlgorithm, SaltStrategy } from "../types.mjs";
 
 /**
@@ -43,7 +43,7 @@ export async function decryptToHex_multipass({
 
     try {
         // set up "prevHash" as a starting point, similar to key-stretching
-        let prevHash = await doInitialRecursions({
+        let prevHash = await doInitialRecursions_keystretch({
             secret,
             initialRecursions,
             salt,
@@ -193,12 +193,12 @@ async function getAlphabetsThisSection({
                 indexEncryptedDataIndexes = indexEncryptedDataIndexesAtStartOfPass + indexIntoPassSection;
                 let alphabet = alphabetsThisSection[indexIntoPassSection] ?? '';
 
-                for (let j = 0; j < recursionsPerHash; j++) {
-                    const preHash = getPreHash({ prevHash, salt, saltStrategy });
-                    hash = await h.hash({ s: preHash, algorithm: hashAlgorithm });
-                    prevHash = hash;
-                }
-                alphabet += hash!;
+                hash = await execRound_getNextHash({
+                    count: recursionsPerHash,
+                    prevHash, salt, saltStrategy, hashAlgorithm
+                });
+                alphabet += hash;
+                prevHash = hash;
 
                 alphabetsThisSection[indexIntoPassSection] = alphabet;
             }
@@ -216,12 +216,12 @@ async function getAlphabetsThisSection({
             // while (!alphabet.includes(hexCharFromData)) {
             while (alphabet.at(encryptedIndex) === undefined) {
                 // only executes if alphabet isn't long enough for index
-                for (let j = 0; j < recursionsPerHash; j++) {
-                    const preHash = getPreHash({ prevHash, salt, saltStrategy });
-                    hash = await h.hash({ s: preHash, algorithm: hashAlgorithm });
-                    prevHash = hash;
-                }
-                alphabet += hash!;
+                hash = await execRound_getNextHash({
+                    count: recursionsPerHash,
+                    prevHash, salt, saltStrategy, hashAlgorithm
+                });
+                alphabet += hash;
+                prevHash = hash;
             }
 
             alphabetsThisSection[indexIntoPassSection] = alphabet;

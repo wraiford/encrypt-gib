@@ -1,6 +1,4 @@
-import * as h from '@ibgib/helper-gib';
-
-import { doInitialRecursions, getPreHash } from "../common/encrypt-decrypt-common.mjs";
+import { doInitialRecursions_keystretch, execRound_getNextHash, } from "../common/encrypt-decrypt-common.mjs";
 import { AlphabetIndexingMode, HashAlgorithm, SaltStrategy } from "../types.mjs";
 
 /**
@@ -33,7 +31,7 @@ export async function encryptFromHex_legacy({
 
     try {
         // set up "prevHash" as a starting point, similar to key-stretching
-        let prevHash = await doInitialRecursions({
+        let prevHash = await doInitialRecursions_keystretch({
             secret,
             initialRecursions,
             salt,
@@ -60,13 +58,12 @@ export async function encryptFromHex_legacy({
                 //     console.log(`alphabet is extending past 64... alphabet.length: ${alphabet.length}`);
                 // }
                 // console.log(`${lc} doing iteration...`);
-                for (let j = 0; j < recursionsPerHash; j++) {
-                    const preHash = getPreHash({ prevHash, salt, saltStrategy });
-                    // console.log(`${lc} preHash: ${preHash}`);
-                    hash = await h.hash({ s: preHash, algorithm: hashAlgorithm });
-                    prevHash = hash;
-                }
+                hash = await execRound_getNextHash({
+                    count: recursionsPerHash,
+                    prevHash, salt, saltStrategy, hashAlgorithm
+                });
                 alphabet += hash!;
+                prevHash = hash;
                 // console.log(`${lc} alphabet: ${alphabet}`); // debug
             }
 

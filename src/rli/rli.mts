@@ -183,7 +183,6 @@ async function execRequestPlease(args: string[]): Promise<void> {
         const argInfos = argsSansDashes.map((arg: string) => {
             let argIdentifier: string;
             let valueString: string;
-            let value: string | number | boolean;
             let argInfo: RLIArgInfo<RLIArgType>;
             if (arg.includes('=')) {
                 [argIdentifier, valueString] = arg.split('=');

@@ -1,5 +1,7 @@
 # [limited-time opportunity](./OPPORTUNITY.md)
 
+**:warning: This is experimental. No guarantees are made or implied regarding its qualities, including but not limited to, its strength, speed, storage overhead. Use at your own risk.**
+
 # encrypt-gib - hash-based encryption at the hex level
 
 Encrypt-gib is a genuinely novel, post quantum encryption algorithm that uses
@@ -132,7 +134,7 @@ Each alphabet is generated via the previous alphabet's last hash, which we will 
 The very first alphabet will use the last hash generated from the key stretch.
 
 ```typescript
-let prevHash = await doInitialRecursions({
+let prevHash = await doInitialRecursions_keystretch({
     secret,                        // 'my p4ssw0rd'
     initialRecursions,             // 2
     salt,                          // 'my salt'
@@ -140,30 +142,43 @@ let prevHash = await doInitialRecursions({
     hashAlgorithm,                 // 'SHA-256'
 });
 // the last hash after initial recursions, say, 'b87ac03382eb47e692e776547f89b72ea475f0a6dc4848039869b1c93a8ab3ba'
-```
 
-which has the following implementation...
 
-```typescript
-async function doInitialRecursions({
+async function doInitialRecursions_keystretch({
     secret,
     initialRecursions,
     salt,
     saltStrategy,
     hashAlgorithm,
 }:... ): Promise<string> {
-    let hash: string | undefined;
-    for (let i = 0; i < initialRecursions; i++) {
-        const preHash = getPreHash({secret, prevHash: hash, salt, saltStrategy});
-        hash = await h.hash({s: preHash, algorithm: hashAlgorithm});
-    }
+    const hash = await execRound_getNextHash({
+        secret,
+        count: initialRecursions,
+        salt, saltStrategy, hashAlgorithm,
+    })
     return hash;
 }
 ```
-This is where we do our key stretching of our user's secret. It relies on our
-rounding function, `getPreHash`:
+
+This relies on the same round function used in encryption/decryption, [`execRound_getNextHash`](./src/common/encrypt-decrypt-common.mts)...
 
 ```typescript
+export async function execRound_getNextHash({
+    secret,
+    prevHash,
+    count,
+    salt,
+    saltStrategy,
+    hashAlgorithm,
+}:...): Promise<string> {
+  let hash = prevHash || undefined;
+  for (let i = 0; i < count; i++) {
+      const preHash = getPreHash({ secret, prevHash: hash, salt, saltStrategy });
+      hash = await h.hash({ s: preHash, algorithm: hashAlgorithm });
+  }
+  return hash;
+}
+
 function getPreHash({
     secret,
     prevHash,
@@ -206,6 +221,12 @@ plaintext character in the following steps:
 // we'll store our encrypted results here
 const encryptedDataIndexes = [];
 
+// parameter determines how to substitute ciphered index for plaintext character
+const getIndex: (alphabet: string, hexChar: string) => number =
+    indexingMode === 'indexOf' ?
+        (alphabet: string, hexChar: string) => { return alphabet.indexOf(hexChar) } :
+        (alphabet: string, hexChar: string) => { return alphabet.lastIndexOf(hexChar) };
+
 // iterate through hex characters: '42ab'
 for (let i = 0; i < hexEncodedData.length; i++) {
 
@@ -218,21 +239,23 @@ for (let i = 0; i < hexEncodedData.length; i++) {
     let alphabet: string = "";
     let hash: string;
     while (!alphabet.includes(hexCharFromData)) {
-        for (let j = 0; j < recursionsPerHash; j++) {
-            const preHash = getPreHash({prevHash, salt, saltStrategy}); // uses prevHash here
-            hash = await h.hash({s: preHash, algorithm: hashAlgorithm});
-            prevHash = hash;
-        }
+        hash = await execRound_getNextHash({
+            count: recursionsPerHash,
+            prevHash, salt, saltStrategy, hashAlgorithm
+        });
         alphabet += hash!;
+        prevHash = hash;
     }
 
     // we now have the alphabet, so find the index of hex character
-    const charIndex = alphabet.indexOf(hexCharFromData); // can also use `lastIndexOf` in parameter
+    // either `indexOf` or `lastIndexOf` into alphabet
+    // we use `indexOf` in this example
+    const charIndex = getIndex(alphabet, hexCharFromData);
 
     // hexChar: 4
     // alphabet: 519304f9ad8644869e14935607013348865a0ed45a5b46a8b44f78f2256d3f71
     //                ^
-    // charIndex: 5
+    // charIndex: 5 (first index of 4)
 
     // hexChar: 2
     // alphabet: 80a53b7e431e43078fddb90ff286939a24a0617d581546c292924dda2574090c
@@ -381,12 +404,12 @@ async function decrypt({
 }
 ```
 
-Inside `decryptToHex` we have the same call to `doInitialRecursions` for
+Inside `decryptToHex` we have the same call to `doInitialRecursions_keystretch` for
 key-stretching to get our starting value of `prevHash` before reconstructing our
 first alphabet:
 
 ```typescript
-let prevHash = await doInitialRecursions({
+let prevHash = await doInitialRecursions_keystretch({
     secret,
     initialRecursions,
     salt,
@@ -419,16 +442,17 @@ for (let i = 0; i < encryptedDataIndexes.length; i++) {
     let alphabet: string = "";
     let hash: string;
     while (charIndex >= alphabet.length) {
-        for (let j = 0; j < recursionsPerHash; j++) {
-            const preHash = getPreHash({prevHash, salt, saltStrategy}); // again the prevHash is used here
-            hash = await h.hash({s: preHash, algorithm: hashAlgorithm});
-            prevHash = hash;
-        }
-        alphabet += hash!;
+        hash = await execRound_getNextHash({
+            count: recursionsPerHash,
+            prevHash, salt, saltStrategy, hashAlgorithm
+        });
+        alphabet += hash;
+        prevHash = hash;
     }
 
     // we now have each alphabet in turn again, so index into it to get the decrypted hex char
     const hexChar: string = alphabet[charIndex];
+    decryptedDataArray.push(hexChar);
 
     // charIndex: 5
     // alphabet: 519304f9ad8644869e14935607013348865a0ed45a5b46a8b44f78f2256d3f71
@@ -445,8 +469,6 @@ for (let i = 0; i < encryptedDataIndexes.length; i++) {
     // charIndex: 50
     // alphabet: d2ee40490a0c4f47994e3539c8d5109f5ad5549a22134e5399b1d2126bf0562d
     // hexChar: b
-
-    decryptedDataArray.push(hexChar);
 }
 
 // reconstitute the decryptedHex
@@ -489,7 +511,7 @@ at which point we have already done initial validation of parameters, as well as
 hex-encoded the plaintext. Here is the first part (again with logging etc. removed):
 
 ```typescript
-let prevHash = await doInitialRecursions({
+let prevHash = await doInitialRecursions_keystretch({
     secret,                         // foo
     initialRecursions,              // 1000
     salt,                           // salt123
@@ -498,7 +520,7 @@ let prevHash = await doInitialRecursions({
 });
 ```
 
-So `doInitialRecursions` is our key-stretching, the same as in the stream version.
+So `doInitialRecursions_keystretch` is our key-stretching, the same as in the stream version.
 
 Next we set our `AlphabetIndexingMode` function:
 
@@ -574,51 +596,51 @@ the code is relatively self-explanatory, so let's look at `getAlphabetsThisSecti
 
 ```typescript
 async function getAlphabetsThisSection(...): Promise<{ alphabetsThisSection: string[], prevHash: string }> {
-  let alphabetsThisSection: string[] = [];
-  let indexHexEncodedData: number;
-  let hash: string;
-  // first construct ALL alphabets for this pass section using the
-  // given number of passes. Note that zero or more of these alphabets
-  // may NOT include the hex character to encode, but this will be
-  // addressed in the next step.
-  for (let passNum = 0; passNum < numOfPasses; passNum++) {
-      for (let indexIntoPassSection = 0; indexIntoPassSection < passSectionLength; indexIntoPassSection++) {
-          indexHexEncodedData = indexHexEncodedDataAtStartOfPass + indexIntoPassSection;
-          let alphabet = alphabetsThisSection[indexIntoPassSection] ?? '';
-          for (let j = 0; j < recursionsPerHash; j++) {
-              const preHash = getPreHash({ prevHash, salt, saltStrategy });
-              hash = await h.hash({ s: preHash, algorithm: hashAlgorithm });
-              prevHash = hash;
-          }
-          alphabet += hash!;
-          alphabetsThisSection[indexIntoPassSection] = alphabet;
-      }
-  }
+    let alphabetsThisSection: string[] = [];
+    let indexHexEncodedData: number;
+    let hash: string;
+    // first construct ALL alphabets for this pass section using the
+    // given number of passes. Note that zero or more of these alphabets
+    // may NOT include the hex character to encode, but this will be
+    // addressed in the next step.
+    for (let passNum = 0; passNum < numOfPasses; passNum++) {
+        for (let indexIntoPassSection = 0; indexIntoPassSection < passSectionLength; indexIntoPassSection++) {
+            indexHexEncodedData = indexHexEncodedDataAtStartOfPass + indexIntoPassSection;
+            let alphabet = alphabetsThisSection[indexIntoPassSection] ?? '';
+            hash = await execRound_getNextHash({
+                count: recursionsPerHash,
+                prevHash, salt, saltStrategy, hashAlgorithm
+            });
+            alphabet += hash;
+            prevHash = hash;
+            alphabetsThisSection[indexIntoPassSection] = alphabet;
+        }
+    }
 
-  // at this point, each alphabet is the same size (numOfPasses * hash
-  // size), but it's not guaranteed that each alphabet will contain the
-  // plaintext character. so go through and extend any alphabets that do
-  // not yet contain the plaintext character
-  for (let indexIntoPassSection = 0; indexIntoPassSection < passSectionLength; indexIntoPassSection++) {
-      indexHexEncodedData = indexHexEncodedDataAtStartOfPass + indexIntoPassSection;
-      const hexCharFromData: string = hexEncodedData[indexHexEncodedData];
-      let alphabet = alphabetsThisSection[indexIntoPassSection];
-      while (!alphabet.includes(hexCharFromData)) {
-          for (let j = 0; j < recursionsPerHash; j++) {
-              const preHash = getPreHash({ prevHash, salt, saltStrategy });
-              hash = await h.hash({ s: preHash, algorithm: hashAlgorithm });
-              prevHash = hash;
-          }
-          alphabet += hash!;
-      }
-      alphabetsThisSection[indexIntoPassSection] = alphabet;
-  }
+    // at this point, each alphabet is the same size (numOfPasses * hash
+    // size), but it's not guaranteed that each alphabet will contain the
+    // plaintext character. so go through and extend any alphabets that do
+    // not yet contain the plaintext character
+    for (let indexIntoPassSection = 0; indexIntoPassSection < passSectionLength; indexIntoPassSection++) {
+        indexHexEncodedData = indexHexEncodedDataAtStartOfPass + indexIntoPassSection;
+        const hexCharFromData: string = hexEncodedData[indexHexEncodedData];
+        let alphabet = alphabetsThisSection[indexIntoPassSection];
+        while (!alphabet.includes(hexCharFromData)) {
+            hash = await execRound_getNextHash({
+                count: recursionsPerHash,
+                prevHash, salt, saltStrategy, hashAlgorithm
+            });
+            alphabet += hash!;
+            prevHash = hash;
+        }
+        alphabetsThisSection[indexIntoPassSection] = alphabet;
+    }
 
-  // at this point, each alphabet is at least the minimum size and is
-  // guaranteed to have at least once instance of the plaintext hexChar.
-  // we also return prevHash for use in the next section is applicable.
-  return { alphabetsThisSection, prevHash };
-  // ...
+    // at this point, each alphabet is at least the minimum size and is
+    // guaranteed to have at least once instance of the plaintext hexChar.
+    // we also return prevHash for use in the next section is applicable.
+    return { alphabetsThisSection, prevHash };
+    // ...
 }
 ```
 

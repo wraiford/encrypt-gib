@@ -1,9 +1,9 @@
 import * as h from '@ibgib/helper-gib';
 
-import { doInitialRecursions, getPreHash } from "../common/encrypt-decrypt-common.mjs";
+import { doInitialRecursions_keystretch, execRound_getNextHash, getPreHash } from "../common/encrypt-decrypt-common.mjs";
 import { AlphabetIndexingMode, HashAlgorithm, SaltStrategy } from "../types.mjs";
-import { ENCRYPT_LOG_A_LOT } from '../constants.mjs';
 
+// import { ENCRYPT_LOG_A_LOT } from '../constants.mjs';
 // const logalot = ENCRYPT_LOG_A_LOT || true;
 
 /**
@@ -41,7 +41,7 @@ export async function encryptFromHex_multipass({
 
     try {
         // set up "prevHash" as a starting point, similar to key-stretching
-        let prevHash = await doInitialRecursions({
+        let prevHash = await doInitialRecursions_keystretch({
             secret,
             initialRecursions,
             salt,
@@ -49,7 +49,7 @@ export async function encryptFromHex_multipass({
             hashAlgorithm: hashAlgorithm!,
         });
         // console.warn(`${lc} first prevHash: ${prevHash}`);
-        // if (logalot) { console.warn(`${lc} doInitialRecursions result prevHash: ${prevHash} (W: 0a7979f8f0c6193e7a68d9573143e423)`); }
+        // if (logalot) { console.warn(`${lc} doInitialRecursions_keystretch result prevHash: ${prevHash} (W: 0a7979f8f0c6193e7a68d9573143e423)`); }
 
         /**
          * closure for avoiding checking `indexingMode` in a tight loop.
@@ -133,7 +133,6 @@ export async function encryptFromHex_multipass({
                 passSectionLength,
                 indexHexEncodedDataAtStartOfPass,
                 hexEncodedData,
-                numOfPasses,
                 getIndexOfCharInAlphabet,
             });
 
@@ -209,13 +208,12 @@ async function getAlphabetsThisSection({
                 let alphabet = alphabetsThisSection[indexIntoPassSection] ?? '';
 
                 // if (logalot) { console.warn(`${lc} starting alphabet: ${alphabet} (W: b5a3ba3203e679ac454a854c32846723)`); }
-                for (let j = 0; j < recursionsPerHash; j++) {
-                    const preHash = getPreHash({ prevHash, salt, saltStrategy });
-                    // console.warn(`${lc} preHash: ${preHash}`);
-                    hash = await h.hash({ s: preHash, algorithm: hashAlgorithm });
-                    prevHash = hash;
-                }
-                alphabet += hash!;
+                hash = await execRound_getNextHash({
+                    count: recursionsPerHash,
+                    prevHash, salt, saltStrategy, hashAlgorithm
+                });
+                alphabet += hash;
+                prevHash = hash;
                 // if (logalot) { console.warn(`${lc} extended alphabet: ${alphabet} (W: c0228b716a324761b581d38a805d192b)`); }
 
                 alphabetsThisSection[indexIntoPassSection] = alphabet;
@@ -238,13 +236,12 @@ async function getAlphabetsThisSection({
             while (!alphabet.includes(hexCharFromData)) {
                 // if (logalot) { console.warn(`${lc} alphabet (${alphabet}) has to be extended because it does not contain hexChar (${hexCharFromData}).  (W: a8040eb78f4d123cfa423de33a7f3b23)`); }
                 // only executes if alphabet doesnt already contain hexChar
-                for (let j = 0; j < recursionsPerHash; j++) {
-                    const preHash = getPreHash({ prevHash, salt, saltStrategy });
-                    // console.warn(`${lc} preHash: ${preHash}`);
-                    hash = await h.hash({ s: preHash, algorithm: hashAlgorithm });
-                    prevHash = hash;
-                }
+                hash = await execRound_getNextHash({
+                    count: recursionsPerHash,
+                    prevHash, salt, saltStrategy, hashAlgorithm
+                });
                 alphabet += hash!;
+                prevHash = hash;
             }
 
             alphabetsThisSection[indexIntoPassSection] = alphabet;
@@ -263,20 +260,17 @@ async function getAlphabetsThisSection({
     }
 }
 
-// const encryptedIndexesThisSection = await getEncryptedIndexesThisSection({
 async function getEncryptedIndexesThisSection({
     alphabetsThisSection,
     passSectionLength,
     indexHexEncodedDataAtStartOfPass,
     hexEncodedData,
-    numOfPasses,
     getIndexOfCharInAlphabet,
 }: {
     alphabetsThisSection: string[],
     passSectionLength: number,
     indexHexEncodedDataAtStartOfPass: number,
     hexEncodedData: string,
-    numOfPasses: number,
     getIndexOfCharInAlphabet: (alphabet: string, hexChar: string) => number,
 }): Promise<number[]> {
     const lc = `[${getEncryptedIndexesThisSection.name}]`;

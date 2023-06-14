@@ -4,7 +4,7 @@ _note: I am aware that not working at the binary level seems to be "inefficient"
 
 ## key stretching
 
-For example, I am aware that in code at [`doInitialRecursions`](https://github.com/wraiford/encrypt-gib/blob/main/src/encrypt-decrypt.ts#L536) (cruft removed for simplicity):
+For example, I am aware that in code at [`doInitialRecursions_keystretch`](https://github.com/wraiford/encrypt-gib/blob/main/src/encrypt-decrypt.ts#L536) (cruft removed for simplicity):
 
 ```typescript
 for (let i = 0; i < initialRecursions; i++) {

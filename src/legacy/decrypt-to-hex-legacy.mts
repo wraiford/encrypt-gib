@@ -1,6 +1,6 @@
 import * as h from '@ibgib/helper-gib';
 
-import { doInitialRecursions, getPreHash } from "../common/encrypt-decrypt-common.mjs";
+import { doInitialRecursions_keystretch, execRound_getNextHash, getPreHash } from "../common/encrypt-decrypt-common.mjs";
 import { HashAlgorithm, SaltStrategy } from "../types.mjs";
 
 /**
@@ -21,7 +21,6 @@ export async function decryptToHex_legacy({
     secret,
     hashAlgorithm,
     encryptedDataDelimiter,
-    // indexingMode, // not needed in decrypt atow
 }: {
     encryptedData: string,
     initialRecursions: number,
@@ -31,13 +30,12 @@ export async function decryptToHex_legacy({
     secret: string,
     hashAlgorithm: HashAlgorithm,
     encryptedDataDelimiter: string,
-    // indexingMode: AlphabetIndexingMode,
 }): Promise<string> {
     const lc = `[${decryptToHex_legacy.name}]`;
 
     try {
         // set up "prevHash" as a starting point, similar to key-stretching
-        let prevHash = await doInitialRecursions({
+        let prevHash = await doInitialRecursions_keystretch({
             secret,
             initialRecursions,
             salt,
@@ -46,11 +44,6 @@ export async function decryptToHex_legacy({
         });
         // console.log(`${lc} first prevHash: ${prevHash}`);
 
-        // const getIndex: (alphabet: string, hexChar: string) => number =
-        //     indexingMode === 'indexOf' ?
-        //         (alphabet: string, hexChar: string) => { return alphabet.indexOf(hexChar) } :
-        //         (alphabet: string, hexChar: string) => { return alphabet.lastIndexOf(hexChar) };
-
         // we have our prevHash starting point, so now we can iterate through the data
         // console.log(`${lc} encryptedDataDelimiter: ${encryptedDataDelimiter}`);
         let encryptedDataIndexes: number[] =
@@ -58,11 +51,14 @@ export async function decryptToHex_legacy({
         // console.log(`${lc} encryptedDataIndexes: ${encryptedDataIndexes.toString()}`);
         let decryptedDataArray: string[] = [];
         for (let i = 0; i < encryptedDataIndexes.length; i++) {
-            // this is the index of the character of data that we want to get out of the alphabet map
-            // but to generate the alphabet, we may need to do multiple hash iterations, depending
-            // on how big the index is. So if we don't hit a '7' until the third hash, then we need to
-            // keep building out the alphabet until that third hash.
-            // HACK: I'm going to do this with a while loop instead of a for because I want to get it working first.
+            // this is the index of the character of data that we want to get
+            // out of the alphabet map but to generate the alphabet, we may need
+            // to do multiple hash iterations, depending on how big the index
+            // is. So if we don't hit a '7' until the third hash, then we need
+            // to keep building out the alphabet until that third hash.
+
+            // HACK: I'm going to do this with a while loop instead of a for
+            // because I want to get it working first.
 
             let charIndex = encryptedDataIndexes[i];
             // console.log(`${lc} charIndex: ${charIndex}`);
@@ -70,13 +66,12 @@ export async function decryptToHex_legacy({
             let hash: string;
             while (charIndex >= alphabet.length) {
                 // console.log(`${lc} doing iteration...`);
-                for (let j = 0; j < recursionsPerHash; j++) {
-                    const preHash = getPreHash({ prevHash, salt, saltStrategy });
-                    // console.log(`${lc} preHash: ${preHash}`);
-                    hash = await h.hash({ s: preHash, algorithm: hashAlgorithm });
-                    prevHash = hash;
-                }
-                alphabet += hash!;
+                hash = await execRound_getNextHash({
+                    count: recursionsPerHash,
+                    prevHash, salt, saltStrategy, hashAlgorithm
+                });
+                alphabet += hash;
+                prevHash = hash;
                 // console.log(`${lc} alphabet: ${alphabet}`); // debug
             }
 

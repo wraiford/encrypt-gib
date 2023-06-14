@@ -1,4 +1,4 @@
-import { RLIArgInfo, RLIParamInfo } from "./rli-types.mjs";
+import { RLIParamInfo } from "./rli-types.mjs";
 
 export const ENCRYPTED_OUTPUT_FILE_EXT = 'encrypt-gib';
 
@@ -67,6 +67,9 @@ export const PARAM_INFO_INITIAL_RECURSIONS: RLIParamInfo = {
     argTypeName: 'integer',
 };
 
+/**
+ * Array of all parameters this library's RLI supports.
+ */
 export const PARAM_INFOS: RLIParamInfo[] = [
     PARAM_INFO_HELP,
     PARAM_INFO_ENCRYPT,
