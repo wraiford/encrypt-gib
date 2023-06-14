@@ -1,3 +1,23 @@
+# 0.2.15
+
+* refactor: round function
+  * I condensed each different implementation of the round function
+    within encrypt and decrypt functions, both in legacy (stream) and
+    multipass modes.
+  * all tests passing for quick (not heavy stress tests yet though)
+  * tested manually for regression also with gather.encrypt-gib and
+    foo.encrypt-gib
+  * adjusted README to reflect changes.
+* meta: removed cruft
+  * lots of cruft removal
+  * did NOT remove unused logging, as those still are useful to uncomment
+    * but dangerous if they get into production...
+    * waffling on this a bit, but low priority since no one else uses this
+      lib.
+* meta: README warning
+  * added a bolded warning at the top of the readme that describes the
+    experimental nature of the lib.
+
 # 0.2.14
 
 * added multipass mode walkthrough section in the readme to contrast with
