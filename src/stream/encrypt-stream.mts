@@ -3,11 +3,11 @@ import * as h from '@ibgib/helper-gib';
 import * as c from '../constants.mjs';
 import { decodeHexStringToString, encodeStringToHexString } from '../helper.mjs';
 import { ALPHABET_INDEXING_MODES, EncryptArgs, EncryptResult, HashAlgorithm, SALT_STRATEGIES } from "../types.mjs";
-import { encryptFromHex_legacy } from './encrypt-from-hex-legacy.mjs';
-import { decryptImpl_legacy } from './decrypt-legacy.mjs';
+import { encryptFromHex_stream } from './encrypt-from-hex-stream.mjs';
+import { decryptImpl_stream } from './decrypt-stream.mjs';
 
 /**
- * Does the actual encryption work using the original "legacy" streaming
+ * Does the actual encryption work using the original "stream" streaming
  * encryption.
  *
  * {@link encrypt}
@@ -16,7 +16,7 @@ import { decryptImpl_legacy } from './decrypt-legacy.mjs';
  *
  * @returns a `EncryptResult` info object
  */
-export async function encryptImpl_legacy({
+export async function encryptImpl_stream({
     dataToEncrypt,
     initialRecursions,
     recursionsPerHash,
@@ -28,7 +28,7 @@ export async function encryptImpl_legacy({
     confirm,
     indexingMode,
 }: EncryptArgs): Promise<EncryptResult> {
-    const lc = `[${encryptImpl_legacy.name}]`;
+    const lc = `[${encryptImpl_stream.name}]`;
 
     const errors: string[] = [];
     let warnings: string[] = [];
@@ -104,7 +104,7 @@ export async function encryptImpl_legacy({
     // #region encrypt hex
 
     // comma-delimited indexes string
-    let encryptedData: string = await encryptFromHex_legacy({
+    let encryptedData: string = await encryptFromHex_stream({
         hexEncodedData,
         initialRecursions,
         recursionsPerHash,
@@ -117,7 +117,7 @@ export async function encryptImpl_legacy({
     });
 
     if (confirm) {
-        const resDecrypt = await decryptImpl_legacy({
+        const resDecrypt = await decryptImpl_stream({
             encryptedData,
             initialRecursions,
             recursionsPerHash,

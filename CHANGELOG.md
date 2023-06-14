@@ -1,3 +1,10 @@
+# 0.2.16
+
+* refactor: renamed temporary "legacy" name to "stream"
+  * the original implementation does act as a stream cipher, even though
+    it does not operate at a binary level. So "stream" seems to be more
+    descriptive than "legacy".
+
 # 0.2.15
 
 * refactor: round function

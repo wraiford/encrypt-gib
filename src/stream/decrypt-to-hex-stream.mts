@@ -12,7 +12,7 @@ import { HashAlgorithm, SaltStrategy } from "../types.mjs";
  *
  * @returns unencrypted, but still encoded, hex string of the original unencrypted data
  */
-export async function decryptToHex_legacy({
+export async function decryptToHex_stream({
     encryptedData,
     initialRecursions,
     recursionsPerHash,
@@ -31,7 +31,7 @@ export async function decryptToHex_legacy({
     hashAlgorithm: HashAlgorithm,
     encryptedDataDelimiter: string,
 }): Promise<string> {
-    const lc = `[${decryptToHex_legacy.name}]`;
+    const lc = `[${decryptToHex_stream.name}]`;
 
     try {
         // set up "prevHash" as a starting point, similar to key-stretching

@@ -3,10 +3,10 @@ import * as h from '@ibgib/helper-gib';
 import * as c from '../constants.mjs';
 import { decodeHexStringToString } from '../helper.mjs';
 import { DecryptArgs, DecryptResult, HashAlgorithm, SALT_STRATEGIES } from "../types.mjs";
-import { decryptToHex_legacy } from './decrypt-to-hex-legacy.mjs';
+import { decryptToHex_stream } from './decrypt-to-hex-stream.mjs';
 
 /**
- * Does the actual decryption work using the original legacy code.
+ * Does the actual decryption work using the original stream code.
  *
  * I'm trying to change this as little as possible for reference and sanity
  * checks.
@@ -17,7 +17,7 @@ import { decryptToHex_legacy } from './decrypt-to-hex-legacy.mjs';
  *
  * @returns a `DecryptResult` info object
  */
-export async function decryptImpl_legacy({
+export async function decryptImpl_stream({
     encryptedData,
     initialRecursions,
     recursionsPerHash,
@@ -27,7 +27,7 @@ export async function decryptImpl_legacy({
     hashAlgorithm,
     encryptedDataDelimiter,
 }: DecryptArgs): Promise<DecryptResult> {
-    const lc = `[${decryptImpl_legacy.name}]`;
+    const lc = `[${decryptImpl_stream.name}]`;
     // console.log(`${lc} encryptedDataDelimiter: ${encryptedDataDelimiter}`);
 
     const errors: string[] = [];
@@ -81,7 +81,7 @@ export async function decryptImpl_legacy({
 
     // decrypt from indices into hex
     // console.log(`${lc} encryptedData: ${encryptedData}`);
-    let hexEncodedData: string = await decryptToHex_legacy({
+    let hexEncodedData: string = await decryptToHex_stream({
         encryptedData,
         initialRecursions,
         recursionsPerHash,

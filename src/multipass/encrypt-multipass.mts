@@ -14,7 +14,7 @@ import {
 // const logalot = ENCRYPT_LOG_A_LOT || true;
 
 /**
- * Does the actual encryption work using the original "legacy" streaming
+ * Does the actual encryption work using the original "stream" streaming
  * encryption.
  *
  * {@link encrypt}

@@ -6,7 +6,7 @@ import { AlphabetIndexingMode, HashAlgorithm, SaltStrategy } from "../types.mjs"
  *
  * @returns encryptedData
  */
-export async function encryptFromHex_legacy({
+export async function encryptFromHex_stream({
     hexEncodedData,
     initialRecursions,
     recursionsPerHash,
@@ -27,7 +27,7 @@ export async function encryptFromHex_legacy({
     encryptedDataDelimiter: string,
     indexingMode: AlphabetIndexingMode,
 }): Promise<string> {
-    const lc = `[${encryptFromHex_legacy.name}]`;
+    const lc = `[${encryptFromHex_stream.name}]`;
 
     try {
         // set up "prevHash" as a starting point, similar to key-stretching

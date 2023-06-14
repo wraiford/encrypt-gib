@@ -6,8 +6,8 @@ import {
     DecryptArgs, DecryptResult,
 } from './types.mjs';
 import { encryptImpl_multipass } from './multipass/encrypt-multipass.mjs';
-import { encryptImpl_legacy } from './legacy/encrypt-legacy.mjs'
-import { decryptImpl_legacy } from './legacy/decrypt-legacy.mjs';
+import { encryptImpl_stream } from './stream/encrypt-stream.mjs'
+import { decryptImpl_stream } from './stream/decrypt-stream.mjs';
 import { decryptImpl_multipass } from './multipass/decrypt-multipass.mjs';
 
 /**
@@ -39,7 +39,7 @@ export async function encrypt(args: EncryptArgs): Promise<EncryptResult> {
         if (args.multipass) {
             result = await encryptImpl_multipass(args);
         } else {
-            result = await encryptImpl_legacy(args);
+            result = await encryptImpl_stream(args);
         }
 
         // print out warnings/errors if necessary
@@ -88,7 +88,7 @@ export async function decrypt(args: DecryptArgs): Promise<DecryptResult> {
         if (args.multipass) {
             result = await decryptImpl_multipass(args);
         } else {
-            result = await decryptImpl_legacy(args);
+            result = await decryptImpl_stream(args);
         }
 
         // print out warnings/errors if necessary
