@@ -3,7 +3,7 @@ import * as h from '@ibgib/helper-gib';
 import * as c from '../constants.mjs';
 import { decodeHexStringToString } from '../helper.mjs';
 import { ALPHABET_INDEXING_MODES, DecryptArgs, DecryptResult, HashAlgorithm, SALT_STRATEGIES } from "../types.mjs";
-import { decryptToHex_multipass } from './decrypt-to-hex-multipass.mjs';
+import { decryptToHex_blockMode } from './decrypt-to-hex-block-mode.mjs';
 
 /**
  * Does the actual decryption work using shortCircuit mitigation strategies.
@@ -14,8 +14,8 @@ import { decryptToHex_multipass } from './decrypt-to-hex-multipass.mjs';
  *
  * @returns a `DecryptResult` info object
  */
-export async function decryptImpl_multipass(args: DecryptArgs): Promise<DecryptResult> {
-    const lc = `[${decryptImpl_multipass.name}]`;
+export async function decryptImpl_blockMode(args: DecryptArgs): Promise<DecryptResult> {
+    const lc = `[${decryptImpl_blockMode.name}]`;
     let {
         encryptedData,
         initialRecursions,
@@ -26,13 +26,19 @@ export async function decryptImpl_multipass(args: DecryptArgs): Promise<DecryptR
         hashAlgorithm,
         encryptedDataDelimiter,
         indexingMode,
+        blockMode,
         multipass,
     } = args;
 
     const errors: string[] = [];
     const warnings: string[] = [];
 
-    if (!multipass) { throw new Error(`(UNEXPECTED) multipass required. This should be truthy in order to get to this impl fn. (E: 306bce36afd64b7182ca2b46ac04a261)`); }
+    if (blockMode && multipass) { throw new Error(`blockMode and multipass set. blockMode was a refactored name of multipass, so these should not both be present. multipass is deprecated. (E: b9b3cd1f701c700835c0419260278223)`); }
+    if (!blockMode && !!multipass) {
+        console.warn(`${lc}[WARNING] "multipass" option is deprecated. this has been refactored to "blockMode". This will use multipass as blockMode. (W: b77c9773e30549cbb389ce61f31eb6d3)`);
+        blockMode = multipass; // to support older versions that use refactored "multipass"
+    }
+    if (!blockMode) { throw new Error(`(UNEXPECTED) blockMode required. This should be truthy in order to get to this impl fn. (E: 306bce36afd64b7182ca2b46ac04a261)`); }
 
     // #region set args defaults
 
@@ -43,10 +49,14 @@ export async function decryptImpl_multipass(args: DecryptArgs): Promise<DecryptR
     salt = salt || await h.getUUID(c.DEFAULT_GETUUID_SEEDSIZE);
     encryptedDataDelimiter = encryptedDataDelimiter || c.DEFAULT_ENCRYPTED_DATA_DELIMITER;
 
-    indexingMode = indexingMode || c.DEFAULT_ALPHABET_INDEXING_MODE_MULTIPASS;
+    indexingMode = indexingMode || c.DEFAULT_ALPHABET_INDEXING_MODE_BLOCKMODE;
 
-    let { maxPassSectionLength, numOfPasses } = multipass;
-    maxPassSectionLength = maxPassSectionLength || c.DEFAULT_MAX_PASS_SECTION_LENGTH;
+    let { maxBlockSize, maxPassSectionLength, numOfPasses } = blockMode;
+    if (!maxBlockSize && !!maxPassSectionLength) {
+        console.warn(`${lc}[WARNING] "maxPassSectionLength" option is deprecated. this has been refactored to "maxBlockSize". This will use maxPassSectioLength as maxBlockSize. (W: e2c83d78a3464704a6067e0f767f20b0)`);
+        maxBlockSize = maxPassSectionLength;
+    }
+    maxBlockSize = maxBlockSize || c.DEFAULT_MAX_BLOCK_SIZE;
     numOfPasses = numOfPasses || c.DEFAULT_NUM_OF_PASSES;
 
     // #endregion
@@ -64,7 +74,7 @@ export async function decryptImpl_multipass(args: DecryptArgs): Promise<DecryptR
     if (!encryptedDataDelimiter) { const e = `${lcv} encryptedDataDelimiter required`; console.error(e); errors.push(e); }
     if (!indexingMode) { const e = `${lcv} indexingMode required (E: a6fe15f8ba414e21b5355d23e808b976)`; console.error(e); errors.push(e); }
     if (!ALPHABET_INDEXING_MODES.includes(indexingMode)) { const e = `${lcv} invalid indexingMode (${indexingMode}). Must be one of ${ALPHABET_INDEXING_MODES} (E: 17435268651444e0b7a594135635fc58)`; console.error(e); errors.push(e); }
-    if (maxPassSectionLength < 1) { const e = `${lcv} maxPassSectionLength must be greater than 0 (E: 0870831aa86b4bfa939aeee9f252326a)`; console.error(e); errors.push(e); }
+    if (maxBlockSize < 1) { const e = `${lcv} maxBlockSize must be greater than 0 (E: 0870831aa86b4bfa939aeee9f252326a)`; console.error(e); errors.push(e); }
     if (numOfPasses < 1) { const e = `${lcv} numOfPasses must be greater than 0 (E: 691d3c3765584c6f8c9aba1ee378df00)`; console.error(e); errors.push(e); }
 
     // if (hashAlgorithm !== 'SHA-256') { const e = `${lcv} only SHA-256 implemented`; console.error(e); errors.push(e); }
@@ -86,7 +96,7 @@ export async function decryptImpl_multipass(args: DecryptArgs): Promise<DecryptR
     // #endregion args validation
 
     // decrypt from indices into hex
-    let hexEncodedData: string = await decryptToHex_multipass({
+    let hexEncodedData: string = await decryptToHex_blockMode({
         encryptedData,
         initialRecursions,
         recursionsPerHash,
@@ -95,7 +105,7 @@ export async function decryptImpl_multipass(args: DecryptArgs): Promise<DecryptR
         secret,
         hashAlgorithm,
         encryptedDataDelimiter,
-        maxPassSectionLength,
+        maxBlockSize,
         numOfPasses,
     });
 

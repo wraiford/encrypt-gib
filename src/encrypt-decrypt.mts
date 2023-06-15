@@ -5,10 +5,10 @@ import {
     EncryptArgs, EncryptResult,
     DecryptArgs, DecryptResult,
 } from './types.mjs';
-import { encryptImpl_multipass } from './multipass/encrypt-multipass.mjs';
-import { encryptImpl_stream } from './stream/encrypt-stream.mjs'
-import { decryptImpl_stream } from './stream/decrypt-stream.mjs';
-import { decryptImpl_multipass } from './multipass/decrypt-multipass.mjs';
+import { encryptImpl_stream } from './stream-mode/encrypt-stream-mode.mjs'
+import { encryptImpl_blockMode } from './block-mode/encrypt-block-mode.mjs';
+import { decryptImpl_stream } from './stream-mode/decrypt-stream-mode.mjs';
+import { decryptImpl_blockMode } from './block-mode/decrypt-block-mode.mjs';
 
 /**
  * Encrypts given `dataToEncrypt` using the secret and other
@@ -36,8 +36,8 @@ export async function encrypt(args: EncryptArgs): Promise<EncryptResult> {
 
         // route to appropriate implementor
         let result: EncryptResult;
-        if (args.multipass) {
-            result = await encryptImpl_multipass(args);
+        if (args.blockMode) {
+            result = await encryptImpl_blockMode(args);
         } else {
             result = await encryptImpl_stream(args);
         }
@@ -82,11 +82,10 @@ export async function decrypt(args: DecryptArgs): Promise<DecryptResult> {
         args.hashAlgorithm = args.hashAlgorithm || c.DEFAULT_HASH_ALGORITHM;
         args.recursionsPerHash = args.recursionsPerHash || c.DEFAULT_RECURSIONS_PER_HASH;
 
-
         // route to appropriate implementor
         let result: DecryptResult;
-        if (args.multipass) {
-            result = await decryptImpl_multipass(args);
+        if (args.blockMode || args.multipass) {
+            result = await decryptImpl_blockMode(args);
         } else {
             result = await decryptImpl_stream(args);
         }

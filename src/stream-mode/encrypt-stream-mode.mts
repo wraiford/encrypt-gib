@@ -3,8 +3,8 @@ import * as h from '@ibgib/helper-gib';
 import * as c from '../constants.mjs';
 import { decodeHexStringToString, encodeStringToHexString } from '../helper.mjs';
 import { ALPHABET_INDEXING_MODES, EncryptArgs, EncryptResult, HashAlgorithm, SALT_STRATEGIES } from "../types.mjs";
-import { encryptFromHex_stream } from './encrypt-from-hex-stream.mjs';
-import { decryptImpl_stream } from './decrypt-stream.mjs';
+import { encryptFromHex_stream } from './encrypt-from-hex-stream-mode.mjs';
+import { decryptImpl_stream } from './decrypt-stream-mode.mjs';
 
 /**
  * Does the actual encryption work using the original "stream" streaming

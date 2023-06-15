@@ -18,19 +18,19 @@ export var DEFAULT_ALPHABET_INDEXING_MODE_LEGACY: AlphabetIndexingMode = 'indexO
  * leverage the alphabet extensions in other options. This may turn out to be
  * unnecessary.
  */
-export var DEFAULT_ALPHABET_INDEXING_MODE_MULTIPASS: AlphabetIndexingMode = 'lastIndexOf';
+export var DEFAULT_ALPHABET_INDEXING_MODE_BLOCKMODE: AlphabetIndexingMode = 'lastIndexOf';
 /**
- * Maximum size of a section, when using multipass mode.
+ * Maximum size of a block, when using block mode.
  *
  * This is similar to a block size, but the final data section may not be the same size.
  *
- * Used in Multipass mode.
+ * Used in block mode.
  */
-export var DEFAULT_MAX_PASS_SECTION_LENGTH: number = 500;
+export var DEFAULT_MAX_BLOCK_SIZE: number = 500;
 /**
- * Default value for the number of passes when using multipass mode.
+ * Default value for the number of passes when using block mode.
  *
- * Used in Multipass mode
+ * Used in block mode
  */
 export var DEFAULT_NUM_OF_PASSES: number = 4;
 

@@ -1,3 +1,16 @@
+# 0.2.17
+
+* refactor: multipass section to block
+  * many various renames, including types, constants, variables,
+    and file names/paths.
+    * made backwards compatible fwiw
+    * changed in readme and opportunity.
+    * changed existing *.encrypt-gib
+  * tested regression for gather.encrypt-gib again.
+  * quick tests all pass. also, did quite awhile of stress test but
+    ultimately need to do another full stress test.
+  * also tweaked refactor for stream to stream-mode in paths.
+
 # 0.2.16
 
 * refactor: renamed temporary "legacy" name to "stream"

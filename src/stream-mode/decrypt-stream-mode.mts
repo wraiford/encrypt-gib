@@ -3,7 +3,7 @@ import * as h from '@ibgib/helper-gib';
 import * as c from '../constants.mjs';
 import { decodeHexStringToString } from '../helper.mjs';
 import { DecryptArgs, DecryptResult, HashAlgorithm, SALT_STRATEGIES } from "../types.mjs";
-import { decryptToHex_stream } from './decrypt-to-hex-stream.mjs';
+import { decryptToHex_stream } from './decrypt-to-hex-stream-mode.mjs';
 
 /**
  * Does the actual decryption work using the original stream code.

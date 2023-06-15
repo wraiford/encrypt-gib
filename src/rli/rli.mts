@@ -26,8 +26,10 @@ import { ENCRYPT_LOG_A_LOT } from '../constants.mjs';
 import { RLIArgInfo, RLIArgType, } from './rli-types.mjs';
 import { PARAM_INFOS, PARAM_INFO_HELP, } from './rli-constants.mjs';
 import {
-    extractArg_dataPath, extractArg_dataToEncrypt, extractArg_hashAlgorithm, extractArg_indexingMode, extractArg_initialRecursions, extractArg_multipass, extractArg_outputPath,
-    extractArg_salt, extractArg_saltStrategy, extractArg_strength, getBaseArgsSet, getParamInfo, getValueFromRawString, promptForSecret,
+    extractArg_dataPath, extractArg_dataToEncrypt, extractArg_hashAlgorithm,
+    extractArg_indexingMode, extractArg_initialRecursions, extractArg_blockMode, extractArg_outputPath,
+    extractArg_salt, extractArg_saltStrategy, extractArg_strength, getBaseArgsSet,
+    getParamInfo, getValueFromRawString, promptForSecret,
     tryRead, validateEncryptedFile,
 } from './rli-helper.mjs';
 
@@ -245,7 +247,7 @@ async function execEncrypt({ argInfos }: { argInfos: RLIArgInfo<RLIArgType>[] })
         const strength = extractArg_strength({ argInfos });
         const salt = extractArg_salt({ argInfos });
         const indexingMode = extractArg_indexingMode({ argInfos });
-        const multipass = extractArg_multipass({ argInfos });
+        const blockMode = extractArg_blockMode({ argInfos });
         const hashAlgorithm = extractArg_hashAlgorithm({ argInfos });
         const saltStrategy = extractArg_saltStrategy({ argInfos });
         const initialRecursions = extractArg_initialRecursions({ argInfos });
@@ -253,7 +255,7 @@ async function execEncrypt({ argInfos }: { argInfos: RLIArgInfo<RLIArgType>[] })
             secret, strength,
             salt, saltStrategy,
             hashAlgorithm, initialRecursions, indexingMode,
-            multipass,
+            blockMode,
         });
         console.log(`${lc} starting timer`);
         console.time(lc);

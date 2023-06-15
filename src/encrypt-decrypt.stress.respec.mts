@@ -9,7 +9,7 @@ const maam = `[${import.meta.url}]`, sir = maam;
 
 import * as c from './constants.mjs';
 import * as encryptGib from './encrypt-decrypt.mjs';
-import { SaltStrategy, HashAlgorithm, SALT_STRATEGIES, MultipassOptions, ALPHABET_INDEXING_MODES, HASH_ALGORITHMS } from './types.mjs';
+import { SaltStrategy, HashAlgorithm, SALT_STRATEGIES, BlockModeOptions, ALPHABET_INDEXING_MODES, HASH_ALGORITHMS } from './types.mjs';
 
 const SIMPLEST_DATA = 'a';
 /**
@@ -91,14 +91,14 @@ await initLongData();
 TEST_DATAS.push(LONG_DATA); // comment this if you don't want a long data test
 TEST_SECRETS.push(LONG_SECRET); // comment this if you don't want a long secret test
 
-const TEST_MULTIPASS_OPTIONS: (MultipassOptions | undefined)[] = [
+const TEST_BLOCKMODE_OPTIONS: (BlockModeOptions | undefined)[] = [
     undefined,
     {
-        maxPassSectionLength: 10,
+        maxBlockSize: 10,
         numOfPasses: 2,
     },
     {
-        maxPassSectionLength: c.DEFAULT_MAX_PASS_SECTION_LENGTH, // 500 atow
+        maxBlockSize: c.DEFAULT_MAX_BLOCK_SIZE, // 500 atow
         numOfPasses: c.DEFAULT_NUM_OF_PASSES,
     },
 ];
@@ -112,7 +112,7 @@ for (const dataToEncrypt of TEST_DATAS) {
                     for (const encryptedDataDelimiter of TEST_DELIMITERS) {
                         for (const secret of TEST_SECRETS) {
                             for (const confirm of TEST_CONFIRM_VALUES) {
-                                for (const multipass of TEST_MULTIPASS_OPTIONS) {
+                                for (const blockMode of TEST_BLOCKMODE_OPTIONS) {
                                     for (const indexingMode of ALPHABET_INDEXING_MODES) {
                                         for (const hashAlgorithm of HASH_ALGORITHMS) {
 
@@ -129,7 +129,7 @@ for (const dataToEncrypt of TEST_DATAS) {
                                                         hashAlgorithm,
                                                         encryptedDataDelimiter,
                                                         confirm,
-                                                        multipass,
+                                                        blockMode,
                                                         indexingMode,
                                                     });
                                                     if (resEncrypt.errors) {
@@ -151,7 +151,7 @@ for (const dataToEncrypt of TEST_DATAS) {
                                                         secret,
                                                         hashAlgorithm,
                                                         encryptedDataDelimiter,
-                                                        multipass,
+                                                        blockMode,
                                                         indexingMode,
                                                     });
 

@@ -1,6 +1,6 @@
 import * as h from '@ibgib/helper-gib';
 
-import { doInitialRecursions_keystretch, execRound_getNextHash, getPreHash } from "../common/encrypt-decrypt-common.mjs";
+import { doInitialRecursions_keystretch, execRound_getNextHash, } from "../common/encrypt-decrypt-common.mjs";
 import { AlphabetIndexingMode, HashAlgorithm, SaltStrategy } from "../types.mjs";
 
 // import { ENCRYPT_LOG_A_LOT } from '../constants.mjs';
@@ -12,7 +12,7 @@ import { AlphabetIndexingMode, HashAlgorithm, SaltStrategy } from "../types.mjs"
  *
  * @returns ciphertext string
  */
-export async function encryptFromHex_multipass({
+export async function encryptFromHex_blockMode({
     hexEncodedData,
     initialRecursions,
     recursionsPerHash,
@@ -22,7 +22,7 @@ export async function encryptFromHex_multipass({
     hashAlgorithm,
     encryptedDataDelimiter,
     indexingMode,
-    maxPassSectionLength,
+    maxBlockSize,
     numOfPasses,
 }: {
     hexEncodedData: string,
@@ -34,10 +34,10 @@ export async function encryptFromHex_multipass({
     hashAlgorithm: HashAlgorithm,
     encryptedDataDelimiter: string,
     indexingMode: AlphabetIndexingMode,
-    maxPassSectionLength: number,
+    maxBlockSize: number,
     numOfPasses: number,
 }): Promise<string> {
-    const lc = `[${encryptFromHex_multipass.name}]`;
+    const lc = `[${encryptFromHex_blockMode.name}]`;
 
     try {
         // set up "prevHash" as a starting point, similar to key-stretching
@@ -73,9 +73,9 @@ export async function encryptFromHex_multipass({
 
         // set the initial pass length.
         let totalLength = hexEncodedData.length;
-        let passSectionLength = maxPassSectionLength;
-        if (passSectionLength > totalLength) { passSectionLength = totalLength; }
-        // if (logalot) { console.warn(`${lc} totalLength (hexEncodedData.length): ${totalLength}, passSectionLength: ${passSectionLength} (W: 1529570c6b474ad1a24f3a4c5b7eceb0)`); }
+        let blockSize = maxBlockSize;
+        if (blockSize > totalLength) { blockSize = totalLength; }
+        // if (logalot) { console.warn(`${lc} totalLength (hexEncodedData.length): ${totalLength}, blockSize: ${blockSize} (W: 1529570c6b474ad1a24f3a4c5b7eceb0)`); }
 
         /**
          * We are doing multiple passes, but possibly only on subsets of
@@ -84,14 +84,14 @@ export async function encryptFromHex_multipass({
          *
          * _note: I am avoiding the use of "block" since that is an overloaded term in cryptography._
          */
-        let passSections = Math.ceil(totalLength / passSectionLength);
-        // if (logalot) { console.warn(`${lc} passSections: ${passSections}`); }
+        let blockSections = Math.ceil(totalLength / blockSize);
+        // if (logalot) { console.warn(`${lc} blockSections: ${blockSections}`); }
         /**
          * the final pass may be less than the pass length.
          */
-        // let finalPassSectionLength = (passSectionLength - ((passSections * passSectionLength) - totalLength)) || passSectionLength; // if 0, then the last pass is full length
-        let finalPassSectionLength = (totalLength % passSectionLength) || passSectionLength; // if 0, then the last pass is full length
-        // if (logalot) { console.warn(`${lc} finalPassSectionLength: ${finalPassSectionLength}`); }
+        // let finalBlockSize = (blockSize - ((blockSections * blockSize) - totalLength)) || blockSize; // if 0, then the last pass is full length
+        let finalBlockSize = (totalLength % blockSize) || blockSize; // if 0, then the last pass is full length
+        // if (logalot) { console.warn(`${lc} finalBlockSize: ${finalBlockSize}`); }
         /**
          * index into hexEncodedData at the start of each pass.
          *
@@ -104,15 +104,15 @@ export async function encryptFromHex_multipass({
         // entire section. once the alphabets are created, iterate the plaintext
         // hexEncodedData and map them to the indices into those alphabets.
         // todo: add parameterized step to encode indices into characters?
-        for (let indexSection = 0; indexSection < passSections; indexSection++) {
+        for (let indexOfBlock = 0; indexOfBlock < blockSections; indexOfBlock++) {
 
-            // adjust the passSectionLength if it's the final one which might be shorter
-            const isFinalPassSection = indexSection === passSections - 1;
-            if (isFinalPassSection) { passSectionLength = finalPassSectionLength; }
-            // if (logalot) { console.warn(`${lc} passSectionLength: ${passSectionLength}`); }
+            // adjust the blockSize if it's the final one which might be shorter
+            const isFinalBlock = indexOfBlock === blockSections - 1;
+            if (isFinalBlock) { blockSize = finalBlockSize; }
+            // if (logalot) { console.warn(`${lc} blockSize: ${blockSize}`); }
 
-            const resGetAlphabets = await getAlphabetsThisSection({
-                passSectionLength,
+            const resGetAlphabets = await getAlphabetsThisBlock({
+                blockSize,
                 indexHexEncodedDataAtStartOfPass,
                 numOfPasses,
                 hexEncodedData,
@@ -123,26 +123,26 @@ export async function encryptFromHex_multipass({
                 hashAlgorithm,
             });
 
-            let alphabetsThisSection = resGetAlphabets.alphabetsThisSection;
-            // if (logalot) { console.warn(`${lc} alphabetsThisSection: ${h.pretty(alphabetsThisSection)} (W: 8c37818b9658d4c6a418b62ec38bd923)`); }
+            let alphabetsThisBlock = resGetAlphabets.alphabetsThisBlock;
+            // if (logalot) { console.warn(`${lc} alphabetsThisBlock: ${h.pretty(alphabetsThisBlock)} (W: 8c37818b9658d4c6a418b62ec38bd923)`); }
             prevHash = resGetAlphabets.prevHash;
             // if (logalot) { console.warn(`${lc} prevHash after alphabets created: ${prevHash} (W: 0b2ffc3ba7a19ecba74fcec8788a6c23)`); }
 
-            const encryptedIndexesThisSection = await getEncryptedIndexesThisSection({
-                alphabetsThisSection,
-                passSectionLength,
+            const encryptedIndexesThisBlock = await getEncryptedIndexesThisBlock({
+                alphabetsThisBlock,
+                blockSize,
                 indexHexEncodedDataAtStartOfPass,
                 hexEncodedData,
                 getIndexOfCharInAlphabet,
             });
 
-            // if (logalot) { console.warn(`${lc} encryptedIndexesThisSection: ${encryptedIndexesThisSection} (W: f84c9d05e4160241664051b946ad3f23)`); }
+            // if (logalot) { console.warn(`${lc} encryptedIndexesThisBlock: ${encryptedIndexesThisBlock} (W: f84c9d05e4160241664051b946ad3f23)`); }
 
-            // if (logalot) { console.warn(`${lc} info before add to encryptedDataIndexes info: ${h.pretty({ indexSection, isFinalPassSection, passSectionLength, prevHash, encryptedDataIndexes, encryptedIndexesThisSection })}`); }
-            encryptedDataIndexes = encryptedDataIndexes.concat(encryptedIndexesThisSection);
+            // if (logalot) { console.warn(`${lc} info before add to encryptedDataIndexes info: ${h.pretty({ indexOfBlock, isFinalBlock, blockSize, prevHash, encryptedDataIndexes, encryptedIndexesThisBlock })}`); }
+            encryptedDataIndexes = encryptedDataIndexes.concat(encryptedIndexesThisBlock);
             // if (logalot) { console.warn(`${lc} encryptedDataIndexes so far: ${encryptedDataIndexes} (W: 58f9bbabce8eeb90a213ab1fa0d88123)`); }
 
-            indexHexEncodedDataAtStartOfPass += passSectionLength;
+            indexHexEncodedDataAtStartOfPass += blockSize;
         }
 
         // we now have populated encryptedDataIndexes fully.
@@ -156,8 +156,8 @@ export async function encryptFromHex_multipass({
     }
 }
 
-async function getAlphabetsThisSection({
-    passSectionLength,
+async function getAlphabetsThisBlock({
+    blockSize,
     numOfPasses,
     indexHexEncodedDataAtStartOfPass,
     hexEncodedData,
@@ -168,7 +168,7 @@ async function getAlphabetsThisSection({
     hashAlgorithm,
 }: {
     /** size of the pass, i.e. number of characters to process */
-    passSectionLength: number,
+    blockSize: number,
     /** number of times to iterate over the pass section */
     numOfPasses: number,
     indexHexEncodedDataAtStartOfPass: number,
@@ -178,10 +178,10 @@ async function getAlphabetsThisSection({
     saltStrategy: SaltStrategy,
     prevHash: string,
     hashAlgorithm: HashAlgorithm,
-}): Promise<{ alphabetsThisSection: string[], prevHash: string }> {
-    const lc = `[${getAlphabetsThisSection.name}]`;
+}): Promise<{ alphabetsThisBlock: string[], prevHash: string }> {
+    const lc = `[${getAlphabetsThisBlock.name}]`;
     try {
-        // if (logalot) { console.warn(`${lc} info: ${h.pretty({ passSectionLength, numOfPasses, indexHexEncodedDataAtStartOfPass, prevHash })}`); }
+        // if (logalot) { console.warn(`${lc} info: ${h.pretty({ blockSize, numOfPasses, indexHexEncodedDataAtStartOfPass, prevHash })}`); }
         /**
          * one alphabet per plaintext character (hex only atow).
          *
@@ -193,7 +193,7 @@ async function getAlphabetsThisSection({
          * those alphabets, depending on if the character is found (and once
          * I implement it, additionalSuperfluousAlphabetExtensions).
          */
-        let alphabetsThisSection: string[] = [];
+        let alphabetsThisBlock: string[] = [];
         /** index into the `hexEncodedData` that we're working with */
         let indexHexEncodedData: number;
         let hash: string;
@@ -202,10 +202,10 @@ async function getAlphabetsThisSection({
         // may NOT include the hex character to encode, but this will be
         // addressed in the next step.
         for (let passNum = 0; passNum < numOfPasses; passNum++) {
-            for (let indexIntoPassSection = 0; indexIntoPassSection < passSectionLength; indexIntoPassSection++) {
-                indexHexEncodedData = indexHexEncodedDataAtStartOfPass + indexIntoPassSection;
-                // if (logalot) { console.warn(`${lc} passNum: ${passNum}, indexIntoPassSection: ${indexIntoPassSection} (W: 13d09af12647907d4497842616915223)`); }
-                let alphabet = alphabetsThisSection[indexIntoPassSection] ?? '';
+            for (let indexIntoBlock = 0; indexIntoBlock < blockSize; indexIntoBlock++) {
+                indexHexEncodedData = indexHexEncodedDataAtStartOfPass + indexIntoBlock;
+                // if (logalot) { console.warn(`${lc} passNum: ${passNum}, indexIntoBlock: ${indexIntoBlock} (W: 13d09af12647907d4497842616915223)`); }
+                let alphabet = alphabetsThisBlock[indexIntoBlock] ?? '';
 
                 // if (logalot) { console.warn(`${lc} starting alphabet: ${alphabet} (W: b5a3ba3203e679ac454a854c32846723)`); }
                 hash = await execRound_getNextHash({
@@ -216,11 +216,11 @@ async function getAlphabetsThisSection({
                 prevHash = hash;
                 // if (logalot) { console.warn(`${lc} extended alphabet: ${alphabet} (W: c0228b716a324761b581d38a805d192b)`); }
 
-                alphabetsThisSection[indexIntoPassSection] = alphabet;
-                // if (logalot) { console.warn(`${lc} alphabetsThisSection: ${h.pretty(alphabetsThisSection)} (W: 1bef26a111a4df4a6d501d5a662dd223)`); }
+                alphabetsThisBlock[indexIntoBlock] = alphabet;
+                // if (logalot) { console.warn(`${lc} alphabetsThisBlock: ${h.pretty(alphabetsThisBlock)} (W: 1bef26a111a4df4a6d501d5a662dd223)`); }
             }
         }
-        // if (logalot) { console.warn(`${lc} initial alphabetsThisSection (${alphabetsThisSection.length}): ${h.pretty(alphabetsThisSection)} (W: ce1f77a7065e45cfb12995f097f70af4)`); }
+        // if (logalot) { console.warn(`${lc} initial alphabetsThisBlock (${alphabetsThisBlock.length}): ${h.pretty(alphabetsThisBlock)} (W: ce1f77a7065e45cfb12995f097f70af4)`); }
 
         // if (logalot) { console.warn(`${lc} at this point, each alphabet is the same size (numOfPasses * hash size), but it's not guaranteed that each alphabet will contain the plaintext character.  so go through and extend any alphabets that do not yet contain the plaintext character (I: c75085603497ea684865010dfd8a3b23)`); }
 
@@ -228,10 +228,10 @@ async function getAlphabetsThisSection({
         // size), but it's not guaranteed that each alphabet will contain the
         // plaintext character.  so go through and extend any alphabets that do
         // not yet contain the plaintext character
-        for (let indexIntoPassSection = 0; indexIntoPassSection < passSectionLength; indexIntoPassSection++) {
-            indexHexEncodedData = indexHexEncodedDataAtStartOfPass + indexIntoPassSection;
+        for (let indexIntoBlock = 0; indexIntoBlock < blockSize; indexIntoBlock++) {
+            indexHexEncodedData = indexHexEncodedDataAtStartOfPass + indexIntoBlock;
             const hexCharFromData: string = hexEncodedData[indexHexEncodedData];
-            let alphabet = alphabetsThisSection[indexIntoPassSection];
+            let alphabet = alphabetsThisBlock[indexIntoBlock];
 
             while (!alphabet.includes(hexCharFromData)) {
                 // if (logalot) { console.warn(`${lc} alphabet (${alphabet}) has to be extended because it does not contain hexChar (${hexCharFromData}).  (W: a8040eb78f4d123cfa423de33a7f3b23)`); }
@@ -244,41 +244,41 @@ async function getAlphabetsThisSection({
                 prevHash = hash;
             }
 
-            alphabetsThisSection[indexIntoPassSection] = alphabet;
-            // if (logalot) { console.warn(`${lc} alphabetsThisSection (length ${alphabetsThisSection.length}): ${h.pretty(alphabetsThisSection)} (W: a86e76aa398d7e4b44dbe0fbb79c1623)`); }
+            alphabetsThisBlock[indexIntoBlock] = alphabet;
+            // if (logalot) { console.warn(`${lc} alphabetsThisBlock (length ${alphabetsThisBlock.length}): ${h.pretty(alphabetsThisBlock)} (W: a86e76aa398d7e4b44dbe0fbb79c1623)`); }
         }
-        // if (logalot) { console.warn(`${lc} guaranteed alphabetsThisSection (${alphabetsThisSection.length}): ${h.pretty(alphabetsThisSection)} (W: 8d684c05b116467aa92e946b03160310)`); }
+        // if (logalot) { console.warn(`${lc} guaranteed alphabetsThisBlock (${alphabetsThisBlock.length}): ${h.pretty(alphabetsThisBlock)} (W: 8d684c05b116467aa92e946b03160310)`); }
 
         // if (logalot) { console.warn(`${lc} at this point, each alphabet is at least the minimum size and is guaranteed to have at least once instance of the plaintext hexChar. (W: c6f31445402b1c561670a2dd59530523)`); }
         // at this point, each alphabet is at least the minimum size and is
         // guaranteed to have at least once instance of the plaintext hexChar.
         // if (logalot) { console.warn(`${lc} return prevHash: ${prevHash}`) }
-        return { alphabetsThisSection, prevHash };
+        return { alphabetsThisBlock, prevHash };
     } catch (error) {
         console.error(`${lc} error: ${h.extractErrorMsg(error)}`);
         throw error;
     }
 }
 
-async function getEncryptedIndexesThisSection({
-    alphabetsThisSection,
-    passSectionLength,
+async function getEncryptedIndexesThisBlock({
+    alphabetsThisBlock,
+    blockSize,
     indexHexEncodedDataAtStartOfPass,
     hexEncodedData,
     getIndexOfCharInAlphabet,
 }: {
-    alphabetsThisSection: string[],
-    passSectionLength: number,
+    alphabetsThisBlock: string[],
+    blockSize: number,
     indexHexEncodedDataAtStartOfPass: number,
     hexEncodedData: string,
     getIndexOfCharInAlphabet: (alphabet: string, hexChar: string) => number,
 }): Promise<number[]> {
-    const lc = `[${getEncryptedIndexesThisSection.name}]`;
+    const lc = `[${getEncryptedIndexesThisBlock.name}]`;
     try {
         const resIndexes: number[] = [];
-        for (let indexIntoPassSection = 0; indexIntoPassSection < passSectionLength; indexIntoPassSection++) {
-            const indexHexEncodedData = indexHexEncodedDataAtStartOfPass + indexIntoPassSection;
-            const alphabet = alphabetsThisSection[indexIntoPassSection];
+        for (let indexIntoBlock = 0; indexIntoBlock < blockSize; indexIntoBlock++) {
+            const indexHexEncodedData = indexHexEncodedDataAtStartOfPass + indexIntoBlock;
+            const alphabet = alphabetsThisBlock[indexIntoBlock];
             const encryptedIndexIntoAlphabet = getIndexOfCharInAlphabet(alphabet, hexEncodedData[indexHexEncodedData]);
             resIndexes.push(encryptedIndexIntoAlphabet);
         }

@@ -6,17 +6,17 @@ import { stdin, stdout } from 'node:process'; // decide if use this or not
 
 import { extractErrorMsg, getTimestampInTicks, getUUID, pretty } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 
-import { DEFAULT_MAX_PASS_SECTION_LENGTH, DEFAULT_NUM_OF_PASSES, ENCRYPT_LOG_A_LOT } from "../constants.mjs";
+import { DEFAULT_MAX_BLOCK_SIZE, DEFAULT_NUM_OF_PASSES, ENCRYPT_LOG_A_LOT } from "../constants.mjs";
 import {
     PARAM_INFO_DATA_PATH, PARAM_INFO_DATA_STRING, PARAM_INFO_ENCRYPT, PARAM_INFO_OUTPUT_PATH, PARAM_INFO_SALT,
-    PARAM_INFO_STRENGTH, ENCRYPTED_OUTPUT_FILE_EXT, PARAM_INFO_INDEXING_MODE, PARAM_INFO_MULTIPASS_FLAG,
-    PARAM_INFO_MULTIPASS_SECTION_LENGTH, PARAM_INFO_MULTIPASS_NUM_OF_PASSES, PARAM_INFO_HASH_ALGORITHM,
+    PARAM_INFO_STRENGTH, ENCRYPTED_OUTPUT_FILE_EXT, PARAM_INFO_INDEXING_MODE, PARAM_INFO_BLOCKMODE_FLAG,
+    PARAM_INFO_BLOCKMODE_BLOCK_SIZE, PARAM_INFO_BLOCKMODE_NUM_OF_PASSES, PARAM_INFO_HASH_ALGORITHM,
     PARAM_INFO_SALT_STRATEGY, PARAM_INFO_INITIAL_RECURSIONS
 } from "./rli-constants.mjs";
 import { RLIArgInfo, GenericEncryptionStrengthSetting, RLIArgType, RLIParamInfo, } from "./rli-types.mjs";
 import {
     ALPHABET_INDEXING_MODES, AlphabetIndexingMode, BaseArgs, EncryptResult,
-    HASH_ALGORITHMS, HashAlgorithm, MultipassOptions, SALT_STRATEGIES, SaltStrategy
+    HASH_ALGORITHMS, HashAlgorithm, BlockModeOptions, SALT_STRATEGIES, SaltStrategy
 } from '../types.mjs';
 
 
@@ -230,31 +230,31 @@ export function extractArg_indexingMode({
     }
 }
 
-export function extractArg_multipass({
+export function extractArg_blockMode({
     argInfos,
 }: {
     argInfos: RLIArgInfo<RLIArgType>[],
-}): MultipassOptions | undefined {
-    const lc = `[${extractArg_multipass.name}]`;
+}): BlockModeOptions | undefined {
+    const lc = `[${extractArg_blockMode.name}]`;
     try {
         if (logalot) { console.log(`${lc} starting... (I: 965c3f7914054754a678767eae1d1afd)`); }
 
-        const multipassFlag = extractArgValue({ paramInfo: PARAM_INFO_MULTIPASS_FLAG, argInfos }) as boolean | undefined;
-        if (!multipassFlag) { return undefined; /* <<<< returns early */ }
+        const blockMode = extractArgValue({ paramInfo: PARAM_INFO_BLOCKMODE_FLAG, argInfos }) as boolean | undefined;
+        if (!blockMode) { return undefined; /* <<<< returns early */ }
 
-        let maxPassSectionLength = extractArgValue({
-            paramInfo: PARAM_INFO_MULTIPASS_SECTION_LENGTH,
+        let maxBlockSize = extractArgValue({
+            paramInfo: PARAM_INFO_BLOCKMODE_BLOCK_SIZE,
             argInfos,
         }) as number | undefined;
-        if (maxPassSectionLength === 0) { throw new Error(`max section length cannot be 0 (E: e76c559f00d24401ead8cf23649a4523)`); }
-        if (maxPassSectionLength) {
-            if (!Number.isInteger(maxPassSectionLength)) { throw new Error(`invalid maxPassSectionLength (${maxPassSectionLength}). must be a valid integer (E: 66da0180dcb7f2fc0a57e47c8e230223)`); }
+        if (maxBlockSize === 0) { throw new Error(`max section length cannot be 0 (E: e76c559f00d24401ead8cf23649a4523)`); }
+        if (maxBlockSize) {
+            if (!Number.isInteger(maxBlockSize)) { throw new Error(`invalid maxBlockSize (${maxBlockSize}). must be a valid integer (E: 66da0180dcb7f2fc0a57e47c8e230223)`); }
         } else {
-            console.warn(`${lc} maxPassSectionLength not specified. using default ${DEFAULT_MAX_PASS_SECTION_LENGTH}. (W: 8e7a702553564c0ab8e578d34ce204ff)`);
-            maxPassSectionLength = DEFAULT_MAX_PASS_SECTION_LENGTH;
+            console.warn(`${lc} maxBlockSize not specified. using default ${DEFAULT_MAX_BLOCK_SIZE}. (W: 8e7a702553564c0ab8e578d34ce204ff)`);
+            maxBlockSize = DEFAULT_MAX_BLOCK_SIZE;
         }
         let numOfPasses = extractArgValue({
-            paramInfo: PARAM_INFO_MULTIPASS_NUM_OF_PASSES,
+            paramInfo: PARAM_INFO_BLOCKMODE_NUM_OF_PASSES,
             argInfos,
         }) as number | undefined;
         if (numOfPasses === 0) { throw new Error(`numOfPasses cannot be 0 (E: a6c7c54acf9045a5b0567ab7a78b15c1)`); }
@@ -265,14 +265,14 @@ export function extractArg_multipass({
             numOfPasses = DEFAULT_NUM_OF_PASSES;
         }
 
-        const resMultipassOptions: MultipassOptions = {
-            maxPassSectionLength,
+        const resBlockModeOptions: BlockModeOptions = {
+            maxBlockSize,
             numOfPasses,
         };
 
-        if (logalot) { console.log(`${lc} resMultipassOptions: ${pretty(resMultipassOptions)} (I: e9e1ee59a99ce2e7c614ff0663a5d323)`); }
+        if (logalot) { console.log(`${lc} resBlockModeOptions: ${pretty(resBlockModeOptions)} (I: e9e1ee59a99ce2e7c614ff0663a5d323)`); }
 
-        return resMultipassOptions;
+        return resBlockModeOptions;
     } catch (error) {
         console.error(`${lc} ${error.message}`);
         throw error;
@@ -536,7 +536,7 @@ export async function getBaseArgsSet({
     salt,
     strength,
     indexingMode,
-    multipass,
+    blockMode,
     hashAlgorithm,
     saltStrategy,
     initialRecursions,
@@ -545,7 +545,7 @@ export async function getBaseArgsSet({
     salt: string | undefined,
     strength: GenericEncryptionStrengthSetting,
     indexingMode: AlphabetIndexingMode | undefined,
-    multipass: MultipassOptions | undefined,
+    blockMode: BlockModeOptions | undefined,
     hashAlgorithm: HashAlgorithm | undefined,
     saltStrategy: SaltStrategy | undefined,
     initialRecursions: number | undefined,
@@ -564,12 +564,12 @@ export async function getBaseArgsSet({
             hashAlgorithm: hashAlgorithm ?? 'SHA-256',
             indexingMode: indexingMode ?? 'indexOf',
             recursionsPerHash: 2,
-            multipass,
+            blockMode,
         }
         return args;
     } else if (strength === 'stronger') {
-        multipass ??= {
-            maxPassSectionLength: 1000,
+        blockMode ??= {
+            maxBlockSize: 1000,
             // every pass is c. 100 in length, so every 10 passes is 1000 characters per character,
             // really selection of this depends on the length of data, but
             // we'll assume it's relatively small data
@@ -583,7 +583,7 @@ export async function getBaseArgsSet({
             hashAlgorithm: hashAlgorithm ?? 'SHA-512',
             indexingMode: indexingMode ?? 'lastIndexOf',
             recursionsPerHash: 10,
-            multipass,
+            blockMode,
         }
         return args;
     } else {

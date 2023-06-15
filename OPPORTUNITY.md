@@ -243,7 +243,7 @@ guarantee that...
         within each round function iteration ("salt strategy"); and,
       * per use-case customization of recursions of hashing per round function
         iteration ("recursions per hash" parameter); and,
-    * encrypt-gib's customizable sectioned multipass mode, which...
+    * encrypt-gib's customizable block mode, which...
       * helps mitigate short-circuit brute force attempts by sectioning plaintext
         data processing in a way that also enables memory-hard processing; and,
     * other facets as well.
@@ -293,8 +293,8 @@ change given the same data - though note that even if the index is common among
 ciphertexts, the corresponding alphabet will be different. so ultimately
 fore-knowledge of the plaintext, even complete knowledge, should not help speed
 up beyond brute force computation time. note the weaker parameter set used here
-(non-multipass) does allow for short-circuiting brute force attacks with
-fore-knowledge of the start of the plaintext.
+(stream mode, not block mode) does allow for short-circuiting brute force
+attacks with fore-knowledge of the start of the plaintext.
 
 data: What do you get if you multiply six by nine?
 
@@ -307,7 +307,7 @@ data: What do you get if you multiply six by nine?
 ### [simple encryption with known data.weaker secret.stronger strength.encrypt-gib](./encryption-examples/simple%20encryption%20with%20known%20data.weaker%20secret.stronger%20strength.encrypt-gib)
 
 ```
-{"initialRecursions":30000,"salt":"d0672c5ea66e2374a963f48523f3e9116f4acd1b461fc0e2592ba0d19514e0fa","saltStrategy":"prependPerHash","hashAlgorithm":"SHA-512","indexingMode":"lastIndexOf","recursionsPerHash":10,"multipass":{"maxPassSectionLength":1000,"numOfPasses":100},"encryptedData":"12795,12794,12782,12779,12789,12757,12799,12789,12789,12795,12763,12797,12760,12778,12793,12775,12797,12787,12795,12792,12788,12794,12799,12751,12795,12792,12749,12792,12790,12790,12799,12784,12785,12796,12793,12781,12791,12774,12781,12795,12721,12766,12796,12797,12784,12756,12782,12771,12788,12784,12791,12796,12788,12778,12790,12777,12795,12778,12797,12777,12787,12793,12793,12789,12777,12787,12784,12788,12791,12797,12777,12734,12789,12793,12794,12792,12779,12791,12799,12793,12774,12784,12790,12793,12793,12793,12788,12752"}
+{"initialRecursions":30000,"salt":"d0672c5ea66e2374a963f48523f3e9116f4acd1b461fc0e2592ba0d19514e0fa","saltStrategy":"prependPerHash","hashAlgorithm":"SHA-512","indexingMode":"lastIndexOf","recursionsPerHash":10,"blockMode":{"maxBlockSize":1000,"numOfPasses":100},"encryptedData":"12795,12794,12782,12779,12789,12757,12799,12789,12789,12795,12763,12797,12760,12778,12793,12775,12797,12787,12795,12792,12788,12794,12799,12751,12795,12792,12749,12792,12790,12790,12799,12784,12785,12796,12793,12781,12791,12774,12781,12795,12721,12766,12796,12797,12784,12756,12782,12771,12788,12784,12791,12796,12788,12778,12790,12777,12795,12778,12797,12777,12787,12793,12793,12789,12777,12787,12784,12788,12791,12797,12777,12734,12789,12793,12794,12792,12779,12791,12799,12793,12774,12784,12790,12793,12793,12793,12788,12752"}
 ```
 
 ### [simple encryption with known data.stronger secret.weaker strength.encrypt-gib](./encryption-examples/simple%20encryption%20with%20known%20data.stronger%20secret.weaker%20strength.encrypt-gib)
@@ -319,7 +319,7 @@ data: What do you get if you multiply six by nine?
 ### [simple encryption with known data.stronger secret.stronger strength.encrypt-gib](./encryption-examples/simple%20encryption%20with%20known%20data.stronger%20secret.stronger%20strength.encrypt-gib)
 
 ```
-{"initialRecursions":30000,"salt":"19bf66cb80c929b077976318a428fcb57fdb5158aa67397416cd001e3fe3ac37","saltStrategy":"prependPerHash","hashAlgorithm":"SHA-512","indexingMode":"lastIndexOf","recursionsPerHash":10,"multipass":{"maxPassSectionLength":1000,"numOfPasses":100},"encryptedData":"12723,12794,12794,12796,12799,12760,12796,12788,12776,12768,12794,12775,12798,12792,12778,12792,12768,12774,12748,12796,12784,12785,12798,12764,12795,12776,12778,12798,12793,12791,12798,12794,12789,12780,12793,12788,12793,12780,12786,12784,12726,12789,12797,12787,12788,12768,12778,12793,12768,12790,12781,12791,12797,12775,12744,12795,12795,12799,12799,12780,12785,12785,12786,12777,12792,12796,12748,12796,12765,12783,12788,12799,12798,12796,12786,12792,12777,12785,12761,12797,12763,12799,12774,12796,12797,12780,12796,12726"}
+{"initialRecursions":30000,"salt":"19bf66cb80c929b077976318a428fcb57fdb5158aa67397416cd001e3fe3ac37","saltStrategy":"prependPerHash","hashAlgorithm":"SHA-512","indexingMode":"lastIndexOf","recursionsPerHash":10,"blockMode":{"maxBlockSize":1000,"numOfPasses":100},"encryptedData":"12723,12794,12794,12796,12799,12760,12796,12788,12776,12768,12794,12775,12798,12792,12778,12792,12768,12774,12748,12796,12784,12785,12798,12764,12795,12776,12778,12798,12793,12791,12798,12794,12789,12780,12793,12788,12793,12780,12786,12784,12726,12789,12797,12787,12788,12768,12778,12793,12768,12790,12781,12791,12797,12775,12744,12795,12795,12799,12799,12780,12785,12785,12786,12777,12792,12796,12748,12796,12765,12783,12788,12799,12798,12796,12786,12792,12777,12785,12761,12797,12763,12799,12774,12796,12797,12780,12796,12726"}
 ```
 
 ### [short message with much longer secret.stronger strength wat](./encryption-examples/wat.encrypt-gib)

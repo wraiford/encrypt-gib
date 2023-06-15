@@ -9,10 +9,8 @@ import { firstOfAll, ifWe, ifWeMight, iReckon, respecfully, respecfullyDear } fr
 const maam = `[${import.meta.url}]`, sir = maam;
 
 import * as c from '../constants.mjs';
-import {
-    SaltStrategy, HashAlgorithm,
-} from '../types.mjs';
-import { decryptToHex_multipass } from './decrypt-to-hex-multipass.mjs';
+import { SaltStrategy, HashAlgorithm, } from '../types.mjs';
+import { decryptToHex_blockMode } from './decrypt-to-hex-block-mode.mjs';
 
 // const SIMPLEST_DATA = 'a';
 // /**
@@ -95,7 +93,7 @@ async function initData(): Promise<void> {
 }
 await initData(); // yay top-level await
 
-await respecfully(sir, `decryptToHex_multipass`, async () => {
+await respecfully(sir, `decryptToHex_blockMode`, async () => {
     await respecfully(sir, `simplest cases`, async () => {
         const salt = "q";
         const hexEncodedData = 'abc123def';
@@ -106,14 +104,14 @@ await respecfully(sir, `decryptToHex_multipass`, async () => {
         const secret = 'aaa';
         const hashAlgorithm: HashAlgorithm = 'SHA-256';
         const encryptedDataDelimiter = c.DEFAULT_ENCRYPTED_DATA_DELIMITER;
-        const maxPassSectionLength = 3;
+        const maxBlockSize = 3;
         const numOfPasses = 1;
 
         await respecfully(sir, `testing both indexingModes`, async () => {
             {
                 const expectedHexEncodedData = 'abc123def';
                 await ifWe(sir, `indexOf, expected hex: "${expectedHexEncodedData}"`, async () => {
-                    const decryptedData = await decryptToHex_multipass({
+                    const decryptedData = await decryptToHex_blockMode({
                         encryptedData: '21,23,76,0,8,5,7,6,11',
                         initialRecursions,
                         recursionsPerHash,
@@ -122,7 +120,7 @@ await respecfully(sir, `decryptToHex_multipass`, async () => {
                         secret,
                         hashAlgorithm: HashAlgorithm.sha_256,
                         encryptedDataDelimiter: c.DEFAULT_ENCRYPTED_DATA_DELIMITER,
-                        maxPassSectionLength,
+                        maxBlockSize,
                         numOfPasses,
                     });
                     // console.log(decryptedData)
@@ -132,7 +130,7 @@ await respecfully(sir, `decryptToHex_multipass`, async () => {
             {
                 const expectedHexEncodedData = 'abc123def';
                 await ifWe(sir, `lastIndexOf, expected hex: "${expectedHexEncodedData}"`, async () => {
-                    const decryptedData = await decryptToHex_multipass({
+                    const decryptedData = await decryptToHex_blockMode({
                         encryptedData: '62,36,115,63,62,54,61,59,48',
                         initialRecursions,
                         recursionsPerHash,
@@ -141,7 +139,7 @@ await respecfully(sir, `decryptToHex_multipass`, async () => {
                         secret,
                         hashAlgorithm: HashAlgorithm.sha_256,
                         encryptedDataDelimiter: c.DEFAULT_ENCRYPTED_DATA_DELIMITER,
-                        maxPassSectionLength,
+                        maxBlockSize,
                         numOfPasses,
                     });
                     // console.log(decryptedData)

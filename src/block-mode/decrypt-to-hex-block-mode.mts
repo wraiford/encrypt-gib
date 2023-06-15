@@ -16,7 +16,7 @@ import { AlphabetIndexingMode, HashAlgorithm, SaltStrategy } from "../types.mjs"
  *
  * @returns unencrypted, but still hex-encoded plaintext string
  */
-export async function decryptToHex_multipass({
+export async function decryptToHex_blockMode({
     encryptedData,
     initialRecursions,
     recursionsPerHash,
@@ -25,7 +25,7 @@ export async function decryptToHex_multipass({
     secret,
     hashAlgorithm,
     encryptedDataDelimiter,
-    maxPassSectionLength,
+    maxBlockSize,
     numOfPasses,
 }: {
     encryptedData: string,
@@ -36,10 +36,10 @@ export async function decryptToHex_multipass({
     secret: string,
     hashAlgorithm: HashAlgorithm,
     encryptedDataDelimiter: string,
-    maxPassSectionLength: number,
+    maxBlockSize: number,
     numOfPasses: number,
 }): Promise<string> {
-    const lc = `[${decryptToHex_multipass.name}]`;
+    const lc = `[${decryptToHex_blockMode.name}]`;
 
     try {
         // set up "prevHash" as a starting point, similar to key-stretching
@@ -64,8 +64,8 @@ export async function decryptToHex_multipass({
 
         // set the initial pass length.
         let totalLength = encryptedDataIndexes.length;
-        let passSectionLength = maxPassSectionLength;
-        if (passSectionLength > totalLength) { passSectionLength = totalLength; }
+        let blockSize = maxBlockSize;
+        if (blockSize > totalLength) { blockSize = totalLength; }
 
         /**
          * We are doing multiple passes, but possibly only on subsets of
@@ -74,11 +74,11 @@ export async function decryptToHex_multipass({
          *
          * _note: I am avoiding the use of "block" since that is an overloaded term in cryptography and is usually related to padding._
          */
-        let passSections = Math.ceil(totalLength / passSectionLength);
+        let blockSections = Math.ceil(totalLength / blockSize);
         /**
          * the final pass may be less than the pass length.
          */
-        let finalPassSectionLength = (totalLength % passSectionLength) || passSectionLength; // if 0, then the last pass is full length
+        let finalBlockSize = (totalLength % blockSize) || blockSize; // if 0, then the last pass is full length
         /**
          * index into encryptedDataIndexes at the start of each pass.
          *
@@ -91,14 +91,14 @@ export async function decryptToHex_multipass({
         // entire section. once the alphabets are created, iterate the plaintext
         // hexEncodedData and map them to the indices into those alphabets.
         // todo: add parameterized step to encode indices into characters?
-        for (let indexSection = 0; indexSection < passSections; indexSection++) {
+        for (let indexOfBlock = 0; indexOfBlock < blockSections; indexOfBlock++) {
 
-            // adjust the passSectionLength if it's the final one which might be shorter
-            const isFinalPassSection = indexSection === passSections - 1;
-            if (isFinalPassSection) { passSectionLength = finalPassSectionLength; }
+            // adjust the blockSize if it's the final one which might be shorter
+            const isFinalBlock = indexOfBlock === blockSections - 1;
+            if (isFinalBlock) { blockSize = finalBlockSize; }
 
-            const resGetAlphabets = await getAlphabetsThisSection({
-                passSectionLength,
+            const resGetAlphabets = await getAlphabetsThisBlock({
+                blockSize,
                 indexEncryptedDataIndexesAtStartOfPass,
                 numOfPasses,
                 encryptedDataIndexes,
@@ -109,19 +109,19 @@ export async function decryptToHex_multipass({
                 hashAlgorithm,
             });
 
-            let alphabetsThisSection = resGetAlphabets.alphabetsThisSection;
+            let alphabetsThisBlock = resGetAlphabets.alphabetsThisBlock;
             prevHash = resGetAlphabets.prevHash; // used in next section if there is one
 
-            const decryptedDataArrayThisSection = await getDecryptedDataArrayThisSection({
-                alphabetsThisSection,
-                passSectionLength,
+            const decryptedDataArrayThisBlock = await getDecryptedDataArrayThisBlock({
+                alphabetsThisBlock,
+                blockSize,
                 indexEncryptedDataIndexesAtStartOfPass,
                 encryptedDataIndexes,
             });
 
-            decryptedDataArray = decryptedDataArray.concat(decryptedDataArrayThisSection);
+            decryptedDataArray = decryptedDataArray.concat(decryptedDataArrayThisBlock);
 
-            indexEncryptedDataIndexesAtStartOfPass += passSectionLength;
+            indexEncryptedDataIndexesAtStartOfPass += blockSize;
         }
 
         // reconstitute the decryptedHex
@@ -137,10 +137,10 @@ export async function decryptToHex_multipass({
  * internal function that builds the JIT alphabets for a given multipass
  * section.
  *
- * @returns alphabetsThisSection array of alphabets and the final `prevHash` for use in the next multipass section (if any).
+ * @returns alphabetsThisBlock array of alphabets and the final `prevHash` for use in the next multipass section (if any).
  */
-async function getAlphabetsThisSection({
-    passSectionLength,
+async function getAlphabetsThisBlock({
+    blockSize,
     numOfPasses,
     indexEncryptedDataIndexesAtStartOfPass,
     encryptedDataIndexes,
@@ -154,7 +154,7 @@ async function getAlphabetsThisSection({
      * Size of the multipass section, i.e. number of characters to
      * encrypt/decrypt as a whole.
      */
-    passSectionLength: number,
+    blockSize: number,
     /**
      * Number of times to iterate over the multipass section
      */
@@ -166,8 +166,8 @@ async function getAlphabetsThisSection({
     saltStrategy: SaltStrategy,
     prevHash: string,
     hashAlgorithm: HashAlgorithm,
-}): Promise<{ alphabetsThisSection: string[], prevHash: string }> {
-    const lc = `[${getAlphabetsThisSection.name}]`;
+}): Promise<{ alphabetsThisBlock: string[], prevHash: string }> {
+    const lc = `[${getAlphabetsThisBlock.name}]`;
     try {
         /**
          * one alphabet per plaintext character (hex only atow).
@@ -180,7 +180,7 @@ async function getAlphabetsThisSection({
          * those alphabets, depending on if the character is found (and once
          * I implement it, additionalSuperfluousAlphabetExtensions).
          */
-        let alphabetsThisSection: string[] = [];
+        let alphabetsThisBlock: string[] = [];
         /** index into the `encryptedDataIndexes` that we're working with */
         let indexEncryptedDataIndexes: number;
         let hash: string;
@@ -189,9 +189,9 @@ async function getAlphabetsThisSection({
         // may NOT include the hex character to encode, but this will be
         // addressed in the next step.
         for (let passNum = 0; passNum < numOfPasses; passNum++) {
-            for (let indexIntoPassSection = 0; indexIntoPassSection < passSectionLength; indexIntoPassSection++) {
-                indexEncryptedDataIndexes = indexEncryptedDataIndexesAtStartOfPass + indexIntoPassSection;
-                let alphabet = alphabetsThisSection[indexIntoPassSection] ?? '';
+            for (let indexIntoBlock = 0; indexIntoBlock < blockSize; indexIntoBlock++) {
+                indexEncryptedDataIndexes = indexEncryptedDataIndexesAtStartOfPass + indexIntoBlock;
+                let alphabet = alphabetsThisBlock[indexIntoBlock] ?? '';
 
                 hash = await execRound_getNextHash({
                     count: recursionsPerHash,
@@ -200,7 +200,7 @@ async function getAlphabetsThisSection({
                 alphabet += hash;
                 prevHash = hash;
 
-                alphabetsThisSection[indexIntoPassSection] = alphabet;
+                alphabetsThisBlock[indexIntoBlock] = alphabet;
             }
         }
 
@@ -208,10 +208,10 @@ async function getAlphabetsThisSection({
         // size), but it's not guaranteed that each alphabet will contain the
         // plaintext character.  so go through and extend any alphabets that do
         // not yet contain the plaintext character
-        for (let indexIntoPassSection = 0; indexIntoPassSection < passSectionLength; indexIntoPassSection++) {
-            indexEncryptedDataIndexes = indexEncryptedDataIndexesAtStartOfPass + indexIntoPassSection;
+        for (let indexIntoBlock = 0; indexIntoBlock < blockSize; indexIntoBlock++) {
+            indexEncryptedDataIndexes = indexEncryptedDataIndexesAtStartOfPass + indexIntoBlock;
             const encryptedIndex: number = encryptedDataIndexes[indexEncryptedDataIndexes];
-            let alphabet = alphabetsThisSection[indexIntoPassSection];
+            let alphabet = alphabetsThisBlock[indexIntoBlock];
 
             // while (!alphabet.includes(hexCharFromData)) {
             while (alphabet.at(encryptedIndex) === undefined) {
@@ -224,12 +224,12 @@ async function getAlphabetsThisSection({
                 prevHash = hash;
             }
 
-            alphabetsThisSection[indexIntoPassSection] = alphabet;
+            alphabetsThisBlock[indexIntoBlock] = alphabet;
         }
 
         // at this point, each alphabet is at least the minimum size and is
         // guaranteed to have at least once instance of the plaintext hexChar.
-        return { alphabetsThisSection, prevHash };
+        return { alphabetsThisBlock, prevHash };
     } catch (error) {
         console.error(`${lc} error: ${h.extractErrorMsg(error)}`);
         throw error;
@@ -243,9 +243,9 @@ async function getAlphabetsThisSection({
  * @param args see individual param docs
  * @returns plaintext as an array of strings
  */
-async function getDecryptedDataArrayThisSection({
-    alphabetsThisSection,
-    passSectionLength,
+async function getDecryptedDataArrayThisBlock({
+    alphabetsThisBlock,
+    blockSize,
     indexEncryptedDataIndexesAtStartOfPass,
     encryptedDataIndexes,
 }: {
@@ -253,11 +253,11 @@ async function getDecryptedDataArrayThisSection({
      * All alphabets for this multipass section that we have already created in
      * a previous step.
      */
-    alphabetsThisSection: string[],
+    alphabetsThisBlock: string[],
     /**
      * Size of the multipass section that we are processing as a whole.
      */
-    passSectionLength: number,
+    blockSize: number,
     /**
      * Start of the multipass section, used to index into {@link encryptedDataIndexes}.
      */
@@ -270,14 +270,14 @@ async function getDecryptedDataArrayThisSection({
      */
     encryptedDataIndexes: number[],
 }): Promise<string[]> {
-    const lc = `[${getDecryptedDataArrayThisSection.name}]`;
+    const lc = `[${getDecryptedDataArrayThisBlock.name}]`;
     try {
         const resDataArray: string[] = [];
 
-        for (let indexIntoPassSection = 0; indexIntoPassSection < passSectionLength; indexIntoPassSection++) {
-            let indexEncryptedDataIndexes = indexEncryptedDataIndexesAtStartOfPass + indexIntoPassSection;
+        for (let indexIntoBlock = 0; indexIntoBlock < blockSize; indexIntoBlock++) {
+            let indexEncryptedDataIndexes = indexEncryptedDataIndexesAtStartOfPass + indexIntoBlock;
             const encryptedIndex: number = encryptedDataIndexes[indexEncryptedDataIndexes];
-            let alphabet = alphabetsThisSection[indexIntoPassSection];
+            let alphabet = alphabetsThisBlock[indexIntoBlock];
             let decryptedCharString = alphabet[encryptedIndex];
             resDataArray.push(decryptedCharString);
         }

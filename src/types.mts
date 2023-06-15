@@ -66,7 +66,7 @@ export const AlphabetIndexingMode = {
 export const ALPHABET_INDEXING_MODES: AlphabetIndexingMode[] = Object.values(AlphabetIndexingMode);
 
 /**
- * The multipass encryption works as follows:
+ * The block-mode algorithm works as follows:
  *
  * ## encrypting
  *
@@ -76,8 +76,8 @@ export const ALPHABET_INDEXING_MODES: AlphabetIndexingMode[] = Object.values(Alp
  *   * j = alphabet expansion index
  * * passes - PASS1, PASS2, .., PASSn
  *
- * 1. First we iterate through the plaintext data in "multipass sections", the
- * size of which is parameterized by `maxPassSectionLength`. If this is larger
+ * 1. First we iterate through the plaintext data in multipass blocks, the
+ * size of which is parameterized by `maxBlockSize`. If this is larger
  * than data, then the entire plaintext will be used.
  *
  * 2. Then we create the initial alphabets for the entire section, determined by
@@ -89,7 +89,7 @@ export const ALPHABET_INDEXING_MODES: AlphabetIndexingMode[] = Object.values(Alp
  * the pass section.
  *
  * 4. We get the index of each plaintext character into its corresponding
- * alphabet and store each index in an array for the entire multipass section.
+ * alphabet and store each index in an array for the entire multipass block.
  * We then concat this new section with any previous sections encrypted,
  * building out our entire result `encryptedData` array section by section.
  *
@@ -100,9 +100,10 @@ export const ALPHABET_INDEXING_MODES: AlphabetIndexingMode[] = Object.values(Alp
  *
  * The decryption process is very similar.
  *
- * 1. First we iterate through the ciphertext data in multipass sections, the
- * size of which must be the same as the encryption process (of course all
- * parameters should be the same encrypting and decrypting).
+ * 1. First we iterate through the ciphertext data in multipass blocks, the
+ * size of which must be the same as the encryption process (all parameters
+ * should be the same encrypting and decrypting. these are automatically stored
+ * in encryption output file).
  *
  * 2. Next we create our alphabets for the entire section. The first phase of
  * this is to build out the minimum sized alphabets per parameters
@@ -121,7 +122,7 @@ export const ALPHABET_INDEXING_MODES: AlphabetIndexingMode[] = Object.values(Alp
  * 5. Once all sections are decrypted to hex, the plaintext array is converted to a
  * hex string and then decoded to the original plaintext.
  */
-export interface MultipassOptions {
+export interface BlockModeOptions {
     /**
      * Maximum number of **hex-encoded** plaintext characters per section when
      * making multiple passes. Each pass extends the JIT alphabet for each
@@ -133,14 +134,20 @@ export interface MultipassOptions {
      *   plaintext in one section).
      * * Barring internal JS voodoo, each pass should require additional memory
      *   roughly linearly proportional to
-     *   * `dataToEncrypt`/`maxPassSectionLength` length (whichever is smaller)
+     *   * `dataToEncrypt`/`maxBlockSize` length (whichever is smaller)
      *   * `numOfPasses` to make
      *   * length of the hash used in creating the JIT alphabets (`hashAlgorithm`)
-     * * The larger `maxPassSectionLength` & `numOfPasses` is, the more a brute
+     * * The larger `maxBlockSize` & `numOfPasses` is, the more a brute
      *   force attack has to calculate - and the more memory it is going to take
      *   - before determining if a secret guess is correct.
      */
-    maxPassSectionLength: number;
+    maxBlockSize: number;
+    /**
+     * @deprecated
+     *
+     * use {@link maxBlockSize}
+     */
+    maxPassSectionLength?: number;
     /**
      * Number of "passes" to make over the pass section. Each pass will extend
      * the JIT alphabet for each character in the pass section by the length of
@@ -148,7 +155,7 @@ export interface MultipassOptions {
      *
      * This should be especially effective in mitigating against brute force
      * cracking when used in tandem with an `indexingMode` of `lastIndexOf`.
-     * This is because at least `(numOfPasses - 1) * maxPassSectionLength`
+     * This is because at least `(numOfPasses - 1) * maxBlockSize`
      * number of hash rounds must be calculated before the very first plaintext
      * character can be deciphered. This is even more expensive if
      * `recursionsPerHash` is larger.
@@ -182,7 +189,7 @@ interface BaseBase {
      * may combine `'lastIndexOf'` with a "multipass" expanding alphabet to
      * ensure that a larger portion of the plaintext (up to 100% of the
      * plaintext), is required to be processed before any short-circuiting
-     * decryption can occur. @see {@link MultipassOptions}
+     * decryption can occur. @see {@link BlockModeOptions}
      *
      * To help understand this, here is an example. Say we use a multi-pass
      * alphabet that requires a minimum of 3 expansions. We encipher the first
@@ -195,9 +202,9 @@ interface BaseBase {
      * already present, then additional rounds won't be needed for the attacker
      * - they already have the index and the alphabet that has the plaintext.
      *
-     * With `lastIndexOf` + multipass, then the attacker is forced to calculate
-     * at least the entire section's hashing because the encrypted index will most likely
-     * be at the end of the alphabet.
+     * With `lastIndexOf` + multipass blocks, then the attacker is forced to
+     * calculate at least the entire section's hashing because the encrypted
+     * index will most likely be at the end of the alphabet.
      *
      * abc123...[200ish hex character]...bac231
      *                                      ^
@@ -217,9 +224,15 @@ interface BaseBase {
      * This is one way to help mitigate against short-circuit brute force
      * attacks.
      *
-     * @see {@link MultipassOptions}
+     * @see {@link BlockModeOptions}
      */
-    multipass?: MultipassOptions;
+    blockMode?: BlockModeOptions;
+    /**
+     * @deprecated
+     *
+     * Use `blockMode` instead.
+     */
+    multipass?: BlockModeOptions;
     /**
      * The hash algorithm to use.
      *

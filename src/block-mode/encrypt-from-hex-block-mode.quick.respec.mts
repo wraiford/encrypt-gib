@@ -17,7 +17,7 @@ import {
     SALT_STRATEGIES
 } from '../types.mjs';
 import { encodeStringToHexString } from '../helper.mjs';
-import { encryptFromHex_multipass } from './encrypt-from-hex-multipass.mjs';
+import { encryptFromHex_blockMode } from './encrypt-from-hex-block-mode.mjs';
 
 const SIMPLEST_DATA = 'a';
 // /**
@@ -81,11 +81,11 @@ async function initData(): Promise<void> {
 }
 await initData(); // yay top-level await
 
-const MAX_PASS_SECTION_LENGTHS: number[] = [
+const MAX_BLOCK_SIZES: number[] = [
     1,
     10,
     42,
-    c.DEFAULT_MAX_PASS_SECTION_LENGTH, // 500 atow
+    c.DEFAULT_MAX_BLOCK_SIZE, // 500 atow
 ];
 const NUM_OF_PASSES: number[] = [
     1,
@@ -93,7 +93,7 @@ const NUM_OF_PASSES: number[] = [
     c.DEFAULT_NUM_OF_PASSES, // 4 atow
 ];
 
-await respecfully(sir, `encryptFromHex_multipass`, async () => {
+await respecfully(sir, `encryptFromHex_blockMode`, async () => {
     await respecfully(sir, `simplest cases`, async () => {
         await respecfully(sir, `varying index modes, no manual jit alphabet extensions required to guarantee`, async () => {
             // i have manually eyeballed guaranteed alphabet extensions with
@@ -108,10 +108,10 @@ await respecfully(sir, `encryptFromHex_multipass`, async () => {
             const secret = 'aaa';
             const hashAlgorithm: HashAlgorithm = 'SHA-256';
             const encryptedDataDelimiter = c.DEFAULT_ENCRYPTED_DATA_DELIMITER;
-            const maxPassSectionLength = 3;
+            const maxBlockSize = 3;
             const numOfPasses = 1;
             await ifWe(sir, `[${AlphabetIndexingMode.indexOf}][${hexEncodedData}]`, async () => {
-                const encryptedData = await encryptFromHex_multipass({
+                const encryptedData = await encryptFromHex_blockMode({
                     hexEncodedData,
                     initialRecursions,
                     recursionsPerHash,
@@ -121,7 +121,7 @@ await respecfully(sir, `encryptFromHex_multipass`, async () => {
                     hashAlgorithm,
                     encryptedDataDelimiter,
                     indexingMode: AlphabetIndexingMode.indexOf,
-                    maxPassSectionLength,
+                    maxBlockSize,
                     numOfPasses,
                 });
                 iReckon(sir, encryptedData).asTo('encryptedData').isGonnaBeTruthy();
@@ -129,7 +129,7 @@ await respecfully(sir, `encryptFromHex_multipass`, async () => {
                 iReckon(sir, encryptedData.split(encryptedDataDelimiter).length).isGonnaBe(hexEncodedData.length);
             });
             await ifWe(sir, `[${AlphabetIndexingMode.lastIndexOf}][${hexEncodedData}]`, async () => {
-                const encryptedData = await encryptFromHex_multipass({
+                const encryptedData = await encryptFromHex_blockMode({
                     hexEncodedData,
                     initialRecursions,
                     recursionsPerHash,
@@ -139,7 +139,7 @@ await respecfully(sir, `encryptFromHex_multipass`, async () => {
                     hashAlgorithm,
                     encryptedDataDelimiter,
                     indexingMode: AlphabetIndexingMode.lastIndexOf,
-                    maxPassSectionLength,
+                    maxBlockSize,
                     numOfPasses,
                 });
                 iReckon(sir, encryptedData).asTo('encryptedData').isGonnaBeTruthy();
@@ -161,11 +161,11 @@ await respecfully(sir, `encryptFromHex_multipass`, async () => {
             const secret = 'aaa';
             const hashAlgorithm: HashAlgorithm = 'SHA-256';
             const encryptedDataDelimiter = c.DEFAULT_ENCRYPTED_DATA_DELIMITER;
-            const maxPassSectionLength = 3;
+            const maxBlockSize = 3;
             const numOfPasses = 1;
 
             await ifWe(sir, `[${AlphabetIndexingMode.indexOf}][${hexEncodedData}]`, async () => {
-                const encryptedData = await encryptFromHex_multipass({
+                const encryptedData = await encryptFromHex_blockMode({
                     hexEncodedData,
                     initialRecursions,
                     recursionsPerHash,
@@ -175,7 +175,7 @@ await respecfully(sir, `encryptFromHex_multipass`, async () => {
                     hashAlgorithm,
                     encryptedDataDelimiter,
                     indexingMode: AlphabetIndexingMode.indexOf,
-                    maxPassSectionLength,
+                    maxBlockSize,
                     numOfPasses,
                 });
                 iReckon(sir, encryptedData).asTo('encryptedData').isGonnaBeTruthy();
@@ -184,7 +184,7 @@ await respecfully(sir, `encryptFromHex_multipass`, async () => {
             });
 
             await ifWe(sir, `[${AlphabetIndexingMode.lastIndexOf}][${hexEncodedData}]`, async () => {
-                const encryptedData = await encryptFromHex_multipass({
+                const encryptedData = await encryptFromHex_blockMode({
                     hexEncodedData,
                     initialRecursions,
                     recursionsPerHash,
@@ -194,7 +194,7 @@ await respecfully(sir, `encryptFromHex_multipass`, async () => {
                     hashAlgorithm,
                     encryptedDataDelimiter,
                     indexingMode: AlphabetIndexingMode.lastIndexOf,
-                    maxPassSectionLength,
+                    maxBlockSize,
                     numOfPasses,
                 });
                 iReckon(sir, encryptedData).asTo('encryptedData').isGonnaBeTruthy();
@@ -208,7 +208,7 @@ await respecfully(sir, `encryptFromHex_multipass`, async () => {
                     const encryptedDataResults: string[] = [];
                     // repeat in the loop and the output should always be the same
                     for (let i = 0; i < 20; i++) {
-                        const encryptedData = await encryptFromHex_multipass({
+                        const encryptedData = await encryptFromHex_blockMode({
                             hexEncodedData,
                             initialRecursions,
                             recursionsPerHash,
@@ -218,7 +218,7 @@ await respecfully(sir, `encryptFromHex_multipass`, async () => {
                             hashAlgorithm,
                             encryptedDataDelimiter,
                             indexingMode,
-                            maxPassSectionLength,
+                            maxBlockSize,
                             numOfPasses,
                         });
                         encryptedDataResults.push(encryptedData);
@@ -241,13 +241,13 @@ await respecfully(sir, `encryptFromHex_multipass`, async () => {
 
         for (const dataToEncrypt of TEST_DATAS) {
             for (const saltStrategy of TEST_SALT_STRATEGIES) {
-                for (const maxPassSectionLength of MAX_PASS_SECTION_LENGTHS) {
+                for (const maxBlockSize of MAX_BLOCK_SIZES) {
                     for (const numOfPasses of NUM_OF_PASSES) {
                         for (const indexingMode of ALPHABET_INDEXING_MODES) {
 
                             const hexEncodedData = await encodeStringToHexString(dataToEncrypt);
 
-                            await respecfully(sir, `datalen:${hexEncodedData.length}|initRec:${initialRecursions}|recPer:${recursionsPerHash}|saltStrat:${saltStrategy}|maxPassLen:${maxPassSectionLength}|numPass:${numOfPasses}|mode:${indexingMode}`, async () => {
+                            await respecfully(sir, `datalen:${hexEncodedData.length}|initRec:${initialRecursions}|recPer:${recursionsPerHash}|saltStrat:${saltStrategy}|maxPassLen:${maxBlockSize}|numPass:${numOfPasses}|mode:${indexingMode}`, async () => {
                                 // i have manually eyeballed guaranteed alphabet extensions with
                                 // this parameter set + data and there were no alphabets with sizes
                                 // larger than a single hash, as there are no extra extensions and
@@ -255,7 +255,7 @@ await respecfully(sir, `encryptFromHex_multipass`, async () => {
                                 // const hexEncodedData = 'abc123def123412341234abcabcabcdef0123456789a'; // length 44
                                 // const numOfPasses = 50;
                                 await ifWe(sir, `[${hexEncodedData}]`, async () => {
-                                    const encryptedData = await encryptFromHex_multipass({
+                                    const encryptedData = await encryptFromHex_blockMode({
                                         hexEncodedData,
                                         initialRecursions,
                                         recursionsPerHash,
@@ -265,7 +265,7 @@ await respecfully(sir, `encryptFromHex_multipass`, async () => {
                                         hashAlgorithm,
                                         encryptedDataDelimiter,
                                         indexingMode,
-                                        maxPassSectionLength,
+                                        maxBlockSize,
                                         numOfPasses,
                                     });
                                     iReckon(sir, encryptedData).asTo('encryptedData').isGonnaBeTruthy();

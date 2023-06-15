@@ -1,1 +1,1 @@
-{"initialRecursions":1000,"salt":"salt123","saltStrategy":"prependPerHash","hashAlgorithm":"SHA-256","indexingMode":"lastIndexOf","recursionsPerHash":10,"multipass":{"maxPassSectionLength":2,"numOfPasses":3},"encryptedData":"182,188,169,184,183,148"}
+{"initialRecursions":1000,"salt":"salt123","saltStrategy":"prependPerHash","hashAlgorithm":"SHA-256","indexingMode":"lastIndexOf","recursionsPerHash":10,"blockMode":{"maxBlockSize":2,"numOfPasses":3},"encryptedData":"182,188,169,184,183,148"}

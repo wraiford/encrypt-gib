@@ -41,16 +41,18 @@ export const PARAM_INFO_INDEXING_MODE: RLIParamInfo = {
     name: 'indexing-mode',
     argTypeName: 'string',
 };
-export const PARAM_INFO_MULTIPASS_FLAG: RLIParamInfo = {
-    name: 'multipass',
+export const PARAM_INFO_BLOCKMODE_FLAG: RLIParamInfo = {
+    name: 'blockMode',
+    // name: 'multipass',
     argTypeName: 'boolean',
     isFlag: true,
 };
-export const PARAM_INFO_MULTIPASS_SECTION_LENGTH: RLIParamInfo = {
-    name: 'section-length',
+export const PARAM_INFO_BLOCKMODE_BLOCK_SIZE: RLIParamInfo = {
+    // name: 'section-length',
+    name: 'block-size',
     argTypeName: 'integer',
 };
-export const PARAM_INFO_MULTIPASS_NUM_OF_PASSES: RLIParamInfo = {
+export const PARAM_INFO_BLOCKMODE_NUM_OF_PASSES: RLIParamInfo = {
     name: 'num-of-passes',
     argTypeName: 'integer',
 };
@@ -80,9 +82,9 @@ export const PARAM_INFOS: RLIParamInfo[] = [
     PARAM_INFO_STRENGTH,
     PARAM_INFO_SALT,
     PARAM_INFO_INDEXING_MODE,
-    PARAM_INFO_MULTIPASS_FLAG,
-    PARAM_INFO_MULTIPASS_SECTION_LENGTH,
-    PARAM_INFO_MULTIPASS_NUM_OF_PASSES,
+    PARAM_INFO_BLOCKMODE_FLAG,
+    PARAM_INFO_BLOCKMODE_BLOCK_SIZE,
+    PARAM_INFO_BLOCKMODE_NUM_OF_PASSES,
     PARAM_INFO_HASH_ALGORITHM,
     PARAM_INFO_SALT_STRATEGY,
     PARAM_INFO_INITIAL_RECURSIONS,

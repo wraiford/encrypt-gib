@@ -8,8 +8,10 @@ const maam = `[${import.meta.url}]`, sir = maam;
 
 import * as c from './constants.mjs';
 import * as encryptGib from './encrypt-decrypt.mjs';
-import { SaltStrategy, HashAlgorithm, AlphabetIndexingMode, ALPHABET_INDEXING_MODES, SALT_STRATEGIES, MultipassOptions } from './types.mjs';
-import { encodeStringToHexString } from './helper.mjs';
+import {
+    SaltStrategy, HashAlgorithm, ALPHABET_INDEXING_MODES, SALT_STRATEGIES,
+    BlockModeOptions,
+} from './types.mjs';
 
 const SIMPLEST_DATA = 'a';
 /**
@@ -102,8 +104,8 @@ await respecfully(sir, `initial brute force mitigation tests`, async () => {
         const saltStrategy = SaltStrategy.appendPerHash;
         const hashAlgorithm = HashAlgorithm.sha_256;
         const encryptedDataDelimiter = c.DEFAULT_ENCRYPTED_DATA_DELIMITER;
-        const multipass: MultipassOptions = {
-            maxPassSectionLength: 50,
+        const blockMode: BlockModeOptions = {
+            maxBlockSize: 50,
             numOfPasses: 4,
         }
 
@@ -121,7 +123,7 @@ await respecfully(sir, `initial brute force mitigation tests`, async () => {
                         hashAlgorithm,
                         encryptedDataDelimiter,
                         indexingMode,
-                        multipass,
+                        blockMode,
                     });
                     iReckon(sir, (resEncrypt.errors || []).length).asTo('resEncrypt.errors || []').isGonnaBe(0);
 
@@ -137,7 +139,7 @@ await respecfully(sir, `initial brute force mitigation tests`, async () => {
                         hashAlgorithm,
                         encryptedDataDelimiter,
                         indexingMode,
-                        multipass,
+                        blockMode,
                     });
 
                     iReckon(sir, dataToEncrypt).asTo('dataToEncrypt===decryptedData').isGonnaBe(resDecrypt.decryptedData);
