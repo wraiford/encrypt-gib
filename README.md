@@ -4,26 +4,35 @@
 
 # encrypt-gib - hash-based encryption at the hex level
 
-Encrypt-gib is a genuinely novel, post quantum encryption algorithm that uses
-cryptographic hashes as its only magical primitive, combined with moderately
-simple programming.
+Encrypt-gib is a novel, post quantum, symmetric encryption algorithm candidate
+that uses cryptographic hashes as its only magical primitive, combined with
+moderately simple programming.
 
-The key innovation with this algorithm, which has both a relatively weaker
-stream mode **and** a multipass block mode - though the blocks in this
-case do not necessarily all have to be the same size.
+The key differentiation of this algorithm is that it leverages crytographic
+hashes more extensively than in any other system. It functions as a substitution
+cipher at the hex level, sacrificing perfomance in conventional metrics such as
+speed and storage size in order to reduce overall complexity - DRYer code with
+more understandable implementation details.
+
+There exists a weaker but faster stream mode, as well as a stronger but slower multipass block mode which also produces more storage overhead.
 
 ## tl;dr - up & running
 
-Node V19+ is required
+You can use the library directly from the npm package, or if you're interested
+in playing with the code and parameters more interactively, follow the steps for
+development.
 
 ### request line interface
 
-RLI is a work in progress.
+Encrypt-gib's RLI is a work in progress. You can use it via a global install:
 
 1. `npm install --global @ibgib/encrypt-gib`
 2. `encrypt-gib --help`
 
-_note: the term "request line interface" itself is in line with my vision of a more dynamic, vibrant, and hopefully more polite future for distributed computation._
+_note: the term "request line interface" itself is in line with my vision of a more dynamic, vibrant, and more boldly polite future for distributed computation._
+
+Or you can clone the repo and use `node .` in the repo's base folder, in place
+of `encrypt-gib`, e.g. `node . --help`
 
 ### development
 
@@ -43,28 +52,47 @@ You can find API usage examples in the following respecs:
 
 The basic idea is this:
 
-> Use configurable recursive cryptographic hashes for "effectively random",
-> one-time, just-in-time (JIT) alphabets and record **indices** into these alphabets
-> as our ciphertext. Combining functions such as XOR or others are not
-> available because they operate at the binary level. These are dynamically sized,
-> hex-based alphabets that act  more as a dynamic 1-time pad than a keystream.
+> Use configurable recursive cryptographic hashes for effectively random,
+> one-time, just-in-time (JIT) alphabets and substitute **indices** into these
+> alphabets as our ciphertext.
 
-So our ciphertext represents indexes into (possibly multiple) hash
-concatenations, with configurability on how we generate those hashes. Currently
-implemented with SHA-256 or SHA-512, our hash "alphabets" are in hex, so our
-data is first hex-encoded. Once we have decided our hash algorithm, we will
-key-stretch via recursive hashing of our secret. We then proceed to encipher
-(record indexes for) either single characters or larger sections of characters.
-Due to the non-zero probability of a single hash digest not containing an
-arbitrary plaintext hex character, these hash digests are concatenated, again in
-a configurable manner. For both encryption and decryption, we first build the
-relevant alphabet(s) and we either record or dereference the index of the hex
-character into that alphabet, depending on whether we are encrypting or
-decrypting.
+```
+plaintext: "a"
 
-_note: These alphabets are very similar to the keystreams, with recursive hashing used as the round function. But since the combining function is not an XOR, and indeed the stream is not at the bit level but the hex level, the term "alphabet" is more appropriate._
+plaintext (hex): 61
 
-The current implementatoin supports either SHA-256 and SHA-512 as parameters,
+plaintext (hex) char: 6
+alphabet #1:
+5965e6cfcf0f...
+  ^
+ciphertext (index): 2
+
+plaintext (hex) char: 1
+alphabet #2:
+7546c9b481be...
+         ^
+ciphertext character (index): 9
+
+total ciphertext:
+2,9
+```
+
+ These are dynamically sized, hex-based alphabets that act
+as dynamic 1-time pads for substitution and not as keystreams used in binary
+combining functions.
+
+So our ciphertext is built by substituting a plaintext hex character with its
+index into a hash "alphabet". We generate these alphabets in stream mode by
+recursive hashing (with parameters deciding details).
+
+There are a couple things to note immediately:
+
+1. This operates as a **substitution** cipher at the hex level, not at the binary level. As such, this is not a keystream and combining functions such as XOR or others are not available or required for additional confusion. The randomness of the hash itself is the confusion.
+2. The initial keystretching phase also uses the same round function that performs the recursive hashing, keeping the implementation DRY-er.
+3. Due to the non-zero probability of a single hash containing any given hex character, individual alphabets may be built with multiple concatenated hashes.
+4. Decryption occurs by the same construction of alphabets, but dereferencing the indices in the alphabet to reverse the substitution.
+
+The current implementation supports either SHA-256 and SHA-512 as parameters,
 because both are available in NodeJS and the browser to maximize isomorphic
 JavaScript. Conceptually, this could use any cryptographic hash or other
 function, as long as that function can deterministically build string
@@ -579,7 +607,7 @@ for (let indexOfBlock = 0; indexOfBlock < blockSections; indexOfBlock++) {
         numOfPasses, getIndexOfCharInAlphabet,
     });
 
-    // add this section's ciphertext indexes to the total output
+    // add this section's ciphertext indices to the total output
     encryptedDataIndexes = encryptedDataIndexes.concat(encryptedIndexesThisBlock);
 
     // adjust our offset for the next section
@@ -784,7 +812,7 @@ at this point, each alphabet is at least the minimum size and is guaranteed to h
 ```
 
 Lastly, we return both the alphabets and our last generated `prevHash`, because we will use
-that `prevHash` in the next section. Here I also am logging the encrypted indexes
+that `prevHash` in the next section. Here I also am logging the encrypted indices
 both for this section and total:
 
 ```
@@ -883,7 +911,7 @@ encryptedIndexesThisBlock: 169,184
 encryptedDataIndexes so far: 182,188,169,184
 ```
 
-So the second section added two more indexes.
+So the second section added two more indices.
 
 Here is the third section:
 
@@ -973,7 +1001,7 @@ final resEncryptedData: 182,188,169,184,183,148
 So there we have it. We went from our data, "foo", which is 3 characters in
 length. Hex encoding turned this into 6 characters in length. We then, working
 with 2-character sections, built up alphabets, each one being at least 3-hash
-digest's in length. We then recorded the indexes into those alphabets. All of
+digest's in length. We then recorded the indices into those alphabets. All of
 this worked at the hex level, none of it performed an XOR combining function.
 It did not act strictly as a stream cipher, because we had to process multiple
 characters' alphabets as a whole. Nor did it necessarily have to work as a
