@@ -20,8 +20,8 @@ import { execPath, cwd, } from 'node:process';
 import { writeFile } from 'node:fs/promises';
 
 import { pretty, extractErrorMsg } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
-import { RLIArgInfo, RLIArgType, RLIParamInfo, } from "@ibgib/helper-gib/dist/rli/rli-types.mjs";
-import { } from "@ibgib/helper-gib/dist/rli/rli-helper.mjs";
+import { RLIArgInfo, RLIArgType, } from "@ibgib/helper-gib/dist/rli/rli-types.mjs";
+import { buildArgInfos, argIs, } from "@ibgib/helper-gib/dist/rli/rli-helper.mjs";
 import { PARAM_INFO_HELP } from "@ibgib/helper-gib/dist/rli/rli-constants.mjs";
 import { tryRead_node, promptForSecret_node } from "@ibgib/helper-gib/dist/helpers/node-helper.mjs";
 
@@ -33,7 +33,6 @@ import {
     extractArg_dataPath, extractArg_dataToEncrypt, extractArg_hashAlgorithm,
     extractArg_indexingMode, extractArg_initialRecursions, extractArg_blockMode, extractArg_outputPath,
     extractArg_salt, extractArg_saltStrategy, extractArg_strength, getBaseArgsSet,
-    getParamInfo, getValueFromRawString,
     validateEncryptedFile,
 } from './rli-helper.mjs';
 
@@ -53,7 +52,7 @@ export async function execRLI(): Promise<void> {
         console.log(`${lc} args.join(' '): ${args.join(' ')}`);
         const validationErrors = validateArgs(args);
         if (!validationErrors) {
-            if (args.some(arg => argIs({ arg, argInfo: PARAM_INFO_HELP }))) {
+            if (args.some(arg => argIs({ arg, paramInfo: PARAM_INFO_HELP }))) {
                 showHelp({ args });
                 return;
             }
@@ -76,15 +75,15 @@ export async function execRLI(): Promise<void> {
     }
 }
 
-function argIs({
-    arg,
-    argInfo,
-}: {
-    arg: string,
-    argInfo: RLIArgInfo,
-}): boolean {
-    return arg?.replace('--', '').toLowerCase() === argInfo.name.toLowerCase();
-}
+// function argIs({
+//     arg,
+//     argInfo,
+// }: {
+//     arg: string,
+//     argInfo: RLIArgInfo,
+// }): boolean {
+//     return arg?.replace('--', '').toLowerCase() === argInfo.name.toLowerCase();
+// }
 
 function showHelp({ args }: { args: string[] }): void {
     const helpMsg = `
@@ -186,35 +185,7 @@ async function execRequestPlease(args: string[]): Promise<void> {
 
         console.log(`argsSansDashes: ${argsSansDashes}`);
 
-        const argInfos = argsSansDashes.map((arg: string) => {
-            let argIdentifier: string;
-            let valueString: string;
-            let argInfo: RLIArgInfo<RLIArgType>;
-            if (arg.includes('=')) {
-                [argIdentifier, valueString] = arg.split('=');
-                const paramInfo = getParamInfo({ argIdentifier, paramInfos: PARAM_INFOS });
-                argInfo = {
-                    name: argIdentifier,
-                    value: getValueFromRawString({ paramInfo, valueString }),
-                    isFlag: false,
-                    argTypeName: paramInfo.argTypeName,
-                    allowMultiple: paramInfo.allowMultiple,
-                }
-            } else {
-                console.log(`${lc} arg without equals: ${arg}`)
-                argIdentifier = arg;
-                const paramInfo = getParamInfo({ argIdentifier, paramInfos: PARAM_INFOS });
-                argInfo = {
-                    name: arg,
-                    isFlag: true,
-                    value: getValueFromRawString({ paramInfo, valueString: undefined }),
-                    argTypeName: paramInfo.argTypeName,
-                    allowMultiple: paramInfo.allowMultiple,
-                }
-            }
-            console.log(`${lc} argInfo: ${pretty(argInfo)}`);
-            return argInfo!;
-        });
+        const argInfos = buildArgInfos({ args, paramInfos: PARAM_INFOS, logalot });
 
         if (argInfos.some(x => x.name === 'encrypt')) {
             await execEncrypt({ argInfos });

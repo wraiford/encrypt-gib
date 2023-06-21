@@ -1,3 +1,7 @@
+# 0.2.20
+
+* refactor: changed rli to use helper-gib `buildArgInfos` fn
+
 # 0.2.19
 
 * refactor: moved some rli code to helper-gib
