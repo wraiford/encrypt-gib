@@ -5,15 +5,23 @@ import * as readline from 'node:readline/promises';
 import { stdin, stdout } from 'node:process'; // decide if use this or not
 
 import { extractErrorMsg, getTimestampInTicks, getUUID, pretty } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
+import {
+    PARAM_INFO_DATA_PATH,
+    PARAM_INFO_DATA_STRING,
+    PARAM_INFO_OUTPUT_PATH,
+} from "@ibgib/helper-gib/dist/rli/rli-constants.mjs";
+import { RLIArgInfo, RLIArgType, RLIParamInfo, } from "@ibgib/helper-gib/dist/rli/rli-types.mjs";
+import { } from "@ibgib/helper-gib/dist/rli/rli-helper.mjs";
+import { tryRead_node } from "@ibgib/helper-gib/dist/helpers/node-helper.mjs";
 
 import { DEFAULT_MAX_BLOCK_SIZE, DEFAULT_NUM_OF_PASSES, ENCRYPT_LOG_A_LOT } from "../constants.mjs";
 import {
-    PARAM_INFO_DATA_PATH, PARAM_INFO_DATA_STRING, PARAM_INFO_ENCRYPT, PARAM_INFO_OUTPUT_PATH, PARAM_INFO_SALT,
-    PARAM_INFO_STRENGTH, ENCRYPTED_OUTPUT_FILE_EXT, PARAM_INFO_INDEXING_MODE, PARAM_INFO_BLOCKMODE_FLAG,
+    PARAM_INFO_ENCRYPT, PARAM_INFO_SALT, PARAM_INFO_STRENGTH, ENCRYPTED_OUTPUT_FILE_EXT,
+    PARAM_INFO_INDEXING_MODE, PARAM_INFO_BLOCKMODE_FLAG,
     PARAM_INFO_BLOCKMODE_BLOCK_SIZE, PARAM_INFO_BLOCKMODE_NUM_OF_PASSES, PARAM_INFO_HASH_ALGORITHM,
     PARAM_INFO_SALT_STRATEGY, PARAM_INFO_INITIAL_RECURSIONS
 } from "./rli-constants.mjs";
-import { RLIArgInfo, GenericEncryptionStrengthSetting, RLIArgType, RLIParamInfo, } from "./rli-types.mjs";
+import { GenericEncryptionStrengthSetting, } from "./rli-types.mjs";
 import {
     ALPHABET_INDEXING_MODES, AlphabetIndexingMode, BaseArgs, EncryptResult,
     HASH_ALGORITHMS, HashAlgorithm, BlockModeOptions, SALT_STRATEGIES, SaltStrategy
@@ -26,27 +34,27 @@ import {
 const logalot = ENCRYPT_LOG_A_LOT || false;
 
 
-export async function tryRead({
-    relOrAbsPath,
-}: {
-    relOrAbsPath: string,
-}): Promise<string | undefined> {
-    const lc = `[${tryRead.name}]`;
-    try {
-        const stat = statSync(relOrAbsPath);
-        if (!stat.isFile()) { throw new Error(`path provided is not a file. (${relOrAbsPath}) (E: f295b7e925534546819edfef9a750164)`); }
-        const resRead = await readFile(relOrAbsPath, { encoding: 'utf8' as BufferEncoding });
-        if (logalot) {
-            console.log(`${lc} record found. data length: ${resRead?.length ?? 0}. fullPath: ${relOrAbsPath}  (I: aa81b3d01e9542788b07302dd174c03d)`);
-        }
-        return resRead;
-    } catch (error) {
-        if (logalot) { console.log(`${lc} path not found (${relOrAbsPath})\nerror:\n${extractErrorMsg(error)} (I: 6658a0b81d3249d2aefc8e3d28efa87b)`); }
-        return undefined;
-    } finally {
-        if (logalot) { console.log(`${lc} complete. (I: 747a187ca6234dd4b2bf9a11a87a0d91)`); }
-    }
-}
+// export async function tryRead({
+//     relOrAbsPath,
+// }: {
+//     relOrAbsPath: string,
+// }): Promise<string | undefined> {
+//     const lc = `[${tryRead.name}]`;
+//     try {
+//         const stat = statSync(relOrAbsPath);
+//         if (!stat.isFile()) { throw new Error(`path provided is not a file. (${relOrAbsPath}) (E: f295b7e925534546819edfef9a750164)`); }
+//         const resRead = await readFile(relOrAbsPath, { encoding: 'utf8' as BufferEncoding });
+//         if (logalot) {
+//             console.log(`${lc} record found. data length: ${resRead?.length ?? 0}. fullPath: ${relOrAbsPath}  (I: aa81b3d01e9542788b07302dd174c03d)`);
+//         }
+//         return resRead;
+//     } catch (error) {
+//         if (logalot) { console.log(`${lc} path not found (${relOrAbsPath})\nerror:\n${extractErrorMsg(error)} (I: 6658a0b81d3249d2aefc8e3d28efa87b)`); }
+//         return undefined;
+//     } finally {
+//         if (logalot) { console.log(`${lc} complete. (I: 747a187ca6234dd4b2bf9a11a87a0d91)`); }
+//     }
+// }
 
 // #region extractArg functions
 
@@ -63,7 +71,7 @@ export async function extractArg_dataToEncrypt({
         let dataPath = extractArgValue({ paramInfo: PARAM_INFO_DATA_PATH, argInfos }) as string | undefined;
         if (dataPath) {
             // data path given, so load from the path
-            resDataToEncrypt = await tryRead({ relOrAbsPath: dataPath });
+            resDataToEncrypt = await tryRead_node({ relOrAbsPath: dataPath });
         } else {
             // data path not given, so should have raw data string
             resDataToEncrypt = extractArgValue({ paramInfo: PARAM_INFO_DATA_STRING, argInfos }) as string | undefined;
@@ -72,7 +80,7 @@ export async function extractArg_dataToEncrypt({
         if (!resDataToEncrypt) { throw new Error(`could not get dataToEncrypt (E: 36ce341bc5b45394fbc97fab808d3823)`); }
         return resDataToEncrypt;
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     } finally {
         if (logalot) { console.log(`${lc} complete.`); }
@@ -137,7 +145,7 @@ export async function extractArg_outputPath({
 
         return relOrAbsPath;
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     } finally {
         if (logalot) { console.log(`${lc} complete.`); }
@@ -177,7 +185,7 @@ export async function extractArg_dataPath({
 
         return relOrAbsPath;
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     } finally {
         if (logalot) { console.log(`${lc} complete.`); }
@@ -196,7 +204,7 @@ export function extractArg_salt({
         const salt = extractArgValue({ paramInfo: PARAM_INFO_SALT, argInfos }) as string | undefined;
         return salt;
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     } finally {
         if (logalot) { console.log(`${lc} complete.`); }
@@ -223,7 +231,7 @@ export function extractArg_indexingMode({
             return undefined;
         }
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     } finally {
         if (logalot) { console.log(`${lc} complete.`); }
@@ -274,7 +282,7 @@ export function extractArg_blockMode({
 
         return resBlockModeOptions;
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     } finally {
         if (logalot) { console.log(`${lc} complete.`); }
@@ -301,7 +309,7 @@ export function extractArg_hashAlgorithm({
             return undefined;
         }
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     } finally {
         if (logalot) { console.log(`${lc} complete.`); }
@@ -328,7 +336,7 @@ export function extractArg_saltStrategy({
             return undefined;
         }
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     } finally {
         if (logalot) { console.log(`${lc} complete.`); }
@@ -356,7 +364,7 @@ export function extractArg_initialRecursions({
             return undefined;
         }
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     } finally {
         if (logalot) { console.log(`${lc} complete.`); }
@@ -403,7 +411,7 @@ export function getValueFromRawString({
                 throw new Error(`(UNEXPECTED) invalid paramInfo.argTypeName (E: c8b03ccb71394d22a29858b98753a123)`);
         }
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     }
 }
@@ -468,7 +476,7 @@ export function extractArgValue<T extends RLIArgType>({
             return argInfo.value;
         }
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     } finally {
         if (logalot) { console.log(`${lc} complete.`); }
@@ -477,50 +485,50 @@ export function extractArgValue<T extends RLIArgType>({
 
 // #endregion extractArg functions
 
-export async function promptForSecret({
-    confirm,
-}: {
-    confirm: boolean,
-}): Promise<string> {
-    const lc = `[${promptForSecret.name}]`;
-    try {
-        console.warn(`WARNING: THIS PASSWORD INPUT IS NOT IMPLEMENTED CORRECTLY WITH REGARDS TO PRIVACY`);
-        const rl = readline.createInterface({
-            input: stdin,
-            output: stdout
-        });
-        let secret: string | undefined = undefined;
-        try {
-            do {
-                const secret1 =
-                    await rl.question(`enter your secret key for the encryption:\n`);
-                if (!secret1) {
-                    `no secret provided. please try again.`;
-                    continue;
-                }
-                if (confirm) {
-                    const secret2 = await rl.question(`confirm:\n`);
-                    if (secret2 === secret1) {
-                        secret = secret1;
-                    } else {
-                        console.log(`secrets do not match. please try again.`);
-                    }
-                } else {
-                    secret = secret1;
-                    continue;
-                }
-            } while (!secret);
-            return secret;
-        } catch (error) {
-            throw error;
-        } finally {
-            rl.close();
-        }
-    } catch (error) {
-        console.error(`${lc} ${error.message}`);
-        throw error;
-    }
-}
+// export async function promptForSecret({
+//     confirm,
+// }: {
+//     confirm: boolean,
+// }): Promise<string> {
+//     const lc = `[${promptForSecret.name}]`;
+//     try {
+//         console.warn(`WARNING: THIS PASSWORD INPUT IS NOT IMPLEMENTED CORRECTLY WITH REGARDS TO PRIVACY`);
+//         const rl = readline.createInterface({
+//             input: stdin,
+//             output: stdout
+//         });
+//         let secret: string | undefined = undefined;
+//         try {
+//             do {
+//                 const secret1 =
+//                     await rl.question(`enter your secret key for the encryption:\n`);
+//                 if (!secret1) {
+//                     `no secret provided. please try again.`;
+//                     continue;
+//                 }
+//                 if (confirm) {
+//                     const secret2 = await rl.question(`confirm:\n`);
+//                     if (secret2 === secret1) {
+//                         secret = secret1;
+//                     } else {
+//                         console.log(`secrets do not match. please try again.`);
+//                     }
+//                 } else {
+//                     secret = secret1;
+//                     continue;
+//                 }
+//             } while (!secret);
+//             return secret;
+//         } catch (error) {
+//             throw error;
+//         } finally {
+//             rl.close();
+//         }
+//     } catch (error) {
+//         console.error(`${lc} ${error.message}`);
+//         throw error;
+//     }
+// }
 
 
 export async function validateEncryptedFile(encryptResults: EncryptResult): Promise<void> {
@@ -619,7 +627,7 @@ export function getParamInfo({ argIdentifier, paramInfos }: {
             throw new Error(`(UNEXPECTED) param info not found for argIdentifier (${argIdentifier}) (E: 47e704068f2eb5a0551cf45d0e72c823)`);
         }
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     }
 }

@@ -1,4 +1,4 @@
-import * as h from '@ibgib/helper-gib';
+import { extractErrorMsg } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 
 import { decodeHexStringToString, encodeStringToHexString } from '../helper.mjs';
 import { ALPHABET_INDEXING_MODES, EncryptArgs, EncryptResult, HashAlgorithm, SALT_STRATEGIES } from "../types.mjs";
@@ -173,7 +173,7 @@ export async function encryptImpl_blockMode(args: EncryptArgs): Promise<EncryptR
                 warnings = warnings.concat([`Confirm check call to decrypt had warnings.`, ...resDecrypt.warnings!])
             }
         } catch (error) {
-            throw new Error(`${lc} confirm failed. decrypt error: ${h.extractErrorMsg(error)} (E: 782a84d9dc294ce9a6a325e3ab293adf)`);
+            throw new Error(`${lc} confirm failed. decrypt error: ${extractErrorMsg(error)} (E: 782a84d9dc294ce9a6a325e3ab293adf)`);
         }
     }
 

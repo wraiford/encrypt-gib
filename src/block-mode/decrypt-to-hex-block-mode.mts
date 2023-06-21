@@ -1,4 +1,4 @@
-import * as h from '@ibgib/helper-gib';
+import { extractErrorMsg } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 
 import { doInitialRecursions_keystretch, execRound_getNextHash, getPreHash } from "../common/encrypt-decrypt-common.mjs";
 import { AlphabetIndexingMode, HashAlgorithm, SaltStrategy } from "../types.mjs";
@@ -128,7 +128,7 @@ export async function decryptToHex_blockMode({
         const decryptedHex: string = decryptedDataArray.join('');
         return decryptedHex;
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     }
 }
@@ -231,7 +231,7 @@ async function getAlphabetsThisBlock({
         // guaranteed to have at least once instance of the plaintext hexChar.
         return { alphabetsThisBlock, prevHash };
     } catch (error) {
-        console.error(`${lc} error: ${h.extractErrorMsg(error)}`);
+        console.error(`${lc} error: ${extractErrorMsg(error)}`);
         throw error;
     }
 }
@@ -284,7 +284,7 @@ async function getDecryptedDataArrayThisBlock({
 
         return resDataArray;
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     }
 }

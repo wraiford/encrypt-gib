@@ -1,12 +1,25 @@
-import { RLIParamInfo } from "./rli-types.mjs";
+import { RLIParamInfo } from "@ibgib/helper-gib/dist/rli/rli-types.mjs";
+import { COMMON_PARAM_INFOS } from "@ibgib/helper-gib/dist/rli/rli-constants.mjs";
 
 export const ENCRYPTED_OUTPUT_FILE_EXT = 'encrypt-gib';
 
-export const PARAM_INFO_HELP: RLIParamInfo = {
-    name: 'help',
-    isFlag: true,
-    argTypeName: 'boolean',
-};
+// export const PARAM_INFO_HELP: RLIParamInfo = {
+//     name: 'help',
+//     isFlag: true,
+//     argTypeName: 'boolean',
+// };
+// export const PARAM_INFO_DATA_PATH: RLIParamInfo = {
+//     name: 'data-path',
+//     argTypeName: 'string',
+// };
+// export const PARAM_INFO_OUTPUT_PATH: RLIParamInfo = {
+//     name: 'output-path',
+//     argTypeName: 'string',
+// };
+// export const PARAM_INFO_DATA_STRING: RLIParamInfo = {
+//     name: 'data-string',
+//     argTypeName: 'string',
+// };
 export const PARAM_INFO_ENCRYPT: RLIParamInfo = {
     name: 'encrypt',
     isFlag: true,
@@ -16,18 +29,6 @@ export const PARAM_INFO_DECRYPT: RLIParamInfo = {
     name: 'decrypt',
     isFlag: true,
     argTypeName: 'boolean',
-};
-export const PARAM_INFO_DATA_PATH: RLIParamInfo = {
-    name: 'data-path',
-    argTypeName: 'string',
-};
-export const PARAM_INFO_OUTPUT_PATH: RLIParamInfo = {
-    name: 'output-path',
-    argTypeName: 'string',
-};
-export const PARAM_INFO_DATA_STRING: RLIParamInfo = {
-    name: 'data-string',
-    argTypeName: 'string',
 };
 export const PARAM_INFO_STRENGTH: RLIParamInfo = {
     name: 'strength',
@@ -73,12 +74,13 @@ export const PARAM_INFO_INITIAL_RECURSIONS: RLIParamInfo = {
  * Array of all parameters this library's RLI supports.
  */
 export const PARAM_INFOS: RLIParamInfo[] = [
-    PARAM_INFO_HELP,
+    ...COMMON_PARAM_INFOS,
+    // PARAM_INFO_HELP,
     PARAM_INFO_ENCRYPT,
     PARAM_INFO_DECRYPT,
-    PARAM_INFO_DATA_PATH,
-    PARAM_INFO_OUTPUT_PATH,
-    PARAM_INFO_DATA_STRING,
+    // PARAM_INFO_DATA_PATH,
+    // PARAM_INFO_OUTPUT_PATH,
+    // PARAM_INFO_DATA_STRING,
     PARAM_INFO_STRENGTH,
     PARAM_INFO_SALT,
     PARAM_INFO_INDEXING_MODE,

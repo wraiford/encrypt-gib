@@ -69,7 +69,7 @@
   "author": "William Raiford",
   "license": "ISC",
   "dependencies": {
-    "@ibgib/helper-gib": "^0.0.7"
+    "@ibgib/helper-gib": "^0.0.9"
   },
   "devDependencies": {
     "@types/node": "^20.2.1",

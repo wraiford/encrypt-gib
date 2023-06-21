@@ -2,7 +2,7 @@ import { readdir, open } from 'node:fs/promises';
 import { statSync } from 'node:fs';
 import * as pathUtils from 'path';
 
-import { pretty } from '@ibgib/helper-gib';
+import { extractErrorMsg, pretty } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 import { getGlobalRespecGib } from '@ibgib/helper-gib/dist/respec-gib/respec-gib.mjs';
 
 // #region settings
@@ -160,7 +160,7 @@ async function getRespecFileFullPaths(dirPath: string, found: string[]): Promise
         }
         return Array.from(new Set(found)); // unique
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     } finally {
         if (logalot) { console.log(`${lc} complete.`); }
@@ -190,7 +190,7 @@ async function respecFileHasExtraRespec(respecPath: string): Promise<boolean> {
         }
         return false;
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     } finally {
         if (logalot) { console.log(`${lc} complete.`); }

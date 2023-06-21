@@ -1,4 +1,4 @@
-import * as h from '@ibgib/helper-gib';
+import { extractErrorMsg } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 
 import { doInitialRecursions_keystretch, execRound_getNextHash, getPreHash } from "../common/encrypt-decrypt-common.mjs";
 import { HashAlgorithm, SaltStrategy } from "../types.mjs";
@@ -86,7 +86,7 @@ export async function decryptToHex_stream({
         // console.log(`${lc} decryptedHex: ${decryptedHex.toString()}`);
         return decryptedHex;
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     }
 }

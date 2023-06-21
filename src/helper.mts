@@ -4,6 +4,8 @@
  * THANK YOU Stack Overflow, Simon Buchan, and others at https://stackoverflow.com/questions/21647928/javascript-unicode-string-to-hex
  */
 
+import { extractErrorMsg } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
+
 
 /**
  * Convert some string to a string with only hex characters.
@@ -21,7 +23,7 @@ export function encodeStringToHexString(s: string): Promise<string> {
             let hexString = bytesToHexString(bytes);
             resolve(hexString);
         } catch (error) {
-            console.error(`${lc} ${error.message}`);
+            console.error(`${lc} ${extractErrorMsg(error)}`);
             reject(error);
         }
     });
@@ -32,7 +34,7 @@ function stringToUTF8Bytes(s: string): Uint8Array {
     try {
         return new TextEncoder().encode(s);
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     }
 }
@@ -45,7 +47,7 @@ function bytesToHexString(bytes: Uint8Array): string {
             byte => byte.toString(16).padStart(2, '0')
         ).join("");
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     }
 }
@@ -65,7 +67,7 @@ export function decodeHexStringToString(hexString: string): Promise<string> {
             const s = utf8BytesToString(bytes);
             resolve(s);
         } catch (error) {
-            console.error(`${lc} ${error.message}`);
+            console.error(`${lc} ${extractErrorMsg(error)}`);
             reject(error);
         }
     });
@@ -86,11 +88,11 @@ function hexStringToBytes(hexString: string): Uint8Array {
         const numBytes = hexString.length / 2;
         const bytes = new Uint8Array(numBytes);
         for (let i = 0; i < numBytes; i++) {
-            bytes[i] = parseInt(hexString.substr(i*2, 2), 16);
+            bytes[i] = parseInt(hexString.substr(i * 2, 2), 16);
         }
         return bytes;
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     }
 }
@@ -99,7 +101,7 @@ function utf8BytesToString(bytes: Uint8Array): string {
     try {
         return new TextDecoder().decode(bytes);
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     }
 }

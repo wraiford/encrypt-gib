@@ -1,4 +1,4 @@
-import * as h from '@ibgib/helper-gib';
+import { extractErrorMsg } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 
 import { doInitialRecursions_keystretch, execRound_getNextHash, } from "../common/encrypt-decrypt-common.mjs";
 import { AlphabetIndexingMode, HashAlgorithm, SaltStrategy } from "../types.mjs";
@@ -124,7 +124,7 @@ export async function encryptFromHex_blockMode({
             });
 
             let alphabetsThisBlock = resGetAlphabets.alphabetsThisBlock;
-            // if (logalot) { console.warn(`${lc} alphabetsThisBlock: ${h.pretty(alphabetsThisBlock)} (W: 8c37818b9658d4c6a418b62ec38bd923)`); }
+            // if (logalot) { console.warn(`${lc} alphabetsThisBlock: ${pretty(alphabetsThisBlock)} (W: 8c37818b9658d4c6a418b62ec38bd923)`); }
             prevHash = resGetAlphabets.prevHash;
             // if (logalot) { console.warn(`${lc} prevHash after alphabets created: ${prevHash} (W: 0b2ffc3ba7a19ecba74fcec8788a6c23)`); }
 
@@ -138,7 +138,7 @@ export async function encryptFromHex_blockMode({
 
             // if (logalot) { console.warn(`${lc} encryptedIndexesThisBlock: ${encryptedIndexesThisBlock} (W: f84c9d05e4160241664051b946ad3f23)`); }
 
-            // if (logalot) { console.warn(`${lc} info before add to encryptedDataIndexes info: ${h.pretty({ indexOfBlock, isFinalBlock, blockSize, prevHash, encryptedDataIndexes, encryptedIndexesThisBlock })}`); }
+            // if (logalot) { console.warn(`${lc} info before add to encryptedDataIndexes info: ${pretty({ indexOfBlock, isFinalBlock, blockSize, prevHash, encryptedDataIndexes, encryptedIndexesThisBlock })}`); }
             encryptedDataIndexes = encryptedDataIndexes.concat(encryptedIndexesThisBlock);
             // if (logalot) { console.warn(`${lc} encryptedDataIndexes so far: ${encryptedDataIndexes} (W: 58f9bbabce8eeb90a213ab1fa0d88123)`); }
 
@@ -151,7 +151,7 @@ export async function encryptFromHex_blockMode({
         // console.warn(`${lc} resEncryptedData: ${resEncryptedData}`);
         return resEncryptedData;
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     }
 }
@@ -181,7 +181,7 @@ async function getAlphabetsThisBlock({
 }): Promise<{ alphabetsThisBlock: string[], prevHash: string }> {
     const lc = `[${getAlphabetsThisBlock.name}]`;
     try {
-        // if (logalot) { console.warn(`${lc} info: ${h.pretty({ blockSize, numOfPasses, indexHexEncodedDataAtStartOfPass, prevHash })}`); }
+        // if (logalot) { console.warn(`${lc} info: ${pretty({ blockSize, numOfPasses, indexHexEncodedDataAtStartOfPass, prevHash })}`); }
         /**
          * one alphabet per plaintext character (hex only atow).
          *
@@ -217,10 +217,10 @@ async function getAlphabetsThisBlock({
                 // if (logalot) { console.warn(`${lc} extended alphabet: ${alphabet} (W: c0228b716a324761b581d38a805d192b)`); }
 
                 alphabetsThisBlock[indexIntoBlock] = alphabet;
-                // if (logalot) { console.warn(`${lc} alphabetsThisBlock: ${h.pretty(alphabetsThisBlock)} (W: 1bef26a111a4df4a6d501d5a662dd223)`); }
+                // if (logalot) { console.warn(`${lc} alphabetsThisBlock: ${pretty(alphabetsThisBlock)} (W: 1bef26a111a4df4a6d501d5a662dd223)`); }
             }
         }
-        // if (logalot) { console.warn(`${lc} initial alphabetsThisBlock (${alphabetsThisBlock.length}): ${h.pretty(alphabetsThisBlock)} (W: ce1f77a7065e45cfb12995f097f70af4)`); }
+        // if (logalot) { console.warn(`${lc} initial alphabetsThisBlock (${alphabetsThisBlock.length}): ${pretty(alphabetsThisBlock)} (W: ce1f77a7065e45cfb12995f097f70af4)`); }
 
         // if (logalot) { console.warn(`${lc} at this point, each alphabet is the same size (numOfPasses * hash size), but it's not guaranteed that each alphabet will contain the plaintext character.  so go through and extend any alphabets that do not yet contain the plaintext character (I: c75085603497ea684865010dfd8a3b23)`); }
 
@@ -245,9 +245,9 @@ async function getAlphabetsThisBlock({
             }
 
             alphabetsThisBlock[indexIntoBlock] = alphabet;
-            // if (logalot) { console.warn(`${lc} alphabetsThisBlock (length ${alphabetsThisBlock.length}): ${h.pretty(alphabetsThisBlock)} (W: a86e76aa398d7e4b44dbe0fbb79c1623)`); }
+            // if (logalot) { console.warn(`${lc} alphabetsThisBlock (length ${alphabetsThisBlock.length}): ${pretty(alphabetsThisBlock)} (W: a86e76aa398d7e4b44dbe0fbb79c1623)`); }
         }
-        // if (logalot) { console.warn(`${lc} guaranteed alphabetsThisBlock (${alphabetsThisBlock.length}): ${h.pretty(alphabetsThisBlock)} (W: 8d684c05b116467aa92e946b03160310)`); }
+        // if (logalot) { console.warn(`${lc} guaranteed alphabetsThisBlock (${alphabetsThisBlock.length}): ${pretty(alphabetsThisBlock)} (W: 8d684c05b116467aa92e946b03160310)`); }
 
         // if (logalot) { console.warn(`${lc} at this point, each alphabet is at least the minimum size and is guaranteed to have at least once instance of the plaintext hexChar. (W: c6f31445402b1c561670a2dd59530523)`); }
         // at this point, each alphabet is at least the minimum size and is
@@ -255,7 +255,7 @@ async function getAlphabetsThisBlock({
         // if (logalot) { console.warn(`${lc} return prevHash: ${prevHash}`) }
         return { alphabetsThisBlock, prevHash };
     } catch (error) {
-        console.error(`${lc} error: ${h.extractErrorMsg(error)}`);
+        console.error(`${lc} error: ${extractErrorMsg(error)}`);
         throw error;
     }
 }
@@ -285,7 +285,7 @@ async function getEncryptedIndexesThisBlock({
 
         return resIndexes;
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     }
 }

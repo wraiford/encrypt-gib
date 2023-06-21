@@ -19,18 +19,22 @@
 import { execPath, cwd, } from 'node:process';
 import { writeFile } from 'node:fs/promises';
 
+import { pretty, extractErrorMsg } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
+import { RLIArgInfo, RLIArgType, RLIParamInfo, } from "@ibgib/helper-gib/dist/rli/rli-types.mjs";
+import { } from "@ibgib/helper-gib/dist/rli/rli-helper.mjs";
+import { PARAM_INFO_HELP } from "@ibgib/helper-gib/dist/rli/rli-constants.mjs";
+import { tryRead_node, promptForSecret_node } from "@ibgib/helper-gib/dist/helpers/node-helper.mjs";
+
 import { decrypt, encrypt } from '../encrypt-decrypt.mjs';
-import { pretty } from '@ibgib/helper-gib';
 import { DecryptArgs, DecryptResult, EncryptResult } from '../types.mjs';
 import { ENCRYPT_LOG_A_LOT } from '../constants.mjs';
-import { RLIArgInfo, RLIArgType, } from './rli-types.mjs';
-import { PARAM_INFOS, PARAM_INFO_HELP, } from './rli-constants.mjs';
+import { PARAM_INFOS, } from './rli-constants.mjs';
 import {
     extractArg_dataPath, extractArg_dataToEncrypt, extractArg_hashAlgorithm,
     extractArg_indexingMode, extractArg_initialRecursions, extractArg_blockMode, extractArg_outputPath,
     extractArg_salt, extractArg_saltStrategy, extractArg_strength, getBaseArgsSet,
-    getParamInfo, getValueFromRawString, promptForSecret,
-    tryRead, validateEncryptedFile,
+    getParamInfo, getValueFromRawString,
+    validateEncryptedFile,
 } from './rli-helper.mjs';
 
 /**
@@ -65,7 +69,7 @@ export async function execRLI(): Promise<void> {
             console.log(`validationErrors: ${validationErrors}`);
         }
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     } finally {
         console.log(`\n${lc} complete.`);
@@ -160,7 +164,7 @@ function validateArgs(args: string[]): string | undefined {
 
         // todo: flesh out args validation
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         validationErrorIfAny = error.message;
     } finally {
         console.log(`\n${lc} complete.`);
@@ -225,7 +229,7 @@ async function execRequestPlease(args: string[]): Promise<void> {
             console.log(`arg ${i}: ${arg}`);
         }
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     } finally {
         console.log(`\n${lc} complete.`);
@@ -242,7 +246,7 @@ async function execEncrypt({ argInfos }: { argInfos: RLIArgInfo<RLIArgType>[] })
         const outputPath = await extractArg_outputPath({ argInfos });
         if (!outputPath) { throw new Error(`was unable to get output data path from the args. (E: 85e4dc233e95174e9183a97a154c9223)`); }
 
-        const secret = await promptForSecret({ confirm: true });
+        const secret = await promptForSecret_node({ confirm: true });
         const dataToEncrypt = await extractArg_dataToEncrypt({ argInfos });
         const strength = extractArg_strength({ argInfos });
         const salt = extractArg_salt({ argInfos });
@@ -274,7 +278,7 @@ async function execEncrypt({ argInfos }: { argInfos: RLIArgInfo<RLIArgType>[] })
         const stringifiedJson = JSON.stringify(resEncrypt);
         await writeFile(outputPath, stringifiedJson);
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     } finally {
         if (logalot) { console.log(`${lc} complete.`); }
@@ -292,7 +296,7 @@ async function execDecrypt({ argInfos }: { argInfos: RLIArgInfo<RLIArgType>[] })
         if (!outputPath) { throw new Error(`was unable to get output data path from the args. (E: a9d0142b366a42a3b4e19332e63b10620)`); }
 
         const dataPath = await extractArg_dataPath({ argInfos });
-        const encryptFileContents_JSON_atow = await tryRead({ relOrAbsPath: dataPath });
+        const encryptFileContents_JSON_atow = await tryRead_node({ relOrAbsPath: dataPath });
         if (!encryptFileContents_JSON_atow) { throw new Error(`could not read file? dataPath: ${dataPath} (E: 16b5daf66b4f1c3fc83dbdf9bdcc0823)`); }
 
         if (logalot) { console.log(`${lc} parsing encrypted file json (I: 9fc96269470322f689e901ab1eef5523)`); }
@@ -301,7 +305,7 @@ async function execDecrypt({ argInfos }: { argInfos: RLIArgInfo<RLIArgType>[] })
         // todo: validate the file
         await validateEncryptedFile(fileContents);
 
-        const secret = await promptForSecret({ confirm: false });
+        const secret = await promptForSecret_node({ confirm: false });
         fileContents.secret = secret!;
 
         console.log(`${lc} starting timer`);
@@ -320,7 +324,7 @@ async function execDecrypt({ argInfos }: { argInfos: RLIArgInfo<RLIArgType>[] })
         if (logalot) { console.log(`${lc} writing to file... (I: 509956939a9825609b43f2572e856a23)`); }
         await writeFile(outputPath, resDecrypt.decryptedData);
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     } finally {
         if (logalot) { console.log(`${lc} complete.`); }

@@ -1,3 +1,13 @@
+# 0.2.19
+
+* refactor: moved some rli code to helper-gib
+  * updated helper-gib
+* refactor: use helper-gib `extractErrorMsg` in catch blocks
+
+# 0.2.18
+
+* meta: readme
+
 # 0.2.17
 
 * refactor: multipass section to block

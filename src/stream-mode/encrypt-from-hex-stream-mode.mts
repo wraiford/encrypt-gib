@@ -1,3 +1,5 @@
+import { extractErrorMsg } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
+
 import { doInitialRecursions_keystretch, execRound_getNextHash, } from "../common/encrypt-decrypt-common.mjs";
 import { AlphabetIndexingMode, HashAlgorithm, SaltStrategy } from "../types.mjs";
 
@@ -77,7 +79,7 @@ export async function encryptFromHex_stream({
         const encryptedData = encryptedDataIndexes.join(encryptedDataDelimiter);
         return encryptedData;
     } catch (error) {
-        console.error(`${lc} ${error.message}`);
+        console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
     }
 }
