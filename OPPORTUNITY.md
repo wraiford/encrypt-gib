@@ -1,3 +1,7 @@
+# no longer opportune
+
+nada resulted from this and it is well out of date. ah well. forever poor!
+
 # [ibGib](https://ibgib.space)
 
 _i believe_
