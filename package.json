@@ -54,7 +54,12 @@
     "man:prepare:publish": "echo 'use this to bump patch > build & tag > pack for publishing to npm repo'",
     "man:prepare:publish:patch": "echo 'use this to bump patch > build & tag > pack for publishing to npm repo'",
     "man:prepare:publish:minor": "echo 'use this to bump minor > build & tag > pack for publishing to npm repo'",
-    "man:prepare:publish:major": "echo 'use this to bump major > build & tag > pack for publishing to npm repo'"
+    "man:prepare:publish:major": "echo 'use this to bump major > build & tag > pack for publishing to npm repo'",
+    "prerli:test:foo": "npm run build && npm run rli:test:foo:clean && mkdir foo",
+    "rli:test:foo": "npm run rli:test:foo:encrypt && npm run rli:test:foo:decrypt",
+    "rli:test:foo:encrypt": "node . --encrypt --data-string=\"foo foo\" --output-path=\"./foo/foo.encrypt-gib\"",
+    "rli:test:foo:decrypt": "node . --decrypt --data-path=\"./foo/foo.encrypt-gib\" --output-path=\"./foo/foo.md\"",
+    "rli:test:foo:clean": "rm -rf ./foo"
   },
   "type": "module",
   "keywords": [
