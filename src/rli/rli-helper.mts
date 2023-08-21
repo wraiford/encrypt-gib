@@ -371,51 +371,6 @@ export function extractArg_initialRecursions({
     }
 }
 
-export function getValueFromRawString({
-    paramInfo,
-    valueString,
-}: {
-    paramInfo: RLIParamInfo;
-    valueString: string | undefined;
-}): RLIArgType | undefined {
-    const lc = `[${getValueFromRawString.name}]`;
-    try {
-        switch (paramInfo.argTypeName) {
-            case 'string':
-                // no conversion required
-                return valueString;
-            case 'integer':
-                // convert to a number
-                if (valueString === undefined) { throw new Error(`integer arg value is undefined. integers must be a valid integer string (E: ce17acde3b863ec5e2fdcc594f0f1423)`); }
-                const argValueInt = Number.parseInt(valueString);
-                if (typeof argValueInt !== 'number') { throw new Error(`arg value string (${valueString})did not parse to an integer. parse result: ${argValueInt} (E: 43cde93160458610ffb49fd16a02d123)`); }
-                return argValueInt;
-            case 'boolean':
-                // convert to a boolean
-                if (valueString === undefined || valueString === '') {
-                    if (!paramInfo.isFlag) { throw new Error(`valueString is undefined or empty string but paramInfo.argTypeName === 'boolean' and paramInfo.isFlag is falsy. (E: 482e595c0ec7344b04def76c1441d623)`); }
-                    // value is not provided, so the arg string is empty. the param is
-                    // a flag, so just its presence means the value is "true".
-                    return true;
-                } else if (valueString === null) {
-                    // ? is this even possible to get here?
-                    throw new Error(`(UNEXPECTED) valueString === null? (E: 78f548b93026407968356d9c4f106223)`);
-                } else {
-                    // typos will evaluate
-                    if (!['true', 'false'].includes(valueString)) {
-                        throw new Error(`invalid boolean valueString ("${valueString}"). must be either "true" or "false" (E: ba7a0d0804131acc2bd9ab37c0382523)`);
-                    }
-                    return valueString === 'true';
-                }
-            default:
-                throw new Error(`(UNEXPECTED) invalid paramInfo.argTypeName (E: c8b03ccb71394d22a29858b98753a123)`);
-        }
-    } catch (error) {
-        console.error(`${lc} ${extractErrorMsg(error)}`);
-        throw error;
-    }
-}
-
 /**
  * extracts the arg value(s) from the given `argInfos` that correspond to the
  * given `paramInfo`.
