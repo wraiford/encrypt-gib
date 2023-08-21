@@ -1,5 +1,3 @@
-# [limited-time opportunity](./OPPORTUNITY.md)
-
 **:warning: This is experimental. No guarantees are made or implied regarding its qualities, including but not limited to, its strength, speed, storage overhead. Use at your own risk.**
 
 # encrypt-gib - hash-based encryption at the hex level
