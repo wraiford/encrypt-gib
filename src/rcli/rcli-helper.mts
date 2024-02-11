@@ -9,9 +9,9 @@ import {
     PARAM_INFO_DATA_PATH,
     PARAM_INFO_DATA_STRING,
     PARAM_INFO_OUTPUT_PATH,
-} from "@ibgib/helper-gib/dist/rli/rli-constants.mjs";
-import { RLIArgInfo, RLIArgType, RLIParamInfo, } from "@ibgib/helper-gib/dist/rli/rli-types.mjs";
-import { } from "@ibgib/helper-gib/dist/rli/rli-helper.mjs";
+} from "@ibgib/helper-gib/dist/rcli/rcli-constants.mjs";
+import { RCLIArgInfo, RCLIArgType, RCLIParamInfo, } from "@ibgib/helper-gib/dist/rcli/rcli-types.mjs";
+import { } from "@ibgib/helper-gib/dist/rcli/rcli-helper.mjs";
 import { tryRead_node } from "@ibgib/helper-gib/dist/helpers/node-helper.mjs";
 
 import { DEFAULT_MAX_BLOCK_SIZE, DEFAULT_NUM_OF_PASSES, ENCRYPT_LOG_A_LOT } from "../constants.mjs";
@@ -20,8 +20,8 @@ import {
     PARAM_INFO_INDEXING_MODE, PARAM_INFO_BLOCKMODE_FLAG,
     PARAM_INFO_BLOCKMODE_BLOCK_SIZE, PARAM_INFO_BLOCKMODE_NUM_OF_PASSES, PARAM_INFO_HASH_ALGORITHM,
     PARAM_INFO_SALT_STRATEGY, PARAM_INFO_INITIAL_RECURSIONS
-} from "./rli-constants.mjs";
-import { GenericEncryptionStrengthSetting, } from "./rli-types.mjs";
+} from "./rcli-constants.mjs";
+import { GenericEncryptionStrengthSetting, } from "./rcli-types.mjs";
 import {
     ALPHABET_INDEXING_MODES, AlphabetIndexingMode, BaseArgs, EncryptResult,
     HASH_ALGORITHMS, HashAlgorithm, BlockModeOptions, SALT_STRATEGIES, SaltStrategy
@@ -61,7 +61,7 @@ const logalot = ENCRYPT_LOG_A_LOT || false;
 export async function extractArg_dataToEncrypt({
     argInfos,
 }: {
-    argInfos: RLIArgInfo<RLIArgType>[],
+    argInfos: RCLIArgInfo<RCLIArgType>[],
 }): Promise<string> {
     const lc = `[${extractArg_dataToEncrypt.name}]`;
     try {
@@ -87,7 +87,7 @@ export async function extractArg_dataToEncrypt({
     }
 }
 
-export function extractArg_strength({ argInfos }: { argInfos: RLIArgInfo<RLIArgType>[]; }): GenericEncryptionStrengthSetting {
+export function extractArg_strength({ argInfos }: { argInfos: RCLIArgInfo<RCLIArgType>[]; }): GenericEncryptionStrengthSetting {
     const lc = `[${extractArg_strength.name}]`;
     let resStrength: GenericEncryptionStrengthSetting = 'stronger'; // default
 
@@ -108,7 +108,7 @@ export function extractArg_strength({ argInfos }: { argInfos: RLIArgInfo<RLIArgT
 export async function extractArg_outputPath({
     argInfos,
 }: {
-    argInfos: RLIArgInfo<RLIArgType>[],
+    argInfos: RCLIArgInfo<RCLIArgType>[],
 }): Promise<string> {
     const lc = `[${extractArg_outputPath.name}]`;
     try {
@@ -155,7 +155,7 @@ export async function extractArg_outputPath({
 export async function extractArg_dataPath({
     argInfos,
 }: {
-    argInfos: RLIArgInfo<RLIArgType>[],
+    argInfos: RCLIArgInfo<RCLIArgType>[],
 }): Promise<string> {
     const lc = `[${extractArg_dataPath.name}]`;
     try {
@@ -195,7 +195,7 @@ export async function extractArg_dataPath({
 export function extractArg_salt({
     argInfos,
 }: {
-    argInfos: RLIArgInfo<RLIArgType>[],
+    argInfos: RCLIArgInfo<RCLIArgType>[],
 }): string | undefined {
     const lc = `[${extractArg_salt.name}]`;
     try {
@@ -214,7 +214,7 @@ export function extractArg_salt({
 export function extractArg_indexingMode({
     argInfos,
 }: {
-    argInfos: RLIArgInfo<RLIArgType>[],
+    argInfos: RCLIArgInfo<RCLIArgType>[],
 }): AlphabetIndexingMode | undefined {
     const lc = `[${extractArg_indexingMode.name}]`;
     try {
@@ -241,7 +241,7 @@ export function extractArg_indexingMode({
 export function extractArg_blockMode({
     argInfos,
 }: {
-    argInfos: RLIArgInfo<RLIArgType>[],
+    argInfos: RCLIArgInfo<RCLIArgType>[],
 }): BlockModeOptions | undefined {
     const lc = `[${extractArg_blockMode.name}]`;
     try {
@@ -292,7 +292,7 @@ export function extractArg_blockMode({
 export function extractArg_hashAlgorithm({
     argInfos,
 }: {
-    argInfos: RLIArgInfo<RLIArgType>[],
+    argInfos: RCLIArgInfo<RCLIArgType>[],
 }): HashAlgorithm | undefined {
     const lc = `[${extractArg_hashAlgorithm.name}]`;
     try {
@@ -319,7 +319,7 @@ export function extractArg_hashAlgorithm({
 export function extractArg_saltStrategy({
     argInfos,
 }: {
-    argInfos: RLIArgInfo<RLIArgType>[],
+    argInfos: RCLIArgInfo<RCLIArgType>[],
 }): SaltStrategy | undefined {
     const lc = `[${extractArg_saltStrategy.name}]`;
     try {
@@ -346,7 +346,7 @@ export function extractArg_saltStrategy({
 export function extractArg_initialRecursions({
     argInfos,
 }: {
-    argInfos: RLIArgInfo<RLIArgType>[],
+    argInfos: RCLIArgInfo<RCLIArgType>[],
 }): number | undefined {
     const lc = `[${extractArg_initialRecursions.name}]`;
     try {
@@ -377,13 +377,13 @@ export function extractArg_initialRecursions({
  *
  * @returns the arg.value corresponding to the given `paramInfo`
  */
-export function extractArgValue<T extends RLIArgType>({
+export function extractArgValue<T extends RCLIArgType>({
     paramInfo,
     argInfos,
     throwIfNotFound,
 }: {
-    paramInfo: RLIParamInfo,
-    argInfos: RLIArgInfo<RLIArgType>[],
+    paramInfo: RCLIParamInfo,
+    argInfos: RCLIArgInfo<RCLIArgType>[],
     throwIfNotFound?: boolean,
 }): T | T[] | undefined {
     const lc = `[${extractArgValue.name}]`;
@@ -415,7 +415,7 @@ export function extractArgValue<T extends RLIArgType>({
             // allow only single arg, so return type is T
             if (filteredArgInfos.length > 1) { throw new Error(`param (name: ${paramInfo.name}) had multiple args but param.allowMultiple is falsy. (E: 0d01157e773bd34f962f8713e7719c23)`); }
 
-            const argInfo = filteredArgInfos[0] as RLIArgInfo<T>;
+            const argInfo = filteredArgInfos[0] as RCLIArgInfo<T>;
 
             // if the flag is set but no `="true"` or `="false"` provided, then
             // we set the value to true
@@ -569,8 +569,8 @@ export function getParamInfo({ argIdentifier, paramInfos }: {
      * I have this separate as I plan to pull this out into a separate lib
      * (maybe helper-gib).
      */
-    paramInfos: RLIParamInfo[]
-}): RLIParamInfo {
+    paramInfos: RCLIParamInfo[]
+}): RCLIParamInfo {
     const lc = `[${getParamInfo.name}]`;
     try {
         const filteredParamInfos = paramInfos.filter(p => p.name === argIdentifier);

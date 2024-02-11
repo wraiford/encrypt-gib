@@ -20,21 +20,21 @@ import { execPath, cwd, } from 'node:process';
 import { writeFile } from 'node:fs/promises';
 
 import { pretty, extractErrorMsg } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
-import { RLIArgInfo, RLIArgType, } from "@ibgib/helper-gib/dist/rli/rli-types.mjs";
-import { buildArgInfos, argIs, } from "@ibgib/helper-gib/dist/rli/rli-helper.mjs";
-import { PARAM_INFO_HELP } from "@ibgib/helper-gib/dist/rli/rli-constants.mjs";
+import { RCLIArgInfo, RCLIArgType, } from "@ibgib/helper-gib/dist/rcli/rcli-types.mjs";
+import { buildArgInfos, argIs, } from "@ibgib/helper-gib/dist/rcli/rcli-helper.mjs";
+import { PARAM_INFO_HELP } from "@ibgib/helper-gib/dist/rcli/rcli-constants.mjs";
 import { tryRead_node, promptForSecret_node } from "@ibgib/helper-gib/dist/helpers/node-helper.mjs";
 
 import { decrypt, encrypt } from '../encrypt-decrypt.mjs';
 import { DecryptArgs, DecryptResult, EncryptResult } from '../types.mjs';
 import { ENCRYPT_LOG_A_LOT } from '../constants.mjs';
-import { PARAM_INFOS, } from './rli-constants.mjs';
+import { PARAM_INFOS, } from './rcli-constants.mjs';
 import {
     extractArg_dataPath, extractArg_dataToEncrypt, extractArg_hashAlgorithm,
     extractArg_indexingMode, extractArg_initialRecursions, extractArg_blockMode, extractArg_outputPath,
     extractArg_salt, extractArg_saltStrategy, extractArg_strength, getBaseArgsSet,
     validateEncryptedFile,
-} from './rli-helper.mjs';
+} from './rcli-helper.mjs';
 
 /**
  * used in verbose logging (across all ibgib libs atow)
@@ -42,8 +42,8 @@ import {
 const logalot = ENCRYPT_LOG_A_LOT || false;
 
 
-export async function execRLI(): Promise<void> {
-    const lc = `[${execRLI.name}]`;
+export async function execRCLI(): Promise<void> {
+    const lc = `[${execRCLI.name}]`;
     try {
         console.log(`${lc} starting... (I: f8361e3196aa46e5912d821cb22ab7a0)\n`);
         console.log(`${lc} process.execPath: ${execPath}`);
@@ -80,14 +80,14 @@ export async function execRLI(): Promise<void> {
 //     argInfo,
 // }: {
 //     arg: string,
-//     argInfo: RLIArgInfo,
+//     argInfo: RCLIArgInfo,
 // }): boolean {
 //     return arg?.replace('--', '').toLowerCase() === argInfo.name.toLowerCase();
 // }
 
 function showHelp({ args }: { args: string[] }): void {
     const helpMsg = `
-    THIS IS INCOMPLETE, STUBBED HELP DOCUMENTATION ATOW. CHECK OUT RLI.MTS AND
+    THIS IS INCOMPLETE, STUBBED HELP DOCUMENTATION ATOW. CHECK OUT RCLI.MTS AND
     THE LIBRARY ITSELF.
 
     howdy from encrypt-gib. for now here's how it's gotta be:
@@ -134,7 +134,7 @@ ${pretty(PARAM_INFOS)}
 
     encrypt-gib --decrypt --data-path="./cool-encrypted-data.encrypt-gib"
 
-    THIS IS INCOMPLETE, STUBBED HELP DOCUMENTATION ATOW. CHECK OUT RLI.MTS AND
+    THIS IS INCOMPLETE, STUBBED HELP DOCUMENTATION ATOW. CHECK OUT RCLI.MTS AND
     THE LIBRARY ITSELF. ATOW ALL NON-FLAG PARAMETER VALUES MUST BE IN DOUBLE QUOTES.
 
     atow I use the following in encrypt-gib's root dir (NOTE: "stronger" setting may take a LONG time):
@@ -177,7 +177,7 @@ function validateArgs(args: string[]): string | undefined {
  * note: atow they're not really validated much.
  */
 async function execRequestPlease(args: string[]): Promise<void> {
-    const lc = `[${execRLI.name}]`;
+    const lc = `[${execRCLI.name}]`;
     try {
         console.log(`${lc} starting... (I: ea2abd65b8d3401eb9c1db873b5b8a04)`);
 
@@ -207,7 +207,7 @@ async function execRequestPlease(args: string[]): Promise<void> {
     }
 }
 
-async function execEncrypt({ argInfos }: { argInfos: RLIArgInfo<RLIArgType>[] }): Promise<void> {
+async function execEncrypt({ argInfos }: { argInfos: RCLIArgInfo<RCLIArgType>[] }): Promise<void> {
     const lc = `[${execEncrypt.name}]`;
     try {
         if (logalot) { console.log(`${lc} starting... (I: 6573534041881444ec8baca28c535d23)`); }
@@ -256,7 +256,7 @@ async function execEncrypt({ argInfos }: { argInfos: RLIArgInfo<RLIArgType>[] })
     }
 }
 
-async function execDecrypt({ argInfos }: { argInfos: RLIArgInfo<RLIArgType>[] }): Promise<void> {
+async function execDecrypt({ argInfos }: { argInfos: RCLIArgInfo<RCLIArgType>[] }): Promise<void> {
     const lc = `[${execDecrypt.name}]`;
     try {
         if (logalot) { console.log(`${lc} starting... (I: a45ae2cd4767411fbdea64ecc182ac93)`); }
@@ -302,4 +302,4 @@ async function execDecrypt({ argInfos }: { argInfos: RLIArgInfo<RLIArgType>[] })
     }
 }
 
-await execRLI();
+await execRCLI();
