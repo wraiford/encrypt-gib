@@ -19,7 +19,7 @@ import {
     PARAM_INFO_ENCRYPT, PARAM_INFO_SALT, PARAM_INFO_STRENGTH, ENCRYPTED_OUTPUT_FILE_EXT,
     PARAM_INFO_INDEXING_MODE, PARAM_INFO_BLOCKMODE_FLAG,
     PARAM_INFO_BLOCKMODE_BLOCK_SIZE, PARAM_INFO_BLOCKMODE_NUM_OF_PASSES, PARAM_INFO_HASH_ALGORITHM,
-    PARAM_INFO_SALT_STRATEGY, PARAM_INFO_INITIAL_RECURSIONS
+    PARAM_INFO_SALT_STRATEGY, PARAM_INFO_INITIAL_RECURSIONS, PARAM_INFO_RECURSIONS_PER_HASH
 } from "./rcli-constants.mjs";
 import { GenericEncryptionStrengthSetting, } from "./rcli-types.mjs";
 import {
@@ -371,6 +371,34 @@ export function extractArg_initialRecursions({
     }
 }
 
+export function extractArg_recursionsPerHash({
+    argInfos,
+}: {
+    argInfos: RCLIArgInfo<RCLIArgType>[],
+}): number | undefined {
+    const lc = `[${extractArg_recursionsPerHash.name}]`;
+    try {
+        if (logalot) { console.log(`${lc} starting... (I: 0d1c7387edd546c680f26661b78afdfc)`); }
+
+        const recursionsPerHash = extractArgValue({ paramInfo: PARAM_INFO_RECURSIONS_PER_HASH, argInfos }) as number | undefined;
+
+        if (recursionsPerHash && typeof recursionsPerHash !== 'number') {
+            throw new Error(`(UNEXPECTED) recursionsPerHash expected to be a number at this point. (E: a4a3cd4fe8c94f479b703a65b909c2fe)`);
+        } else if (recursionsPerHash === 0) {
+            throw new Error(`recursionsPerHash cannot be 0. Must be a positive integer. (E: 95a23fd1b5064375a9ce7680ff7e3b8b)`);
+        } else if (recursionsPerHash) {
+            return recursionsPerHash;
+        } else {
+            return undefined;
+        }
+    } catch (error) {
+        console.error(`${lc} ${extractErrorMsg(error)}`);
+        throw error;
+    } finally {
+        if (logalot) { console.log(`${lc} complete.`); }
+    }
+}
+
 /**
  * extracts the arg value(s) from the given `argInfos` that correspond to the
  * given `paramInfo`.
@@ -503,6 +531,7 @@ export async function getBaseArgsSet({
     hashAlgorithm,
     saltStrategy,
     initialRecursions,
+    recursionsPerHash,
 }: {
     secret: string,
     salt: string | undefined,
@@ -512,6 +541,7 @@ export async function getBaseArgsSet({
     hashAlgorithm: HashAlgorithm | undefined,
     saltStrategy: SaltStrategy | undefined,
     initialRecursions: number | undefined,
+    recursionsPerHash: number | undefined,
 }): Promise<BaseArgs> {
     const lc = `[${getBaseArgsSet.name}]`;
     if (!salt) {
@@ -526,7 +556,7 @@ export async function getBaseArgsSet({
             saltStrategy: saltStrategy ?? 'initialAppend',
             hashAlgorithm: hashAlgorithm ?? 'SHA-256',
             indexingMode: indexingMode ?? 'indexOf',
-            recursionsPerHash: 2,
+            recursionsPerHash: recursionsPerHash ?? 2,
             blockMode,
         }
         return args;
@@ -545,7 +575,7 @@ export async function getBaseArgsSet({
             saltStrategy: saltStrategy ?? 'prependPerHash',
             hashAlgorithm: hashAlgorithm ?? 'SHA-512',
             indexingMode: indexingMode ?? 'lastIndexOf',
-            recursionsPerHash: 10,
+            recursionsPerHash: recursionsPerHash ?? 10,
             blockMode,
         }
         return args;

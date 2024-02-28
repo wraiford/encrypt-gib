@@ -34,6 +34,7 @@ import {
     extractArg_indexingMode, extractArg_initialRecursions, extractArg_blockMode, extractArg_outputPath,
     extractArg_salt, extractArg_saltStrategy, extractArg_strength, getBaseArgsSet,
     validateEncryptedFile,
+    extractArg_recursionsPerHash,
 } from './rcli-helper.mjs';
 
 /**
@@ -226,10 +227,12 @@ async function execEncrypt({ argInfos }: { argInfos: RCLIArgInfo<RCLIArgType>[] 
         const hashAlgorithm = extractArg_hashAlgorithm({ argInfos });
         const saltStrategy = extractArg_saltStrategy({ argInfos });
         const initialRecursions = extractArg_initialRecursions({ argInfos });
+        const recursionsPerHash = extractArg_recursionsPerHash({ argInfos });
         const baseArgs = await getBaseArgsSet({
             secret, strength,
             salt, saltStrategy,
-            hashAlgorithm, initialRecursions, indexingMode,
+            hashAlgorithm, initialRecursions, recursionsPerHash,
+            indexingMode,
             blockMode,
         });
         console.log(`${lc} starting timer`);
