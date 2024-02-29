@@ -111,6 +111,18 @@ export const AlphabetIndexingMode = {
 export const ALPHABET_INDEXING_MODES: AlphabetIndexingMode[] = Object.values(AlphabetIndexingMode);
 
 /**
+ * # tl;dr
+ *
+ * Block mode is stronger but slower relative to the stream mode.
+ *
+ * When block mode is enabled, we do multiple passes on sections of plaintext
+ * when encrypting/decrypting.
+ *
+ * This is one way to help mitigate against short-circuit brute force
+ * attacks.
+ *
+ * # how it works
+ *
  * The block-mode algorithm works as follows:
  *
  * ## encrypting
