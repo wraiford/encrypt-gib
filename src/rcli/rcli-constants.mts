@@ -31,7 +31,7 @@ export const PARAM_INFO_INDEXING_MODE: RCLIParamInfo = {
     description: 'mode used when indexing into a jit alphabet per round. can be "indexOf" or "lastIndexOf". when trying to mitigate against brute forcing, "lastIndexOf" should be used so that the entire hash chain is required in order to index into (i think).'
 };
 export const PARAM_INFO_BLOCKMODE_FLAG: RCLIParamInfo = {
-    name: 'blockMode',
+    name: 'block-mode',
     argTypeName: 'boolean',
     isFlag: true,
     description: 'if true, will execute encrypt/decrypt in a block mode to help mitigate brute force short-circuit attacks.'
