@@ -1,8 +1,5 @@
 import * as pathUtils from 'path';
 import { statSync } from 'node:fs';
-import { readFile, } from 'node:fs/promises';
-import * as readline from 'node:readline/promises';
-import { stdin, stdout } from 'node:process'; // decide if use this or not
 
 import { extractErrorMsg, getTimestampInTicks, getUUID, pretty } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 import {
@@ -33,28 +30,6 @@ import {
  */
 const logalot = ENCRYPT_LOG_A_LOT || false;
 
-
-// export async function tryRead({
-//     relOrAbsPath,
-// }: {
-//     relOrAbsPath: string,
-// }): Promise<string | undefined> {
-//     const lc = `[${tryRead.name}]`;
-//     try {
-//         const stat = statSync(relOrAbsPath);
-//         if (!stat.isFile()) { throw new Error(`path provided is not a file. (${relOrAbsPath}) (E: f295b7e925534546819edfef9a750164)`); }
-//         const resRead = await readFile(relOrAbsPath, { encoding: 'utf8' as BufferEncoding });
-//         if (logalot) {
-//             console.log(`${lc} record found. data length: ${resRead?.length ?? 0}. fullPath: ${relOrAbsPath}  (I: aa81b3d01e9542788b07302dd174c03d)`);
-//         }
-//         return resRead;
-//     } catch (error) {
-//         if (logalot) { console.log(`${lc} path not found (${relOrAbsPath})\nerror:\n${extractErrorMsg(error)} (I: 6658a0b81d3249d2aefc8e3d28efa87b)`); }
-//         return undefined;
-//     } finally {
-//         if (logalot) { console.log(`${lc} complete. (I: 747a187ca6234dd4b2bf9a11a87a0d91)`); }
-//     }
-// }
 
 // #region extractArg functions
 

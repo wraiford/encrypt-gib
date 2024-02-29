@@ -59,6 +59,51 @@ export const HashAlgorithm = {
 export const HASH_ALGORITHMS: HashAlgorithm[] = Object.values(HashAlgorithm);
 
 export type AlphabetIndexingMode = 'indexOf' | 'lastIndexOf';
+/**
+ * when iterating characters, this determines whether we are using `'indexOf'` or
+ * `'lastIndexOf'` on the alphabet string.
+ *
+ * So if the JIT hex alphabet is abc123abc456 and our character is b:
+ *
+ * abc123abc456
+ *  ^     ^
+ *  1
+ * * `'indexOf'` -> 1
+ * * `'lastIndexOf'` -> 7
+ *
+ * with immediately expanding JIT alphabets, this shouldn't make much of a
+ * difference.  But when mitigating brute force short-circuit attacks, where
+ * the brute forcer only decrypts the first couple of characters of data, we
+ * may combine `'lastIndexOf'` with a "multipass" expanding alphabet to
+ * ensure that a larger portion of the plaintext (up to 100% of the
+ * plaintext), is required to be processed before any short-circuiting
+ * decryption can occur. @see {@link BlockModeOptions}
+ *
+ * To help understand this, here is an example. Say we use a multi-pass
+ * alphabet that requires a minimum of 3 expansions. We encipher the first
+ * character of plaintext we first convert that character to hex. Say this
+ * hex is 'a'. Now we create our corresponding alphabet by recursively
+ * rounding on the initial `prevHash` (after key stretching with
+ * `initialRecursions` has occurred). Say one round produces a hash
+ * '123a56ba90' for our one-time JIT alphabet. If this were an immediately
+ * expanding JIT alphabet with no minimum expansions and the ciphertext is
+ * already present, then additional rounds won't be needed for the attacker
+ * - they already have the index and the alphabet that has the plaintext.
+ *
+ * With `lastIndexOf` + multipass blocks, then the attacker is forced to
+ * calculate at least the entire section's hashing because the encrypted
+ * index will most likely be at the end of the alphabet.
+ *
+ * abc123...[200ish hex character]...bac231
+ *                                      ^
+ * The first `indexOf('2')` would just be 4, and no other alphabet
+ * extensions would be required (not a single one in the section).  Whereas
+ * the `lastIndexOf('2')` would be a 200+ index. This would require multiple
+ * hashes for every previous character in the section, and would thus harder
+ * to short-circuit.
+ *
+ * @default `'indexOf'`
+ */
 export const AlphabetIndexingMode = {
     indexOf: 'indexOf',
     lastIndexOf: 'lastIndexOf',
@@ -172,49 +217,9 @@ export interface BlockModeOptions {
  */
 interface BaseBase {
     /**
-     * when iterating characters, this determines whether we are using `'indexOf'` or
-     * `'lastIndexOf'` on the alphabet string.
+     * how to index into the jit alphabet
      *
-     * So if the JIT hex alphabet is abc123abc456 and our character is b:
-     *
-     * abc123abc456
-     *  ^     ^
-     *  1
-     * * `'indexOf'` -> 1
-     * * `'lastIndexOf'` -> 7
-     *
-     * with immediately expanding JIT alphabets, this shouldn't make much of a
-     * difference.  But when mitigating brute force short-circuit attacks, where
-     * the brute forcer only decrypts the first couple of characters of data, we
-     * may combine `'lastIndexOf'` with a "multipass" expanding alphabet to
-     * ensure that a larger portion of the plaintext (up to 100% of the
-     * plaintext), is required to be processed before any short-circuiting
-     * decryption can occur. @see {@link BlockModeOptions}
-     *
-     * To help understand this, here is an example. Say we use a multi-pass
-     * alphabet that requires a minimum of 3 expansions. We encipher the first
-     * character of plaintext we first convert that character to hex. Say this
-     * hex is 'a'. Now we create our corresponding alphabet by recursively
-     * rounding on the initial `prevHash` (after key stretching with
-     * `initialRecursions` has occurred). Say one round produces a hash
-     * '123a56ba90' for our one-time JIT alphabet. If this were an immediately
-     * expanding JIT alphabet with no minimum expansions and the ciphertext is
-     * already present, then additional rounds won't be needed for the attacker
-     * - they already have the index and the alphabet that has the plaintext.
-     *
-     * With `lastIndexOf` + multipass blocks, then the attacker is forced to
-     * calculate at least the entire section's hashing because the encrypted
-     * index will most likely be at the end of the alphabet.
-     *
-     * abc123...[200ish hex character]...bac231
-     *                                      ^
-     * The first `indexOf('2')` would just be 4, and no other alphabet
-     * extensions would be required (not a single one in the section).  Whereas
-     * the `lastIndexOf('2')` would be a 200+ index. This would require multiple
-     * hashes for every previous character in the section, and would thus harder
-     * to short-circuit.
-     *
-     * @default `'indexOf'`
+     * @see {@link AlphabetIndexingMode}
      */
     indexingMode?: AlphabetIndexingMode;
     /**
