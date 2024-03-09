@@ -23,7 +23,7 @@ import { pretty, extractErrorMsg } from '@ibgib/helper-gib/dist/helpers/utils-he
 import { RCLIArgInfo, RCLIArgType, } from "@ibgib/helper-gib/dist/rcli/rcli-types.mjs";
 import { buildArgInfos, argIs, } from "@ibgib/helper-gib/dist/rcli/rcli-helper.mjs";
 import { PARAM_INFO_HELP } from "@ibgib/helper-gib/dist/rcli/rcli-constants.mjs";
-import { tryRead_node, promptForSecret_node } from "@ibgib/helper-gib/dist/helpers/node-helper.mjs";
+import { tryRead_node, promptForSecret } from "@ibgib/helper-gib/dist/helpers/node-helper.mjs";
 
 import { decrypt, encrypt } from '../encrypt-decrypt.mjs';
 import { DecryptArgs, DecryptResult, EncryptResult } from '../types.mjs';
@@ -218,7 +218,7 @@ async function execEncrypt({ argInfos }: { argInfos: RCLIArgInfo<RCLIArgType>[] 
         const outputPath = await extractArg_outputPath({ argInfos });
         if (!outputPath) { throw new Error(`was unable to get output data path from the args. (E: 85e4dc233e95174e9183a97a154c9223)`); }
 
-        const secret = await promptForSecret_node({ confirm: true });
+        const secret = await promptForSecret({ confirm: true });
         const dataToEncrypt = await extractArg_dataToEncrypt({ argInfos });
         const strength = extractArg_strength({ argInfos });
         const salt = extractArg_salt({ argInfos });
@@ -279,7 +279,7 @@ async function execDecrypt({ argInfos }: { argInfos: RCLIArgInfo<RCLIArgType>[] 
         // todo: validate the file
         await validateEncryptedFile(fileContents);
 
-        const secret = await promptForSecret_node({ confirm: false });
+        const secret = await promptForSecret({ confirm: false });
         fileContents.secret = secret!;
 
         console.log(`${lc} starting timer`);
