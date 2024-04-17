@@ -53,7 +53,7 @@ export async function execRCLI(): Promise<void> {
         console.log(`${lc} args.join(' '): ${args.join(' ')}`);
         const validationErrors = validateArgs(args);
         if (!validationErrors) {
-            if (args.some(arg => argIs({ arg, paramInfo: PARAM_INFO_HELP }))) {
+            if (args.some((arg, argIndex) => argIs({ arg, paramInfo: PARAM_INFO_HELP, argInfoIndex: argIndex }))) {
                 showHelp({ args });
                 return;
             }

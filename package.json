@@ -28,14 +28,14 @@
     "test:quick": "npm run test:node:quick",
     "man:test:quick": "echo 'use this if you want to build+test QUICK respec tests (much MUCH shorter than full test)'",
     "pretest:node": "npm run build:test",
-    "test:node": "node dist/respec-gib.stress-test.node.mjs --inspect",
+    "test:node": "node dist/respec-gib.stress-test.node.mjs",
     "man:test:node": "echo 'use this if you want to build+test in node'",
-    "test:node:nobuild": "node dist/respec-gib.node.mjs --inspect",
+    "test:node:nobuild": "node dist/respec-gib.node.mjs",
     "man:test:node:nobuild": "echo 'use this if you want to test in node but its already built'",
     "pretest:node:quick": "npm run build:test",
-    "test:node:quick": "node dist/respec-gib.quick-test.node.mjs --inspect",
+    "test:node:quick": "node dist/respec-gib.quick-test.node.mjs",
     "man:test:node:quick": "echo 'use this if you want to build+test QUICK respec tests in node'",
-    "test:node:quick:nobuild": "node dist/respec-gib.quick-test.node.mjs --inspect",
+    "test:node:quick:nobuild": "node dist/respec-gib.quick-test.node.mjs",
     "man:test:node:quick:nobuild": "echo 'use this if you want to execute QUICK respec tests in node but its already built'",
     "pretest:browser": "npm run build:test",
     "test:browser": "echo \"not implemented yet\"",
@@ -74,7 +74,7 @@
   "author": "William Raiford",
   "license": "ISC",
   "dependencies": {
-    "@ibgib/helper-gib": "^0.0.24"
+    "@ibgib/helper-gib": "^0.0.27"
   },
   "devDependencies": {
     "@types/node": "^20.2.1"
