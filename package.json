@@ -74,7 +74,7 @@
   "author": "William Raiford",
   "license": "ISC",
   "dependencies": {
-    "@ibgib/helper-gib": "^0.0.28"
+    "@ibgib/helper-gib": "^0.0.29"
   },
   "devDependencies": {
     "@types/node": "^20.2.1"
