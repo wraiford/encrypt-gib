@@ -1,6 +1,6 @@
-import * as h from '@ibgib/helper-gib';
-import * as c from './constants.mjs';
+import { getUUID } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 
+import * as c from './constants.mjs';
 import {
     EncryptArgs, EncryptResult,
     DecryptArgs, DecryptResult,
@@ -29,7 +29,7 @@ export async function encrypt(args: EncryptArgs): Promise<EncryptResult> {
         if (!args.dataToEncrypt) { throw new Error(`dataToEncrypt required (E: 168c9076e5434c83ba81e3485ee6f3e4)`); }
 
         // common defaults
-        args.salt = args.salt || await h.getUUID(c.DEFAULT_GETUUID_SEEDSIZE);
+        args.salt = args.salt || await getUUID(c.DEFAULT_GETUUID_SEEDSIZE);
         args.saltStrategy = args.saltStrategy || c.DEFAULT_SALT_STRATEGY;
         args.hashAlgorithm = args.hashAlgorithm || c.DEFAULT_HASH_ALGORITHM;
         args.recursionsPerHash = args.recursionsPerHash || c.DEFAULT_RECURSIONS_PER_HASH;
@@ -77,7 +77,7 @@ export async function decrypt(args: DecryptArgs): Promise<DecryptResult> {
         if (!args.encryptedData) { throw new Error(`encryptedData required (E: f879f612428b4283bae089acee929a58)`); }
 
         // common defaults
-        args.salt = args.salt || await h.getUUID(c.DEFAULT_GETUUID_SEEDSIZE);
+        args.salt = args.salt || await getUUID(c.DEFAULT_GETUUID_SEEDSIZE);
         args.saltStrategy = args.saltStrategy || c.DEFAULT_SALT_STRATEGY;
         args.hashAlgorithm = args.hashAlgorithm || c.DEFAULT_HASH_ALGORITHM;
         args.recursionsPerHash = args.recursionsPerHash || c.DEFAULT_RECURSIONS_PER_HASH;

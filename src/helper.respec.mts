@@ -1,10 +1,11 @@
 /**
  * Test helper functions.
  */
-// import * as h from './helper.mjs';
-import * as h from '@ibgib/helper-gib';
+
 import { ifWe, ifWeMight, iReckon, respecfully } from '@ibgib/helper-gib/dist/respec-gib/respec-gib.mjs';
 const maam = `[${import.meta.url}]`, sir = maam;
+import { clone, getTimestamp, getUUID, hash } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
+
 import { decodeHexStringToString, encodeStringToHexString } from './helper.mjs';
 
 
@@ -25,7 +26,7 @@ await respecfully(sir, `when cloning`, async () => {
                 }
             }
         };
-        const cloneADeep = h.clone(objADeep);
+        const cloneADeep = clone(objADeep);
         iReckon(sir, cloneADeep?.levelOne?.levelTwo?.buckle).isGonnaBe("your shoe");
         iReckon(sir, cloneADeep?.levelOne?.levelTwo?.three).isGonnaBe("four");
         iReckon(sir, cloneADeep?.levelOne?.levelTwo?.objSimple).isGonnaBe(objSimple);
@@ -42,7 +43,7 @@ await respecfully(sir, `when cloning`, async () => {
 await respecfully(sir, `when getting timestamp`, async () => {
     await ifWe(sir, `should get the current date as UTCString`, async () => {
         // implementation detail hmm....
-        const timestamp = h.getTimestamp();
+        const timestamp = getTimestamp();
         const date = new Date(timestamp);
         const dateAsUTCString = date.toUTCString();
         iReckon(sir, timestamp).isGonnaBe(dateAsUTCString);
@@ -51,22 +52,22 @@ await respecfully(sir, `when getting timestamp`, async () => {
 
 await respecfully(sir, `when hashing (helper)`, async () => {
     await ifWe(sir, `should hash consistently with implicit sha256`, async () => {
-        const hash = await h.hash({s: SOME_STRING}) || "";
-        iReckon(sir, hash.toUpperCase()).isGonnaBe(SOME_STRING_HASH);
+        const hashedStr = await hash({ s: SOME_STRING }) || "";
+        iReckon(sir, hashedStr.toUpperCase()).isGonnaBe(SOME_STRING_HASH);
     });
     await ifWe(sir, `should hash consistently with explicit sha256`, async () => {
-        const hash = await h.hash({s: SOME_STRING, algorithm: "SHA-256"}) || "";
-        iReckon(sir, hash.toUpperCase()).isGonnaBe(SOME_STRING_HASH);
+        const hashedStr = await hash({ s: SOME_STRING, algorithm: "SHA-256" }) || "";
+        iReckon(sir, hashedStr.toUpperCase()).isGonnaBe(SOME_STRING_HASH);
     });
     await ifWe(sir, `should hash without collisions, 1000 times`, async () => {
         const hashes: string[] = [];
-        const salt = await h.getUUID(1024);
+        const salt = await getUUID(1024);
         // console.log(`salt: ${salt}`);
         for (let i = 0; i < 1000; i++) {
-            const hash = await h.hash({s: salt + i.toString(), algorithm: "SHA-256"}) || "";
+            const hashedStr = await hash({ s: salt + i.toString(), algorithm: "SHA-256" }) || "";
             // console.log(hash);
-            iReckon(sir, hashes).not.includes(hash);
-            hashes.push(hash);
+            iReckon(sir, hashes).not.includes(hashedStr);
+            hashes.push(hashedStr);
         }
     });
 });
@@ -75,7 +76,7 @@ await respecfully(sir, `when generating UUIDs`, async () => {
     await ifWe(sir, `shouldn't duplicate UUIDs`, async () => {
         const ids: string[] = [];
         for (let i = 0; i < 100; i++) {
-            const id = await h.getUUID();
+            const id = await getUUID();
             iReckon(sir, ids).not.includes(id);
             ids.push(id);
         }
@@ -93,7 +94,7 @@ new lines
 
 also`;
 
-const DATA_WITH_AWS_CREDENTIALS_ENTIRE_PARAGRAPH  = `
+const DATA_WITH_AWS_CREDENTIALS_ENTIRE_PARAGRAPH = `
 Custom password policy options
 When you configure a custom password policy for your account, you can specify the following conditions:
 
@@ -144,8 +145,8 @@ await respecfully(sir, `when encoding string to hex string`, async () => {
     for (let i = 0; i < Object.keys(DATAS).length; i++) {
         const msg = Object.keys(DATAS)[i];
 
-    // }
-    // Object.keys(DATAS).forEach(msg => {
+        // }
+        // Object.keys(DATAS).forEach(msg => {
         await respecfully(sir, `with ${msg}`, async () => {
             const data = DATAS[msg];
 
@@ -180,8 +181,8 @@ await respecfully(sir, `when encoding string to hex string`, async () => {
     for (let i = 0; i < Object.keys(HEX_ONLY_DATAS).length; i++) {
         const msg = Object.keys(HEX_ONLY_DATAS)[i];
 
-    // }
-    // Object.keys(HEX_ONLY_DATAS).forEach(msg => {
+        // }
+        // Object.keys(HEX_ONLY_DATAS).forEach(msg => {
         await respecfully(sir, `with ${msg}`, async () => {
             const data = HEX_ONLY_DATAS[msg];
 
@@ -190,13 +191,13 @@ await respecfully(sir, `when encoding string to hex string`, async () => {
                 iReckon(sir, hexString).not.isGonnaBe(data);
             });
         });
-    // });
+        // });
     }
 
     const keysSimpleDatas = Object.keys(SIMPLE_DATAS);
     for (let i = 0; i < keysSimpleDatas.length; i++) {
         const msg = keysSimpleDatas[i];
-    // Object.keys(SIMPLE_DATAS).forEach(msg => {
+        // Object.keys(SIMPLE_DATAS).forEach(msg => {
         await respecfully(sir, `with ${msg}`, async () => {
             const data = SIMPLE_DATAS[msg];
             await ifWe(sir, `hex string should NOT be equal to original string`, async () => {
@@ -204,7 +205,7 @@ await respecfully(sir, `when encoding string to hex string`, async () => {
                 iReckon(sir, hexString).not.isGonnaBe(data);
             });
         });
-    // });
+        // });
     }
 
 });

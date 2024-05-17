@@ -1,5 +1,4 @@
-import * as h from '@ibgib/helper-gib';
-import { extractErrorMsg } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
+import { extractErrorMsg, hash as hashFn } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 
 import { HashAlgorithm, SaltStrategy } from "../types.mjs";
 
@@ -59,7 +58,7 @@ export async function execRound_getNextHash({
         let hash = prevHash || undefined;
         for (let i = 0; i < count; i++) {
             const preHash = getPreHash({ secret, prevHash: hash, salt, saltStrategy });
-            hash = await h.hash({ s: preHash, algorithm: hashAlgorithm });
+            hash = await hashFn({ s: preHash, algorithm: hashAlgorithm });
         }
         if (!hash) { throw new Error(`hash was not created (E: 09dfdfd644734727a34a1bc0bd8e93b9)`); }
         return hash;

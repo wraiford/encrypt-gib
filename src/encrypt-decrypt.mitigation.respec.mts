@@ -2,9 +2,9 @@
  * Test helper functions.
  */
 
-import * as h from '@ibgib/helper-gib';
 import { firstOfAll, ifWe, ifWeMight, iReckon, respecfully } from '@ibgib/helper-gib/dist/respec-gib/respec-gib.mjs';
 const maam = `[${import.meta.url}]`, sir = maam;
+import { getUUID } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 
 import * as c from './constants.mjs';
 import * as encryptGib from './encrypt-decrypt.mjs';
@@ -82,11 +82,11 @@ const TEST_CONFIRM_VALUES: boolean[] = [true, false];
 
 async function initData(): Promise<void> {
     for (let i = 0; i < 500; i++) {
-        let uuid = await h.getUUID();
+        let uuid = await getUUID();
         LONG_DATA += uuid + '\n';
     }
     for (let i = 0; i < 100; i++) {
-        let uuid = await h.getUUID();
+        let uuid = await getUUID();
         LONG_SECRET += uuid + '\n';
     }
     TEST_DATAS.push(LONG_DATA); // comment this if you don't want a long data test

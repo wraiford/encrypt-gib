@@ -1,4 +1,4 @@
-import * as h from '@ibgib/helper-gib';
+import { getUUID } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 
 import * as c from '../constants.mjs';
 import { decodeHexStringToString } from '../helper.mjs';
@@ -39,7 +39,7 @@ export async function decryptImpl_stream({
     recursionsPerHash = recursionsPerHash || c.DEFAULT_RECURSIONS_PER_HASH;
     saltStrategy = saltStrategy || c.DEFAULT_SALT_STRATEGY;
     hashAlgorithm = hashAlgorithm || c.DEFAULT_HASH_ALGORITHM;
-    salt = salt || await h.getUUID(c.DEFAULT_GETUUID_SEEDSIZE);
+    salt = salt || await getUUID(c.DEFAULT_GETUUID_SEEDSIZE);
     encryptedDataDelimiter = encryptedDataDelimiter || c.DEFAULT_ENCRYPTED_DATA_DELIMITER;
 
     // #endregion

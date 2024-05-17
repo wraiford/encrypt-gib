@@ -4,7 +4,7 @@
  */
 
 // import * as h from './helper.mjs';
-import * as h from '@ibgib/helper-gib';
+import { getUUID } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 import { firstOfAll, ifWe, ifWeMight, iReckon, respecfully, respecfullyDear } from '@ibgib/helper-gib/dist/respec-gib/respec-gib.mjs';
 const maam = `[${import.meta.url}]`, sir = maam;
 
@@ -89,11 +89,11 @@ const TEST_DELIMITERS = [
 
 async function initData(): Promise<void> {
     for (let i = 0; i < 10; i++) {
-        let uuid = await h.getUUID();
+        let uuid = await getUUID();
         LONG_DATA += uuid + '\n';
     }
     for (let i = 0; i < 100; i++) {
-        let uuid = await h.getUUID();
+        let uuid = await getUUID();
         LONG_SECRET += uuid + '\n';
     }
     TEST_DATAS.push(LONG_DATA); // comment this if you don't want a long data test
